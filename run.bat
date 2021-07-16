@@ -1,0 +1,1 @@
+qemu-system-x86_64 \\wsl$\Ubuntu-18.04\home\daniel\juiceos32\bin\OS.bin
