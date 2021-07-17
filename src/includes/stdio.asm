@@ -1,35 +1,84 @@
-;; print: print given string
-;; si - *string
-print:
-    mov ax, 0xb800
-    mov es, ax
-
-    imul di, [cursorY], 160
-    imul ax, [cursorX], 2
-    add di, ax
-
-    mov ah, 0x17
-
-.loop:
+print_string:
     lodsb
     cmp al, 0
     je .end
-    cmp al, 0xA
-    je .CRLF
-    stosw
-    inc word [cursorX]
-    cmp word [cursorX], 80
-    jne .loop
-    inc word [cursorY]
-    mov word [cursorX], 0
-    jmp .loop
-
-    .CRLF:
-        mov word [cursorX], 0
-        inc word [cursorY]
-        jmp .loop
+    call print_char
+    jmp print_string
 .end:
     ret
 
-cursorX: dw 0
-cursorY: dw 0
+print_char:
+    mov edi, 0xb8000
+    imul edx, [cursorX], 2
+    add edi, edx
+    imul edx, [cursorY], 160
+    add edi, edx
+
+    cmp al, 0xA                 ; If we got 0xA
+    je .Newline                 ; We must process new line
+    
+    mov ah, [printColor]
+    stosw
+
+    inc word [cursorX]
+    cmp word [cursorX], 80
+    jne .end
+
+    inc word [cursorY]
+    mov word [cursorX], 0
+    jmp .end
+
+.Newline:
+    inc word [cursorY]
+    mov word [cursorX], 0
+.end:
+    call update_cursor
+    ret
+
+update_cursor:
+    push eax
+    push ebx
+    push edx
+
+    mov ebx, [cursorX]
+    mov eax, [cursorY]
+
+    mov dl, 80
+    mul dl
+    add bx, ax
+
+    mov dx, 0x03D4
+    mov al, 0x0F
+    out dx, al
+
+    inc dl
+    mov al, bl
+    out dx, al
+
+    dec dl
+    mov al, 0x0E
+    out dx, al
+
+    inc dl
+    mov al, bh
+    out dx, al
+
+    pop edx
+    pop ebx
+    pop eax
+    ret
+
+clear_screen:
+    mov edi, 0xb8000
+    mov cx, 80 * 25
+.loop:
+    mov ah, [printColor]
+    mov al, ' '
+    stosw
+    loop .loop
+
+    ret
+
+cursorX: dd 0
+cursorY: dd 0
+printColor: db 0x07
