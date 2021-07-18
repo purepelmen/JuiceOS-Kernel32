@@ -1,3 +1,4 @@
+;; print_string: prints a string stored in %ESI
 print_string:
     pusha
 .loop:
@@ -10,6 +11,7 @@ print_string:
     popa
     ret
 
+;; print_char: prints a char store in %AL
 print_char:
     pusha
     push edi
@@ -26,24 +28,26 @@ print_char:
     mov ah, [printColor]
     stosw
 
-    inc word [cursorX]
-    cmp word [cursorX], 80
+    inc dword [cursorX]
+    cmp dword [cursorX], 80
     jne .end
 
-    inc word [cursorY]
-    mov word [cursorX], 0
+    inc dword [cursorY]
+    mov dword [cursorX], 0
     jmp .end
 
 .Newline:
-    inc word [cursorY]
-    mov word [cursorX], 0
+    inc dword [cursorY]
+    mov dword [cursorX], 0
 .end:
+    call update_scrolling
     call update_cursor
 
     pop edi
     popa
     ret
 
+;; update_cursor: updates cursor position
 update_cursor:
     push eax
     push ebx
@@ -77,6 +81,7 @@ update_cursor:
     pop eax
     ret
 
+;; clear_screen: clears the screen
 clear_screen:
     pusha
     push edi
@@ -93,14 +98,28 @@ clear_screen:
     popa
     ret
 
-;; TODO: In the future this procedure will prevent text overflowing
+;; update_scrolling: updates all text on the screen to prevent its overflowing
 update_scrolling:
+    cmp dword [cursorY], 25
+    jnge .end
+
     mov esi, 0xb8000+(80*2)
     mov edi, 0xb8000
-    mov cx, (80*25)-80
+    mov cx, (80*24)
 .loop:
     movsw
     loop .loop
+
+    mov edi, 0xb8000+(80*24*2)
+    mov cx, 80
+.loop2:
+    mov ah, [printColor]
+    mov al, ' '
+    stosw
+    loop .loop2
+
+    mov dword [cursorY], 24     ; Move cursor to last line
+.end:
     ret
 
 cursorX: dd 0
