@@ -10,8 +10,10 @@ kernel_main:
     mov si, helloStr
     call print_string
 
-    call print_cpu_info
-    jmp $
+loop:
+    call ps2_waitKey
+    call print_char
+    jmp loop
 
 %include "src/includes/cpuid.asm"
 %include "src/includes/stdio.asm"

@@ -74,6 +74,9 @@ print_char:
 
     cmp al, 0xA                 ; If we got 0xA
     je .Newline                 ; We must process new line
+
+    cmp al, 0x08                ; If we got 0x08
+    je .Backspace               ; We must process new line
     
     mov ah, [printColor]
     stosw
@@ -89,6 +92,39 @@ print_char:
 .Newline:
     inc dword [cursorY]
     mov dword [cursorX], 0
+    jmp .end
+
+.Backspace:
+    cmp dword [cursorX], 0
+    je .BackspaceBackLine
+
+    dec dword [cursorX]
+
+    mov edi, 0xb8000
+    imul edx, [cursorX], 2
+    add edi, edx
+    imul edx, [cursorY], 160
+    add edi, edx
+
+    mov ah, [printColor]
+    mov al, ' '
+    stosw
+    
+    jmp .end
+.BackspaceBackLine:
+    mov dword [cursorX], 79
+    dec dword [cursorY]
+
+    mov edi, 0xb8000
+    imul edx, [cursorX], 2
+    add edi, edx
+    imul edx, [cursorY], 160
+    add edi, edx
+
+    mov ah, [printColor]
+    mov al, ' '
+    stosw
+    
 .end:
     call update_scrolling
     call update_cursor
