@@ -1,11 +1,9 @@
-;; TODO: Fix this
 ps2_keyboard_getkey:
     in al, 0x64
     test al, 0011b              ; Check if it is not pressed
     jz ps2_keyboard_getkey      ; Loop 
 
     in al, 0x60                 ; 60h port - returns the latest pressed key
-    
     ret
 
 ps2_waitKey:
@@ -147,6 +145,29 @@ asciiTable: db 0                ; RESERVED
             db 0, 0, 0, 0       ; F7-F10
             db 0                ; NUM LOCK
             db 0                ; SCROLL LOCK
+            db 0                ; HOME
+            db 0
+            db 0
+            db '-'              ; NUMPAD MINUS
+            db 0
+            db '5'              ; NUMPAD 5
+            db 0
+            db '+'              ; KEYPAD PLUS
+            db 0                ; END
+            db 0
+            db 0                ; PgDown
+            db 0                ; Insert
+            db 0                ; Delete
+            db 0                ; PrtSc SysRq
+            db '#'              ; Macro
+            db 0, 0             ; f11-f12
+            db 0, 0, 0          ; f13-f15 (lWin, rWin, Menu)
+            db 0, 0, 0, 0, 0, 0, 0, 0, 0    ; F16-f24
+            db 0
+            db 0
+            db 0
+            db 0
+            db 0
             db 0
 asciiTableNumsShifted: db ')!@#$%^&*('
 

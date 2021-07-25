@@ -96,7 +96,7 @@ print_char:
 
 .Backspace:
     cmp dword [cursorX], 0
-    je .BackspaceBackLine
+    je .end
 
     dec dword [cursorX]
 
@@ -109,28 +109,71 @@ print_char:
     mov ah, [printColor]
     mov al, ' '
     stosw
-    
-    jmp .end
-.BackspaceBackLine:
-    mov dword [cursorX], 79
-    dec dword [cursorY]
-
-    mov edi, 0xb8000
-    imul edx, [cursorX], 2
-    add edi, edx
-    imul edx, [cursorY], 160
-    add edi, edx
-
-    mov ah, [printColor]
-    mov al, ' '
-    stosw
-    
 .end:
     call update_scrolling
     call update_cursor
 
     pop edi
     popa
+    ret
+
+;; get_string_length: get string length
+;; esi - *string pointer | Return: ecx - chars count
+get_string_length:
+    xor ecx, ecx
+    push esi
+.loop:
+    lodsb
+    cmp al, 0
+    je .end
+    inc ecx
+    jmp .loop
+.end:
+    pop esi
+    ret
+
+;; compare_string_length: compare two string lengths
+;; esi - *first string pointer, edi - *second string pointer
+;; Return: al - 0x01 = true (Length are equal) | al - 0x00 = false
+compare_string_length:
+    push esi
+    call get_string_length
+    mov edx, ecx
+
+    mov esi, edi
+    call get_string_length
+    pop esi
+
+    cmp ecx, edx
+    je .Equal
+    jmp .NEqual
+
+.Equal:
+    mov al, 0x01
+    ret
+.NEqual:
+    mov al, 0x00
+    ret
+
+;; compare_string: compare two strings
+;; esi - *first string pointer, edi - *second string pointer
+;; Return: al - 0x01 = true (strings are equal) | al - 0x00 = false
+copmare_string:
+    ;; Compare length
+    call compare_string_length
+    cmp al, 0x01
+    jne .NEqual
+
+    ;; Loop comparison
+    cld
+    rep cmpsb
+    jne .NEqual
+    jmp .Equal
+.NEqual:
+    mov al, 0x00
+    ret
+.Equal:
+    mov al, 0x01
     ret
 
 ;; update_cursor: updates cursor position
@@ -210,6 +253,53 @@ update_scrolling:
 .end:
     ret
 
+;; TODO: Make input procedure
+get_input:
+    call reset_inputBuffer
+    mov di, inputBuffer
+.inputLoop:
+    call ps2_waitKey
+
+    cmp al, 0xA
+    je .end
+
+    cmp al, 0x08
+    je .HandleBackSpace
+
+    cmp di, inputBuffer + 58
+    jge .inputLoop
+
+    call print_char
+    stosb
+
+    jmp .inputLoop
+
+.HandleBackSpace:
+    ;; If we at start of input, we shouldn't handle backspace
+    cmp di, inputBuffer
+    je .inputLoop
+
+    call print_char
+    dec di
+    jmp .inputLoop
+
+.end:
+    ret
+
+;; reset_inputBuffer: fill input buffer by zeros to reset it
+reset_inputBuffer:
+    pusha
+    mov cx, 60
+    mov di, inputBuffer
+.loop:
+    mov al, 0
+    stosb
+    loop .loop
+    popa
+    ret
+
 cursorX: dd 0
 cursorY: dd 0
 printColor: db 0x07
+
+inputBuffer: times 60 db 0
