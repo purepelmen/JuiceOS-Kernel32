@@ -256,7 +256,7 @@ update_scrolling:
 ;; TODO: Make input procedure
 get_input:
     call reset_inputBuffer
-    mov di, inputBuffer
+    mov edi, inputBuffer
 .inputLoop:
     call ps2_waitKey
 
@@ -266,7 +266,7 @@ get_input:
     cmp al, 0x08
     je .HandleBackSpace
 
-    cmp di, inputBuffer + 58
+    cmp edi, inputBuffer + 58
     jge .inputLoop
 
     call print_char
@@ -276,11 +276,11 @@ get_input:
 
 .HandleBackSpace:
     ;; If we at start of input, we shouldn't handle backspace
-    cmp di, inputBuffer
+    cmp edi, inputBuffer
     je .inputLoop
 
     call print_char
-    dec di
+    dec edi
     jmp .inputLoop
 
 .end:
@@ -290,7 +290,7 @@ get_input:
 reset_inputBuffer:
     pusha
     mov cx, 60
-    mov di, inputBuffer
+    mov edi, inputBuffer
 .loop:
     mov al, 0
     stosb

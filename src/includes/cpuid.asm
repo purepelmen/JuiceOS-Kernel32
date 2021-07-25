@@ -1,5 +1,5 @@
 print_cpu_info:
-    mov si, cpuInfoHeaderStr
+    mov esi, cpuInfoHeaderStr
     call print_string
 
     xor eax, eax
@@ -38,7 +38,7 @@ print_cpu_info:
     mov al, ch 
     call print_char
 
-    mov si, cpuInfoHeader2Str
+    mov esi, cpuInfoHeader2Str
     call print_string
 
     ; Model printing

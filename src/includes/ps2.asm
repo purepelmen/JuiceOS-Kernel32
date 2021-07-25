@@ -27,7 +27,7 @@ ps2_waitKey:
     pop eax
     je ps2_waitKey
 
-    mov bx, asciiTable
+    mov ebx, asciiTable
     xlatb
 
     cmp byte [leftShiftPressed], 0
@@ -48,7 +48,7 @@ ps2_waitKey:
     jnle .checkOther
 
     sub al, 0x30
-    mov bx, asciiTableNumsShifted
+    mov ebx, asciiTableNumsShifted
     xlatb
     jmp .end
 

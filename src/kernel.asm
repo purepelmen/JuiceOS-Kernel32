@@ -1,5 +1,13 @@
 [bits 32]
-[org 0x1000]
+
+extern kmain
+global start
+
+start:
+    cli
+    mov esp, stack_top
+    ; call kmain
+    ; hlt
 
 kernel_main:
     ; mov eax, 0x2f542f55
@@ -10,10 +18,10 @@ kernel_main:
 
 ;; Start new input
 input:
-    mov si, newLine
+    mov esi, newLine
     call print_string
 input_nbl:
-    mov si, prompt
+    mov esi, prompt
     call print_string
 
     call get_input
@@ -21,7 +29,7 @@ input_nbl:
 ;; Command handler
 process_input:
     ;; If nothing was printed, skip it
-    cmp di, inputBuffer
+    cmp edi, inputBuffer
     je input
 
     mov esi, inputBuffer
@@ -54,19 +62,19 @@ process_input:
     cmp al, 0x01
     je cmd_reboot
 
-    mov si, commandNotFoundStr
+    mov esi, commandNotFoundStr
     call print_string
 
     jmp input
 
 cmd_hello:
-    mov si, helloStr
+    mov esi, helloStr
     call print_string
 
     jmp input
 
 cmd_systemInfo:
-    mov si, systemInfoStr
+    mov esi, systemInfoStr
     call print_string
 
     jmp input
@@ -76,12 +84,12 @@ cmd_cpuid:
     jmp input
 
 cmd_test:
-    mov si, testCmdHeaderStr
+    mov esi, testCmdHeaderStr
     call print_string
 
     call get_input
 
-    cmp di, inputBuffer
+    cmp edi, inputBuffer
     je .unknownDevice
 
     mov esi, inputBuffer
@@ -97,13 +105,13 @@ cmd_test:
     je .devicesList
 
 .unknownDevice:
-    mov si, testDeviceNotFoundStr
+    mov esi, testDeviceNotFoundStr
     call print_string
 
     jmp input
 
 .devicesList:
-    mov si, devicesListStr
+    mov esi, devicesListStr
     call print_string
     jmp input
 
@@ -116,11 +124,11 @@ cmd_test:
     cmp al, 0xEE
     je .TestComplete
 
-    mov si, keyboardPs2TestFailureStr
+    mov esi, keyboardPs2TestFailureStr
     call print_string
     jmp input
 .TestComplete:
-    mov si, keyboardPs2TestSuccessStr
+    mov esi, keyboardPs2TestSuccessStr
     call print_string
     jmp input
 
@@ -151,4 +159,7 @@ cmdTest: db 'test', 0
 testDevicesList: db 'list', 0
 devicePS2Test: db 'ps2', 0
 
-times 4096-($-$$) db 0
+section .bss
+stack_bottom:
+    resb 64
+stack_top:
