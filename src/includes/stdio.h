@@ -8,8 +8,8 @@ unsigned int cursorX = 0;
 unsigned int cursorY = 0;
 unsigned char printColor = 0x07;
 
-unsigned int inputBufferCounter;
 unsigned char inputBuffer[60];
+unsigned int inputBufferCounter;
 
 unsigned char* VIDMEM = (char*) 0xb8000;
 
@@ -165,4 +165,5 @@ unsigned char compare_string(const char* str1, const char* str2) {
     return result;
 }
 
+#include "types.h"
 #endif

@@ -1,6 +1,5 @@
 #include "includes/stdio.h"
-#include "includes/ps2.h"
-#include "includes/ports.h"
+#include "includes/types.h"
 
 extern char* get_cpuid_info(void);
 extern char* get_cpu_model_info(void);
@@ -33,6 +32,21 @@ void kmain(void) {
             continue;
         }
 
+        if(compare_string(command, "test_cmd")) {
+            printHexDword(0x12AB34CD);
+            print_char(0xA);
+            continue;
+        }
+
+        if(compare_string(command, "cpuid")) {
+            print_string("CPUID: ");
+            print_string(get_cpuid_info());
+            print_string("\nCPU Model: ");
+            print_string(get_cpu_model_info());
+            print_string("\n\n");
+            continue;
+        }
+
         if(compare_string(command, "test")) {
             print_string("Please type here device you want to test: ");
             unsigned char* subCmd = get_input();
@@ -57,15 +71,6 @@ void kmain(void) {
 
             print_string("\nTyped device is not found! Type \"test\" and then \"list\" to get all devices you could test.\n\n");
 
-            continue;
-        }
-        
-        if(compare_string(command, "cpuid")) {
-            print_string("CPUID: ");
-            print_string(get_cpuid_info());
-            print_string("\nCPU Model: ");
-            print_string(get_cpu_model_info());
-            print_string("\n\n");
             continue;
         }
         
