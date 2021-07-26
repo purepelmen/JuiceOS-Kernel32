@@ -28,7 +28,7 @@ void clear_screen(void) {
 }
 
 void print_char(unsigned char aChar) {
-    unsigned char* adressToPrint = (char*) 0xb8000 + (cursorX * 2 + cursorY * 160);
+    unsigned char* adressToPrint = (char*) VIDMEM + (cursorX * 2 + cursorY * 160);
 
     if(aChar == 0xA) {
         // New line
@@ -39,7 +39,7 @@ void print_char(unsigned char aChar) {
         if(cursorX != 0) {
             cursorX -= 1;
 
-            adressToPrint = (char*) 0xb8000 + (cursorX * 2 + cursorY * 160);
+            adressToPrint = (char*) VIDMEM + (cursorX * 2 + cursorY * 160);
             adressToPrint[0] = ' ';
             adressToPrint[1] = printColor;
         }
@@ -68,14 +68,14 @@ void print_string(const char* string) {
 
 void update_scrolling(void) {
     if(cursorY >= 25) {
-        unsigned char* si = (char*) 0xb8000+(80*2);
-        unsigned char* di = (char*) 0xb8000;
+        unsigned char* si = (char*) VIDMEM+(80*2);
+        unsigned char* di = (char*) VIDMEM;
 
         for(int i=0; i < 80*24*2; i++) {
             di[i] = si[i];
         }
 
-        di = (char*) 0xb8000+(80*24*2);
+        di = (char*) VIDMEM+(80*24*2);
         for(int i=0; i < 80*2; i++) {
             di[i] = ' ';
             i++;
@@ -169,6 +169,53 @@ unsigned char compare_string(const char* str1, const char* str2) {
         break;
     }
     return result;
+}
+
+void str_upper(const char* string, char* destination) {
+    unsigned int i = 0;
+    while(string[i] != 0x0) {
+        if(string[i] >= 'a' && string[i] <= 'z') {
+            destination[i] -= 0x20;
+        } else {
+            destination[i] = string[i];
+        }
+        i++;
+    }
+}
+
+void str_lower(const char* string, char* destination) {
+    unsigned int i = 0;
+    while(string[i] != 0x0) {
+        if(string[i] >= 'A' && string[i] <= 'Z') {
+            destination[i] += 0x20;
+        } else {
+            destination[i] = string[i];
+        }
+        i++;
+    }
+}
+
+// TODO: Find better solution for using this procedure
+void str_split(const unsigned char* string, unsigned char* destination, unsigned char separator, unsigned int index) {
+    unsigned int parsingIndex = 0;
+    unsigned int destIndex = 0;
+    unsigned int i = 0;
+    while(string[i] != 0x0) {
+        if(index < parsingIndex) {
+            break;
+        }
+        if(string[i] == separator) {
+            parsingIndex++;
+            i++;
+            continue;
+        }
+
+        if(index == parsingIndex) {
+            destination[destIndex] = string[i];
+            destIndex++;
+        }
+        i++;
+    }
 }
 
 #include "types.h"

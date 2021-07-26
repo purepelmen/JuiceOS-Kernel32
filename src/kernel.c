@@ -5,13 +5,14 @@
 extern char* get_cpuid_info(void);
 extern char* get_cpu_model_info(void);
 
-void kmain(void) {
+void kernel_main(void) {
     clear_screen();
 
     while(1) {
         print_string("PC:>>");
 
         unsigned char* command = get_input();
+        str_lower(command, command);
         print_char(0xA);
 
         if(strlen(command) == 0) {

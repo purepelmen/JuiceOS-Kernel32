@@ -1,6 +1,6 @@
 [bits 32]
 
-extern kmain
+extern kernel_main
 extern print_string
 
 global start
@@ -8,7 +8,7 @@ global start
 start:
     cli
     mov esp, stack_top
-    call kmain
+    call kernel_main
     hlt
 
 %include "src/includes/cpuid.asm"
