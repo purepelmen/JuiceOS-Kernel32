@@ -8,9 +8,6 @@ unsigned int cursorX = 0;
 unsigned int cursorY = 0;
 unsigned char printColor = 0x07;
 
-unsigned char inputBuffer[60];
-unsigned int inputBufferCounter;
-
 unsigned char* VIDMEM = (char*) 0xb8000;
 
 void update_cursor(void);
@@ -25,6 +22,8 @@ void clear_screen(void) {
         i++;
     }
 
+    cursorX = 0;
+    cursorY = 0;
     update_cursor();
 }
 
@@ -101,7 +100,8 @@ void update_cursor(void) {
 }
 
 unsigned char* get_input() {
-    inputBufferCounter = 0;
+    static unsigned char inputBuffer[60];
+    unsigned int inputBufferCounter = 0;
 
     // Reset input buffer
     unsigned char* di = (char*) &inputBuffer;
@@ -118,10 +118,16 @@ unsigned char* get_input() {
             break;
         }
 
-        if(key == 0x08 && inputBufferCounter > 0) {
+        if(key == 0x08) {
             // Backspace pressed
+
+            if(inputBufferCounter <= 0) {
+                continue;
+            }
+
             print_char(key);
             inputBufferCounter -= 1;
+            inputBuffer[inputBufferCounter] = 0x0;
             continue;
         } 
         if(inputBufferCounter >= 58) {
@@ -134,7 +140,7 @@ unsigned char* get_input() {
     return (char*) &inputBuffer;
 }
 
-unsigned int get_string_length(const char* str) {
+unsigned int strlen(const char* str) {
     unsigned int i = 0;
     while(str[i] != 0x0) {
         i++;
@@ -142,14 +148,14 @@ unsigned int get_string_length(const char* str) {
     return i;
 }
 
-unsigned char compare_string_length(const char* str1, const char* str2) {
-    unsigned fst = get_string_length(str1);
-    unsigned snd = get_string_length(str2);
+unsigned char strlen_cmp(const char* str1, const char* str2) {
+    unsigned fst = strlen(str1);
+    unsigned snd = strlen(str2);
     return fst == snd;
 }
 
 unsigned char compare_string(const char* str1, const char* str2) {
-    if(!compare_string_length(str1, str2)) 
+    if(!strlen_cmp(str1, str2)) 
         return 0;
 
     unsigned char result = 1;
