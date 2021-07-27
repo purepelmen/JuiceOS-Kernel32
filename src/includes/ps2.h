@@ -1,28 +1,29 @@
 #ifndef C_PS2_DRIVER_LIB
 #define C_PS2_DRIVER_LIB
 
+#include "types.h"
 #include "ports.h"
 
-const unsigned char* asciiTable = "\x00\x00" "1234567890-=" "\x08\x09" "qwertyuiop[]" "\x0A\x00" "asdfghjkl;'`" "\x00" "\\zxcvbnm,./" "\x00" "*\x00" " " "\x00\x00\x00\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00\x00" "-" "\x00" "5" "\x00" "+" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
-const unsigned char* asciiTableNumsShifted = ")!@#$%^&*(";
+const uint8_t* asciiTable = "\x00\x00" "1234567890-=" "\x08\x09" "qwertyuiop[]" "\x0A\x00" "asdfghjkl;'`" "\x00" "\\zxcvbnm,./" "\x00" "*\x00" " " "\x00\x00\x00\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00\x00" "-" "\x00" "5" "\x00" "+" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+const uint8_t* asciiTableNumsShifted = ")!@#$%^&*(";
 
-unsigned char leftShiftPressed = 0;
-unsigned char leftCtrlPressed = 0;
+uint8_t leftShiftPressed = 0;
+uint8_t leftCtrlPressed = 0;
 
-unsigned char ps2_keyboard_getKey() {
+uint8_t ps2_keyboard_getKey() {
     while(1) {
-        char ch = port_byte_in(0x64);
+        uint8_t ch = port_byte_in(0x64);
         if(ch & 3) break;
     }
 
-    char result = port_byte_in(0x60);
+    uint8_t result = port_byte_in(0x60);
     return result;
 }
 
-unsigned char ps2_waitKey(void) {
-    unsigned char ourChar;
+uint8_t ps2_waitKey(void) {
+    uint8_t ourChar;
     while(1) {
-        unsigned char scan = ps2_keyboard_getKey();
+        uint8_t scan = ps2_keyboard_getKey();
 
         if(scan == 0x2A) {
             leftShiftPressed = 1;

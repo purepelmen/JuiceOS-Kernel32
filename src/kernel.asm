@@ -15,5 +15,5 @@ start:
 
 section .bss
 stack_bottom:
-    resb 24028
+    resb 65536
 stack_top:

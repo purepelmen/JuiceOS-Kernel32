@@ -1,209 +1,85 @@
-global get_cpuid_info
-global get_cpu_model_info
+global cpuid_get_id
+global cpuid_get_model
 
-get_cpuid_info:
+cpuid_get_id:
     push ebp
     mov ebp, esp
-
     pushad
-
+    
     mov edi, cpuInfoStr
-
     xor eax, eax
     cpuid
 
     ; EBX
-    mov al, bl
-    stosb
-    mov al, bh 
-    stosb
-    shr ebx, 16
-    mov al, bl
-    stosb
-    mov al, bh 
-    stosb
-
+    mov eax, ebx
+    stosd
     ; EDX
-    mov al, dl
-    stosb
-    mov al, dh 
-    stosb
-    shr edx, 16
-    mov al, dl
-    stosb
-    mov al, dh 
-    stosb
-
+    mov eax, edx
+    stosd
     ; ECX
-    mov al, cl
-    stosb
-    mov al, ch 
-    stosb
-    shr ecx, 16
-    mov al, cl
-    stosb
-    mov al, ch 
-    stosb
+    mov eax, ecx
+    stosd
 
     popad
-
     mov eax, cpuInfoStr
-
     pop ebp
     ret
 
-get_cpu_model_info:
+cpuid_get_model:
     push ebp
     mov ebp, esp
-
     pushad
 
     mov edi, cpuModelInfoStr
-
     mov eax, 0x80000002
     cpuid
 
     ; EAX
-    stosb
-    mov al, ah 
-    stosb
-    shr eax, 16
-    stosb
-    mov al, ah 
-    stosb
-
+    stosd
     ; EBX
-    mov al, bl
-    stosb
-    mov al, bh 
-    stosb
-    shr ebx, 16
-    mov al, bl
-    stosb
-    mov al, bh 
-    stosb
-
+    mov eax, ebx
+    stosd
     ; ECX
-    mov al, cl
-    stosb
-    mov al, ch 
-    stosb
-    shr ecx, 16
-    mov al, cl
-    stosb
-    mov al, ch 
-    stosb
-
+    mov eax, ecx
+    stosd
     ; EDX
-    mov al, dl
-    stosb
-    mov al, dh 
-    stosb
-    shr edx, 16
-    mov al, dl
-    stosb
-    mov al, dh 
-    stosb
+    mov eax, edx
+    stosd
 
     mov eax, 0x80000003
     cpuid
 
     ; EAX
-    stosb
-    mov al, ah 
-    stosb
-    shr eax, 16
-    stosb
-    mov al, ah 
-    stosb
-
+    stosd
     ; EBX
-    mov al, bl
-    stosb
-    mov al, bh 
-    stosb
-    shr ebx, 16
-    mov al, bl
-    stosb
-    mov al, bh 
-    stosb
-
+    mov eax, ebx
+    stosd
     ; ECX
-    mov al, cl
-    stosb
-    mov al, ch 
-    stosb
-    shr ecx, 16
-    mov al, cl
-    stosb
-    mov al, ch 
-    stosb
-
+    mov eax, ecx
+    stosd
     ; EDX
-    mov al, dl
-    stosb
-    mov al, dh 
-    stosb
-    shr edx, 16
-    mov al, dl
-    stosb
-    mov al, dh 
-    stosb
+    mov eax, edx
+    stosd
 
     mov eax, 0x80000004
     cpuid
 
     ; EAX
-    stosb
-    mov al, ah 
-    stosb
-    shr eax, 16
-    stosb
-    mov al, ah 
-    stosb
-
+    stosd
     ; EBX
-    mov al, bl
-    stosb
-    mov al, bh 
-    stosb
-    shr ebx, 16
-    mov al, bl
-    stosb
-    mov al, bh 
-    stosb
-
+    mov eax, ebx
+    stosd
     ; ECX
-    mov al, cl
-    stosb
-    mov al, ch 
-    stosb
-    shr ecx, 16
-    mov al, cl
-    stosb
-    mov al, ch 
-    stosb
-
+    mov eax, ecx
+    stosd
     ; EDX
-    mov al, dl
-    stosb
-    mov al, dh 
-    stosb
-    shr edx, 16
-    mov al, dl
-    stosb
-    mov al, dh 
-    stosb
-
-    mov al, 0xA
-    stosb
+    mov eax, edx
+    stosd
 
     popad
-
     mov eax, cpuModelInfoStr
-
     pop ebp
     ret
 
-cpuInfoStr: times 16 db 0
-cpuModelInfoStr: times 100 db 0
+cpuInfoStr: times 14 db 0
+cpuModelInfoStr: times 60 db 0

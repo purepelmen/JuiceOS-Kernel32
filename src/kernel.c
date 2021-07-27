@@ -1,9 +1,7 @@
 #include "includes/stdio.h"
-#include "includes/types.h"
-#include "includes/ps2.h"
 
-extern char* get_cpuid_info(void);
-extern char* get_cpu_model_info(void);
+extern uint8_t* cpuid_get_id(void);
+extern uint8_t* cpuid_get_model(void);
 
 void kernel_main(void) {
     clear_screen();
@@ -11,7 +9,7 @@ void kernel_main(void) {
     while(1) {
         print_string("PC:>>");
 
-        unsigned char* command = get_input();
+        uint8_t* command = get_input();
         str_lower(command, command);
         print_char(0xA);
 
@@ -41,10 +39,12 @@ void kernel_main(void) {
 
         if(compare_string(command, "ascii")) {
             print_string("Type any char.\n");
-            unsigned char key = ps2_waitKey();
+
+            uint8_t key = ps2_waitKey();
             print_string("ASCII code of typed key is: 0x");
             print_hexb(key);
             print_string("\nIt displays as: ");
+
             print_char(key);
             print_string("\n\n");
             continue;
@@ -52,9 +52,9 @@ void kernel_main(void) {
 
         if(compare_string(command, "cpuid")) {
             print_string("CPUID: ");
-            print_string(get_cpuid_info());
+            print_string(cpuid_get_id());
             print_string("\nCPU Model: ");
-            print_string(get_cpu_model_info());
+            print_string(cpuid_get_model());
             print_string("\n\n");
             continue;
         }
@@ -72,19 +72,19 @@ void kernel_main(void) {
         }
 
         if(compare_string(command, "test")) {
-            print_string("Please type here device you want to test: ");
-            unsigned char* subCmd = get_input();
+            print_string("Type device: ");
+            uint8_t* subCmd = get_input();
             
             if(compare_string(subCmd, "ps2")) {
                 port_byte_out(0x60, 0xEE);
-                unsigned char response = port_byte_in(0x60);
+                uint8_t response = port_byte_in(0x60);
 
                 if(response == 0xEE) {
-                    print_string("\nPS/2 keyboard responded to echo-command. PS/2 Keyboard passed the test.\n\n");
+                    print_string("\nPS/2 keyboard - OK.\n\n");
                     continue;
                 }
 
-                print_string("\nPS/2 keyboard not responded properly to echo-command. PS/2 Keyboard failed the test.\n\n");
+                print_string("\nPS/2 keyboard - FAIL.\n\n");
                 continue;
             }
 
