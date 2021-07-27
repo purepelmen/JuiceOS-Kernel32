@@ -5,6 +5,9 @@ typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 
+#define STANDART_SCREEN_COLOR 0x07
+#define STANDART_INVERTED_SCREEN_COLOR 0x70
+
 void update_cursor(void);
 void update_scrolling(void);
 void print_char(uint8_t aChar);
@@ -15,7 +18,8 @@ void print_char(uint8_t aChar);
 
 uint32_t cursorX = 0;
 uint32_t cursorY = 0;
-uint8_t printColor = 0x07;
+uint8_t printColor = STANDART_SCREEN_COLOR;
+uint8_t inputExitCode = 0x0;
 
 uint8_t* VIDMEM = (uint8_t*) 0xb8000;
 
@@ -64,10 +68,46 @@ void print_char(uint8_t aChar) {
     update_cursor();
 }
 
+void print_char_noupdates(uint8_t aChar) {
+    uint8_t* adressToPrint = (uint8_t*) VIDMEM + (cursorX * 2 + cursorY * 160);
+
+    if(aChar == 0xA) {
+        // New line
+        cursorY += 1;
+        cursorX = 0;
+    } else if (aChar == 0x08) {
+        // Backspace
+        if(cursorX != 0) {
+            cursorX -= 1;
+
+            adressToPrint = (uint8_t*) VIDMEM + (cursorX * 2 + cursorY * 160);
+            adressToPrint[0] = ' ';
+            adressToPrint[1] = printColor;
+        }
+    } else {
+        adressToPrint[0] = aChar;
+        adressToPrint[1] = printColor;
+
+        cursorX += 1;
+        if(cursorX == 80) {
+            cursorY += 1;
+            cursorX = 0;
+        }
+    }
+}
+
 void print_string(const uint8_t* string) {
     uint32_t i = 0;
     while(string[i] != 0x0) {
         print_char(string[i]);
+        i += 1;
+    }
+}
+
+void print_string_noupdates(const uint8_t* string) {
+    uint32_t i = 0;
+    while(string[i] != 0x0) {
+        print_char_noupdates(string[i]);
         i += 1;
     }
 }
@@ -121,6 +161,13 @@ uint8_t* get_input() {
 
         if(key == 0xA) {
             // Enter pressed
+            inputExitCode = key;
+            break;
+        }
+
+        if(key == 0xF0) {
+            // Windows Left pressed
+            inputExitCode = key;
             break;
         }
 

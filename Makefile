@@ -7,7 +7,7 @@ ISO = bin/iso
 
 build: init assembly
 	@cp $(BUILD)/kernel.elf $(ISO)/boot
-	@grub-mkrescue -o $(ISO_FILE) $(ISO)
+	@grub-mkrescue -V "JuiceOS" -o $(ISO_FILE) $(ISO)
 	@echo "Build successfull!"
 
 assembly:

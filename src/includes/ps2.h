@@ -4,11 +4,12 @@
 #include "types.h"
 #include "ports.h"
 
-const uint8_t* asciiTable = "\x00\x00" "1234567890-=" "\x08\x09" "qwertyuiop[]" "\x0A\x00" "asdfghjkl;'`" "\x00" "\\zxcvbnm,./" "\x00" "*\x00" " " "\x00\x00\x00\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00\x00" "-" "\x00" "5" "\x00" "+" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+const uint8_t* asciiTable = "\x00\x1B" "1234567890-=" "\x08\x09" "qwertyuiop[]" "\x0A\x00" "asdfghjkl;'`" "\x00" "\\zxcvbnm,./" "\x00" "*\x00" " " "\x00\x00\x00\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00\x00" "-" "\x00" "5" "\x00" "+" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 const uint8_t* asciiTableNumsShifted = ")!@#$%^&*(";
 
 uint8_t leftShiftPressed = 0;
 uint8_t leftCtrlPressed = 0;
+uint8_t capsLockActive = 0;
 
 uint8_t ps2_keyboard_getKey() {
     while(1) {
@@ -40,11 +41,20 @@ uint8_t ps2_waitKey(void) {
         } else if(scan & (1 << 7)) {
             // Key release
             continue;
+        } else if(scan == 0x3A) {
+            capsLockActive = !capsLockActive;
+            continue;
+        }
+
+        if(scan == 0x5b) {
+            ourChar = 0xF0;
+            break;
         }
 
         ourChar = asciiTable[scan];
 
-        if(leftShiftPressed == 0) break;
+        if(capsLockActive == 0 && leftShiftPressed == 0)
+            break;
 
         if(ourChar >= 'a' && ourChar <= 'z') {
             ourChar -= 0x20;
@@ -83,3 +93,9 @@ uint8_t ps2_waitKey(void) {
 }
 
 #endif
+
+// UP_ARROW = 48 (c8 - release)
+// DOWN_ARROW = 50 (d0 - release)
+// LEFT_ARROW = 4b (cb - release)
+// RIGHT_ARROW = 4d (cd - release)
+// CapsLock = 3a (ba release)

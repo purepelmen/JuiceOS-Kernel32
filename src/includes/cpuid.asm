@@ -82,4 +82,4 @@ cpuid_get_model:
     ret
 
 cpuInfoStr: times 14 db 0
-cpuModelInfoStr: times 60 db 0
+cpuModelInfoStr: times 50 db 0
