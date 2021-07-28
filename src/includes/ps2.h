@@ -11,18 +11,18 @@ uint8_t leftShiftPressed = 0;
 uint8_t leftCtrlPressed = 0;
 uint8_t capsLockActive = 0;
 
-uint8_t keyboardLedsState = 0;
-
+/* Wait for key and returns its scancode */
 uint8_t ps2_keyboard_getKey(void) {
     while(1) {
         uint8_t ch = port_byte_in(0x64);
-        if(ch & 3) break;
+        if(ch & 1) break;
     }
 
     uint8_t result = port_byte_in(0x60);
     return result;
 }
 
+/* Wait for key and returns its scancode. (Can ignore key releases) */
 uint8_t ps2_waitScancode(uint8_t ignoreReleases) {
     while(1) {
         uint8_t scan = ps2_keyboard_getKey();
@@ -36,6 +36,7 @@ uint8_t ps2_waitScancode(uint8_t ignoreReleases) {
     }
 }
 
+/* Return pressed key in ASCII */
 uint8_t ps2_waitKey(void) {
     uint8_t ourChar;
     while(1) {
@@ -58,22 +59,16 @@ uint8_t ps2_waitKey(void) {
             continue;
         } else if(scan == 0x3A) {
             capsLockActive = !capsLockActive;
-            if(capsLockActive) keyboardLedsState = 7;
-            else keyboardLedsState = 0;
-
-            port_byte_out(0x60, 0xED);
-            port_byte_out(0x60, keyboardLedsState);
+            continue;
+        } else if(scan == 0xFA) {
+            // On command sent
             continue;
         }
-
+        
         if(scan == 0x5b) {
             ourChar = 0xF0;
             break;
         }
-
-        // Updating Keyboard LEDs
-        port_byte_out(0x60, 0xED);
-        port_byte_out(0x60, keyboardLedsState);
 
         ourChar = asciiTable[scan];
 
@@ -123,5 +118,5 @@ uint8_t ps2_waitKey(void) {
 // LEFT_ARROW = 4b (cb - release)
 // RIGHT_ARROW = 4d (cd - release)
 // CapsLock = 3a (ba release)
-// ESCAPE = 01 (?? release)
+// ESCAPE = 01 (81 release)
 // Right Shift = 36 (b6 release)

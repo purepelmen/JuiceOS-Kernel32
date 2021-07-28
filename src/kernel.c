@@ -1,6 +1,6 @@
 #include "includes/stdio.h"
 
-#define KERNEL_VERSION "1.0.2.1"
+#define KERNEL_VERSION "1.0.2"
 
 extern uint8_t* cpuid_get_id(void);
 extern uint8_t* cpuid_get_model(void);
@@ -101,20 +101,23 @@ void console(void) {
             print_string("HELLO - Test command that say hello to you.\n");
             print_string("MEMDUMP - Open Memory dumper.\n");
             print_string("REBOOT - Reboot your PC.\n");
+            print_string("SCANTEST - Print scancode of every pressed key.\n");
             print_string("SYSTEM - Print system information.\n\n");
             continue;
         }
 
-        if(compare_string(command, "scancode_test")) {
+        if(compare_string(command, "scantest")) {
             ps2_keyboard_getKey();
 
             while (1) {
                 uint8_t scancode = ps2_keyboard_getKey();
+
                 print_string("0x");
                 print_hexb(scancode);
                 print_string("\n");
+                if(scancode == 0x81) break;
             }
-            
+            print_char('\n');
             continue;
         }
         

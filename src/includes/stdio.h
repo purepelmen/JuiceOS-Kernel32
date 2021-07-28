@@ -25,6 +25,7 @@ uint8_t inputExitCode = 0x0;
 
 uint8_t* VIDMEM = (uint8_t*) 0xb8000;
 
+/* Clear the screen */
 void clear_screen(void) {
     printColor = STANDART_SCREEN_COLOR;
     unsigned int i = 0;
@@ -40,6 +41,7 @@ void clear_screen(void) {
     update_cursor();
 }
 
+/* Print given char and update scrolling/cursor */
 void print_char(uint8_t aChar) {
     uint8_t* adressToPrint = (uint8_t*) VIDMEM + (cursorX * 2 + cursorY * 160);
 
@@ -71,6 +73,7 @@ void print_char(uint8_t aChar) {
     update_cursor();
 }
 
+/* Print given char. Do not update scrolling/cursor. Also don't handle newline and backspace */
 void print_char_noupdates(uint8_t aChar) {
     uint8_t* adressToPrint = (uint8_t*) VIDMEM + (cursorX * 2 + cursorY * 160);
 
@@ -84,6 +87,7 @@ void print_char_noupdates(uint8_t aChar) {
     }
 }
 
+/* Print given string */
 void print_string(const uint8_t* string) {
     uint32_t i = 0;
     while(string[i] != 0x0) {
@@ -92,6 +96,7 @@ void print_string(const uint8_t* string) {
     }
 }
 
+/* Print given string using print_char_noupdates() function. */
 void print_string_noupdates(const uint8_t* string) {
     uint32_t i = 0;
     while(string[i] != 0x0) {
@@ -100,6 +105,7 @@ void print_string_noupdates(const uint8_t* string) {
     }
 }
 
+/* Scrolling update function. If text is overflowing the screen, all screen content will be moved up */
 void update_scrolling(void) {
     if(cursorY >= 25) {
         uint8_t* si = (uint8_t*) VIDMEM+(80*2);
@@ -119,6 +125,7 @@ void update_scrolling(void) {
     }
 }
 
+/* Cursor update function. Cursor moves to position that stores in cursorX and cursorY vars */
 void update_cursor(void) {
     uint16_t cX = cursorX;
     uint16_t cY = cursorY;
@@ -133,6 +140,7 @@ void update_cursor(void) {
     port_byte_out(0x03D5, cX >> 8);
 }
 
+/* Getting input and writting it to a string. Enter or Escape breaks the input loop */
 uint8_t* get_input() {
     static uint8_t inputBuffer[60];
     unsigned int inputBufferCounter = 0;
@@ -181,6 +189,7 @@ uint8_t* get_input() {
     return (uint8_t*) &inputBuffer;
 }
 
+/* Count the string length */
 uint32_t strlen(const uint8_t* str) {
     uint32_t i = 0;
     while(str[i] != 0x0) {
@@ -189,12 +198,14 @@ uint32_t strlen(const uint8_t* str) {
     return i;
 }
 
+/* Compare the lengths of two strings */
 uint8_t strlen_cmp(const uint8_t* str1, const uint8_t* str2) {
     unsigned fst = strlen(str1);
     unsigned snd = strlen(str2);
     return fst == snd;
 }
 
+/* Compare two strings */
 uint8_t compare_string(const uint8_t* str1, const uint8_t* str2) {
     if(!strlen_cmp(str1, str2)) 
         return 0;
@@ -212,6 +223,7 @@ uint8_t compare_string(const uint8_t* str1, const uint8_t* str2) {
     return result;
 }
 
+/* Make text uppercase */
 void str_upper(const uint8_t* string, uint8_t* destination) {
     uint32_t i = 0;
     while(string[i] != 0x0) {
@@ -224,6 +236,7 @@ void str_upper(const uint8_t* string, uint8_t* destination) {
     }
 }
 
+/* Make text lowercase */
 void str_lower(const uint8_t* string, uint8_t* destination) {
     uint32_t i = 0;
     while(string[i] != 0x0) {
@@ -237,6 +250,7 @@ void str_lower(const uint8_t* string, uint8_t* destination) {
 }
 
 // TODO: Find better solution for using this procedure
+/* Split string by separator */
 void str_split(const uint8_t* string, uint8_t* destination, uint8_t separator, uint32_t index) {
     uint32_t parsingIndex = 0;
     uint32_t destIndex = 0;
@@ -259,6 +273,7 @@ void str_split(const uint8_t* string, uint8_t* destination, uint8_t separator, u
     }
 }
 
+/* Print 4-bit number as HEX */
 void print_hex4bit(uint8_t char4bit) {
     char4bit += 0x30;
     if(char4bit <= 0x39) {
@@ -269,19 +284,29 @@ void print_hex4bit(uint8_t char4bit) {
     }
 }
 
+/* Print 8-bit number as HEX */
 void print_hexb(uint8_t byte) {
     print_hex4bit(byte >> 4);
     print_hex4bit(byte & 0x0F);
 }
 
+/* Print 16-bit number as HEX */
 void print_hexw(uint16_t word) {
     print_hexb(word >> 8);
     print_hexb(word & 0x00FF);
 }
 
+/* Print 32-bit number as HEX */
 void print_hexdw(uint32_t dword) {
     print_hexw(dword >> 16);
     print_hexw(dword & 0x0000FFFF);
+}
+
+/* Copy 'bytesAmount' bytes of memory from 'source' to 'destination' */
+void memcopy(const uint8_t* source, uint8_t* destination, uint32_t bytesAmount) {
+    for(int i=0; i < bytesAmount; i++) {
+        destination[i] = source[i];
+    }
 }
 
 #endif

@@ -1,0 +1,6 @@
+Update 1.0.2:
+- 'Test' command deleted
+- Memory dumper added
+- Types lib deleted. Its function moved to STDIO lib
+- Few changes with 'print_char_noupdates' function
+- And other omptimizations and fixes
