@@ -1,7 +1,7 @@
 #ifndef C_PS2_DRIVER_LIB
 #define C_PS2_DRIVER_LIB
 
-#include "types.h"
+#include "stdio.h"
 #include "ports.h"
 
 const uint8_t* asciiTable = "\x00\x1B" "1234567890-=" "\x08\x09" "qwertyuiop[]" "\x0A\x00" "asdfghjkl;'`" "\x00" "\\zxcvbnm,./" "\x00" "*\x00" " " "\x00\x00\x00\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\x00\x00\x00" "-" "\x00" "5" "\x00" "+" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
@@ -11,7 +11,9 @@ uint8_t leftShiftPressed = 0;
 uint8_t leftCtrlPressed = 0;
 uint8_t capsLockActive = 0;
 
-uint8_t ps2_keyboard_getKey() {
+uint8_t keyboardLedsState = 0;
+
+uint8_t ps2_keyboard_getKey(void) {
     while(1) {
         uint8_t ch = port_byte_in(0x64);
         if(ch & 3) break;
@@ -19,6 +21,19 @@ uint8_t ps2_keyboard_getKey() {
 
     uint8_t result = port_byte_in(0x60);
     return result;
+}
+
+uint8_t ps2_waitScancode(uint8_t ignoreReleases) {
+    while(1) {
+        uint8_t scan = ps2_keyboard_getKey();
+        if(ignoreReleases) {
+            if(scan & (1 << 7)) 
+                continue;
+            else
+                break;
+        } else
+            break;
+    }
 }
 
 uint8_t ps2_waitKey(void) {
@@ -43,6 +58,11 @@ uint8_t ps2_waitKey(void) {
             continue;
         } else if(scan == 0x3A) {
             capsLockActive = !capsLockActive;
+            if(capsLockActive) keyboardLedsState = 7;
+            else keyboardLedsState = 0;
+
+            port_byte_out(0x60, 0xED);
+            port_byte_out(0x60, keyboardLedsState);
             continue;
         }
 
@@ -50,6 +70,10 @@ uint8_t ps2_waitKey(void) {
             ourChar = 0xF0;
             break;
         }
+
+        // Updating Keyboard LEDs
+        port_byte_out(0x60, 0xED);
+        port_byte_out(0x60, keyboardLedsState);
 
         ourChar = asciiTable[scan];
 
@@ -99,3 +123,5 @@ uint8_t ps2_waitKey(void) {
 // LEFT_ARROW = 4b (cb - release)
 // RIGHT_ARROW = 4d (cd - release)
 // CapsLock = 3a (ba release)
+// ESCAPE = 01 (?? release)
+// Right Shift = 36 (b6 release)

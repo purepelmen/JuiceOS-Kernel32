@@ -1,12 +1,13 @@
 #include "includes/stdio.h"
 
-#define KERNEL_VERSION "1.0.1"
+#define KERNEL_VERSION "1.0.2.1"
 
 extern uint8_t* cpuid_get_id(void);
 extern uint8_t* cpuid_get_model(void);
 
 void openMenu(void);
 void openInfo(void);
+void openMemoryDumper(void);
 
 void kernel_main(void) {
     openMenu();
@@ -85,6 +86,12 @@ void console(void) {
             continue;
         }
 
+        if(compare_string(command, "memdump")) {
+            openMemoryDumper();
+            clear_screen();
+            continue;
+        }
+
         if(compare_string(command, "help")) {
             print_string("ASCII - Print hex representation of a typed char.\n");
             print_string("CLS - Clear the console.\n");
@@ -92,10 +99,9 @@ void console(void) {
             print_string("EXIT - Quit from console to OS menu.\n");
             print_string("HELP - Print this message.\n");
             print_string("HELLO - Test command that say hello to you.\n");
+            print_string("MEMDUMP - Open Memory dumper.\n");
             print_string("REBOOT - Reboot your PC.\n");
-            print_string("SCANCODE_TEST - Print scancode in hex of every pressed key.\n");
-            print_string("SYSTEM - Print system information.\n");
-            print_string("TEST - Test a hardware (for instance PS/2).\n\n");
+            print_string("SYSTEM - Print system information.\n\n");
             continue;
         }
 
@@ -111,33 +117,6 @@ void console(void) {
             
             continue;
         }
-
-        if(compare_string(command, "test")) {
-            print_string("Type device: ");
-            uint8_t* subCmd = get_input();
-            
-            if(compare_string(subCmd, "ps2")) {
-                port_byte_out(0x60, 0xEE);
-                uint8_t response = port_byte_in(0x60);
-
-                if(response == 0xEE) {
-                    print_string("\nPS/2 keyboard - OK.\n\n");
-                    continue;
-                }
-
-                print_string("\nPS/2 keyboard - FAIL.\n\n");
-                continue;
-            }
-
-            if(compare_string(subCmd, "list")) {
-                print_string("\nAvailable devices to test: ps2 (PS/2 Keyboard).\n\n");
-                continue;
-            }
-
-            print_string("\nTyped device is not found! Type \"test\" and then \"list\" to get all devices you could test.\n\n");
-
-            continue;
-        }
         
         print_string("Your typed command is not found.\n\n");
     }
@@ -147,7 +126,7 @@ void openMenu(void) {
     clear_screen();
     const uint8_t NON_SELECTED_COLOR = STANDART_SCREEN_COLOR;
     const uint8_t SELECTED_COLOR = STANDART_INVERTED_SCREEN_COLOR;
-    const uint8_t ITEMS_AMOUNT = 3;         // Zero means - 1
+    const uint8_t ITEMS_AMOUNT = 4;         // Zero means - 1
 
     uint8_t currentPosition = 0;
     while(1) {
@@ -171,7 +150,7 @@ void openMenu(void) {
             printColor = SELECTED_COLOR;
         else 
             printColor = NON_SELECTED_COLOR;
-        print_string("Information");
+        print_string("Memory dumper");
 
         cursorX = 6;
         cursorY = 5;
@@ -179,7 +158,7 @@ void openMenu(void) {
             printColor = SELECTED_COLOR;
         else 
             printColor = NON_SELECTED_COLOR;
-        print_string("Halt CPU");
+        print_string("Information");
 
         cursorX = 6;
         cursorY = 6;
@@ -187,10 +166,18 @@ void openMenu(void) {
             printColor = SELECTED_COLOR;
         else 
             printColor = NON_SELECTED_COLOR;
+        print_string("Halt CPU");
+
+        cursorX = 6;
+        cursorY = 7;
+        if(currentPosition == 4)
+            printColor = SELECTED_COLOR;
+        else 
+            printColor = NON_SELECTED_COLOR;
         print_string("Reboot PC");
 
         // Getting input
-        uint8_t key = ps2_keyboard_getKey();
+        uint8_t key = ps2_waitScancode(true);
         if(key == 0x48) {
             if(currentPosition == 0) currentPosition = ITEMS_AMOUNT;
             else currentPosition--;
@@ -206,13 +193,17 @@ void openMenu(void) {
                 clear_screen();
             }
             if(currentPosition == 1) {
-                openInfo();
+                openMemoryDumper();
                 clear_screen();
             }
             if(currentPosition == 2) {
-                return;
+                openInfo();
+                clear_screen();
             }
             if(currentPosition == 3) {
+                return;
+            }
+            if(currentPosition == 4) {
                 __asm__ ("jmp 0xFFFF0");
             }
         }
@@ -257,6 +248,76 @@ void openInfo(void) {
     cursorY = 24;
     printColor = STANDART_INVERTED_SCREEN_COLOR;
     print_string_noupdates("                        Click any key to back to menu...                        ");
-    printColor = STANDART_SCREEN_COLOR;
     ps2_waitKey();
+}
+
+void openMemoryDumper(void) {
+    uint8_t* memPtr = (uint8_t*) 0x0;
+    uint8_t asciiFlag = false;
+    clear_screen();
+
+    while(1) {
+        printColor = STANDART_INVERTED_SCREEN_COLOR;
+        print_string("                             Juice OS Memory Dumper                             ");
+
+        printColor = STANDART_SCREEN_COLOR;
+        cursorX = 0;
+        cursorY = 2;
+        for(int i=0; i < 512; i++) {
+            if(asciiFlag) {
+                printColor = 0x07;
+                print_char_noupdates(memPtr[i]);
+                update_cursor();
+                printColor = STANDART_SCREEN_COLOR;
+                print_string("  ");
+            } else {
+                printColor = 0x07;
+                print_hexb(memPtr[i]);
+                printColor = STANDART_SCREEN_COLOR;
+                print_char(' ');
+            }
+        }
+
+        printColor = STANDART_INVERTED_SCREEN_COLOR;
+        cursorX = 0;
+        cursorY = 24;
+        print_string("Dump: 0x");
+        print_hexdw((uint32_t) memPtr);
+        print_string(" - 0x");
+        print_hexdw((uint32_t) memPtr + 511);
+        print_string(" | ASCII Flag = ");
+        if(asciiFlag)
+            print_string("ON ");
+        else
+            print_string("OFF");
+        print_string_noupdates("                                     ");
+
+        cursorX = 0;
+        cursorY = 0;
+        update_cursor();
+
+        uint8_t key = ps2_waitScancode(true);
+        if(key == 0x01) {
+            break;
+        }
+        if(key == 0x4D) {
+            // Right arrow
+            memPtr += 512;
+        }
+        if(key == 0x4B) {
+            // Left arrow
+            memPtr -= 512;
+        }
+        if(key == 0x50) {
+            // Down arrow
+            memPtr += 0x1000;
+        }
+        if(key == 0x48) {
+            // Up arrow
+            memPtr -= 0x1000;
+        }
+        if(key == 0x36) {
+            asciiFlag = !asciiFlag;
+        }
+    }
 }

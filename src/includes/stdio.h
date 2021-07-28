@@ -5,6 +5,9 @@ typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 
+#define true 1
+#define false 0
+
 #define STANDART_SCREEN_COLOR 0x07
 #define STANDART_INVERTED_SCREEN_COLOR 0x70
 
@@ -12,7 +15,6 @@ void update_cursor(void);
 void update_scrolling(void);
 void print_char(uint8_t aChar);
 
-#include "types.h"
 #include "ports.h"
 #include "ps2.h"
 
@@ -24,6 +26,7 @@ uint8_t inputExitCode = 0x0;
 uint8_t* VIDMEM = (uint8_t*) 0xb8000;
 
 void clear_screen(void) {
+    printColor = STANDART_SCREEN_COLOR;
     unsigned int i = 0;
     while(i < 80 * 25 * 2) {
         VIDMEM[i] = ' ';
@@ -71,28 +74,13 @@ void print_char(uint8_t aChar) {
 void print_char_noupdates(uint8_t aChar) {
     uint8_t* adressToPrint = (uint8_t*) VIDMEM + (cursorX * 2 + cursorY * 160);
 
-    if(aChar == 0xA) {
-        // New line
+    adressToPrint[0] = aChar;
+    adressToPrint[1] = printColor;
+
+    cursorX += 1;
+    if(cursorX == 80) {
         cursorY += 1;
         cursorX = 0;
-    } else if (aChar == 0x08) {
-        // Backspace
-        if(cursorX != 0) {
-            cursorX -= 1;
-
-            adressToPrint = (uint8_t*) VIDMEM + (cursorX * 2 + cursorY * 160);
-            adressToPrint[0] = ' ';
-            adressToPrint[1] = printColor;
-        }
-    } else {
-        adressToPrint[0] = aChar;
-        adressToPrint[1] = printColor;
-
-        cursorX += 1;
-        if(cursorX == 80) {
-            cursorY += 1;
-            cursorX = 0;
-        }
     }
 }
 
@@ -269,6 +257,31 @@ void str_split(const uint8_t* string, uint8_t* destination, uint8_t separator, u
         }
         i++;
     }
+}
+
+void print_hex4bit(uint8_t char4bit) {
+    char4bit += 0x30;
+    if(char4bit <= 0x39) {
+        print_char(char4bit);
+    } else {
+        char4bit += 39;
+        print_char(char4bit);
+    }
+}
+
+void print_hexb(uint8_t byte) {
+    print_hex4bit(byte >> 4);
+    print_hex4bit(byte & 0x0F);
+}
+
+void print_hexw(uint16_t word) {
+    print_hexb(word >> 8);
+    print_hexb(word & 0x00FF);
+}
+
+void print_hexdw(uint32_t dword) {
+    print_hexw(dword >> 16);
+    print_hexw(dword & 0x0000FFFF);
 }
 
 #endif
