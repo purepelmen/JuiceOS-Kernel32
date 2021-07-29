@@ -1,6 +1,20 @@
 Update 1.0.2:
-- 'Test' command deleted
-- Memory dumper added
-- Types lib deleted. Its function moved to STDIO lib
-- Few changes with 'print_char_noupdates' function
-- And other omptimizations and fixes
+    Beta1:
+        - 'Test' command deleted
+        - Memory dumper added
+        - Types lib deleted. Its function moved to STDIO lib
+        - Few changes with 'print_char_noupdates' function
+        - And other omptimizations and fixes
+
+    Beta2:
+        - 'scantest' command omptimized
+        - Multiboot verifying and cpuid support check added to kernel
+        - PS/2 driver optimization
+        - New STDIO method: 'memcopy'
+        - Stdio, PS/2 driver and Ports lib function documentated
+    Beta3:
+        - PS/2 Driver Numpad support
+        - PS/2 Driver handles right shift
+        - STDIO functions optimizations
+        - Memory dumper: ASCII flag activation key changed
+        - Unsupported keys like F1-F12, Ins, Del... now won't be showed as spaces

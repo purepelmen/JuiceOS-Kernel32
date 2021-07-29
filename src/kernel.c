@@ -1,6 +1,7 @@
 #include "includes/stdio.h"
+#include "includes/ps2.h"
 
-#define KERNEL_VERSION "1.0.2"
+#define KERNEL_VERSION "1.0.2-Beta3"
 
 extern uint8_t* cpuid_get_id(void);
 extern uint8_t* cpuid_get_model(void);
@@ -135,7 +136,7 @@ void openMenu(void) {
     while(1) {
         printColor = NON_SELECTED_COLOR;
 
-        cursorX = 30;
+        cursorX = 25;
         cursorY = 1;
         print_string("Juice OS v" KERNEL_VERSION " Menu");
 
@@ -215,7 +216,7 @@ void openMenu(void) {
 
 void openInfo(void) {
     clear_screen();
-    cursorX = 30;
+    cursorX = 25;
     cursorY = 1;
     print_string("Juice OS - Kernel32 v" KERNEL_VERSION);
 
@@ -319,7 +320,7 @@ void openMemoryDumper(void) {
             // Up arrow
             memPtr -= 0x1000;
         }
-        if(key == 0x36) {
+        if(key == 0x2A) {
             asciiFlag = !asciiFlag;
         }
     }
