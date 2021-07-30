@@ -1,25 +1,11 @@
 #include "stdio.h"
 #include "ps2.h"
-
-#include "descriptor_table.h"
-#include "isr.h"
-
-#define KERNEL_VERSION "1.0.2-Beta3"
-
-extern uint8_t* cpuid_get_id(void);
-extern uint8_t* cpuid_get_model(void);
-
-void openMenu(void);
-void openInfo(void);
-void openMemoryDumper(void);
+#include "descriptor_tables.h"
+#include "kernel.h"
 
 void kernel_main(void) {
     // Initialise all the ISRs and segmentation
     init_descriptor_tables();
-
-    // asm volatile("int $0x3");
-    // asm volatile("int $0x4");
-
     openMenu();
 
     // Halting CPU
@@ -34,7 +20,9 @@ void console(void) {
     clear_screen();
 
     while(1) {
+        printColor = STANDART_CONSOLE_PREFIX_COLOR;
         print_string("PC:>>");
+        printColor = STANDART_SCREEN_COLOR;
 
         uint8_t* command = get_input();
         str_lower(command, command);
@@ -112,7 +100,8 @@ void console(void) {
             print_string("MEMDUMP - Open Memory dumper.\n");
             print_string("REBOOT - Reboot your PC.\n");
             print_string("SCANTEST - Print scancode of every pressed key.\n");
-            print_string("SYSTEM - Print system information.\n\n");
+            print_string("SYSTEM - Print system information.\n");
+            print_string("TEST_INT10H - Test IDT. It calls 0x10 interrupt.\n\n");
             continue;
         }
 
@@ -131,8 +120,9 @@ void console(void) {
             continue;
         }
 
-        if(compare_string(command, "int04h")) {
+        if(compare_string(command, "test_int10h")) {
             asm volatile("int $0x10");
+            print_char('\n');
             continue;
         }
         
