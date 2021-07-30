@@ -1,6 +1,9 @@
 #include "includes/stdio.h"
 #include "includes/ps2.h"
 
+#include "includes/descriptor_table.h"
+#include "includes/isr.h"
+
 #define KERNEL_VERSION "1.0.2-Beta3"
 
 extern uint8_t* cpuid_get_id(void);
@@ -11,6 +14,12 @@ void openInfo(void);
 void openMemoryDumper(void);
 
 void kernel_main(void) {
+    // Initialise all the ISRs and segmentation
+    init_descriptor_tables();
+
+    // asm volatile("int $0x3");
+    // asm volatile("int $0x4");
+
     openMenu();
 
     // Halting CPU
@@ -119,6 +128,11 @@ void console(void) {
                 if(scancode == 0x81) break;
             }
             print_char('\n');
+            continue;
+        }
+
+        if(compare_string(command, "int04h")) {
+            asm volatile("int $0x10");
             continue;
         }
         

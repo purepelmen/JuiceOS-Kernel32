@@ -71,6 +71,8 @@ no_cpuid_str:     db "CPUID is not supported on this PC! You cannot continue loa
                   db "Press any key to reboot...", 0
 
 %include "src/includes/cpuid.asm"
+%include "src/includes/gdt.asm"
+%include "src/includes/interrupts.asm"
 
 section .bss
 stack_bottom:
