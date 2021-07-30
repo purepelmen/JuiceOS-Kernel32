@@ -131,6 +131,8 @@ uint8_t* get_input() {
     while(1) {
         uint8_t key = ps2_waitKey();
 
+        if(key == 0x0) continue;
+
         if(key == 0xA) {
             // Enter pressed
             inputExitCode = key;

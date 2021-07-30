@@ -6,6 +6,9 @@
 // Init GDT/IDT
 void init_descriptor_tables();
 
+// Reset IDT to BIOS
+void reset_idt();
+
 struct gdt_entry_struct {
     uint16_t limit_low;           // The lower 16 bits of the limit.
     uint16_t base_low;            // The lower 16 bits of the base.

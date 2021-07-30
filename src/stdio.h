@@ -10,7 +10,7 @@ typedef unsigned int uint32_t;
 
 #define STANDART_SCREEN_COLOR 0x07
 #define STANDART_INVERTED_SCREEN_COLOR 0x70
-#define STANDART_CONSOLE_PREFIX_COLOR 0x03
+#define STANDART_CONSOLE_PREFIX_COLOR 0x02
 
 extern uint32_t cursorX;
 extern uint32_t cursorY;

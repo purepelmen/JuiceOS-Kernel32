@@ -44,6 +44,7 @@ void console(void) {
         }
 
         if(compare_string(command, "reboot")) {
+            reset_idt();
             __asm__("jmp 0xFFFF0");
             continue;
         }
@@ -212,6 +213,7 @@ void openMenu(void) {
                 return;
             }
             if(currentPosition == 4) {
+                reset_idt();
                 __asm__ ("jmp 0xFFFF0");
             }
         }

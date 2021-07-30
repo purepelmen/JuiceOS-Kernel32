@@ -19,6 +19,10 @@ void init_descriptor_tables() {
     init_idt();
 }
 
+void reset_idt() {
+    gdt_flush((uint32_t) 0x0);
+}
+
 static void init_gdt() {
     gdt_ptr.limit = (sizeof(gdt_entry_t) * 5) - 1;
     gdt_ptr.base  = (uint32_t)&gdt_entries;
