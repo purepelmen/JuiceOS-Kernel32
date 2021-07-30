@@ -70,10 +70,6 @@ no_multiboot_str: db "Kernel booted without multiboot! You cannot continue loadi
 no_cpuid_str:     db "CPUID is not supported on this PC! You cannot continue loading this OS.", 0xA
                   db "Press any key to reboot...", 0
 
-%include "src/includes/cpuid.asm"
-%include "src/includes/gdt.asm"
-%include "src/includes/interrupts.asm"
-
 section .bss
 stack_bottom:
     resb 65536

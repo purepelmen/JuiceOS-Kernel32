@@ -1,1 +1,1 @@
-qemu-system-x86_64 \\wsl$\Ubuntu-18.04\home\daniel\juiceos32\bin\JuiceOS.iso
+qemu-system-x86_64 \\wsl$\Ubuntu-20.04\home\daniel\kernel32\bin\JuiceOS.iso

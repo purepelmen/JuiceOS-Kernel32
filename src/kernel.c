@@ -1,8 +1,8 @@
-#include "includes/stdio.h"
-#include "includes/ps2.h"
+#include "stdio.h"
+#include "ps2.h"
 
-#include "includes/descriptor_table.h"
-#include "includes/isr.h"
+#include "descriptor_table.h"
+#include "isr.h"
 
 #define KERNEL_VERSION "1.0.2-Beta3"
 

@@ -310,7 +310,7 @@ void memcopy(uint8_t* source, uint8_t* destination, uint32_t bytesAmount) {
 }
 
 /* Fill memory by given byte */
-void memset(uint8_t* ptr, uint8_t byte, uint32_t amount) {
+void mem_set(uint8_t* ptr, uint8_t byte, uint32_t amount) {
     for(int i=0; i < amount; i++) {
         ptr[i] = byte;
     }

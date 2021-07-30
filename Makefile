@@ -1,26 +1,40 @@
-LINK_FILES = $(BUILD)/kernel_launcher.elf $(BUILD)/kernel.elf
+ASM_SRC = $(wildcard src/asm/*.asm)
+ASM_OBJS = $(ASM_SRC:.asm=.o)
+C_SRC = $(wildcard src/*.c)
+C_OBJS = $(C_SRC:.c=.o)
 
 ISO_FILE = bin/JuiceOS.iso
-LINK = src/linkers/
+OBJECTS = bin/build/objs
+LINK = bin/linkers
 BUILD = bin/build
 ISO = bin/iso
 
-build: assembly compileC
+build: cleanObjs $(ASM_OBJS) $(C_OBJS)
+	@echo "LD $(ASM_OBJS) $(C_OBJS)"
+	@ld -m elf_i386 -T $(LINK)/kernel.ld -o $(BUILD)/juiceos_k32.elf $(ASM_OBJS) $(C_OBJS)
+	
+	@rm -f src/asm/*.o
+	@rm -f src/*.o
 	@cp $(BUILD)/juiceos_k32.elf $(ISO)/
+
 	@grub-mkrescue -V "JuiceOS" -o $(ISO_FILE) $(ISO)
 	@echo "Build successfull!"
 
-assembly:
-	@nasm -f elf32 -o $(BUILD)/kernel_launcher.elf src/kernel_launcher.asm
+$(ASM_OBJS):
+	@echo "NASM $(@:.o=.asm)"
+	@nasm -f elf32 -o $@ $(@:.o=.asm)
 
-compileC:
-	@gcc -m32 -o $(BUILD)/kernel.elf -c src/kernel.c
+$(C_OBJS):
+	@echo "GCC $(@:.o=.c)"
+	@gcc -m32 -o $@ -c $(@:.o=.c)
 
-	@ld -m elf_i386 -T $(LINK)/kernel.ld -o $(BUILD)/juiceos_k32.elf $(LINK_FILES)
+cleanObjs:
+	@rm -f src/asm/*.o
+	@rm -f src/*.o
 
 clean:
 	@rm -f $(BUILD)/*.elf
-	@rm -f $(ISO)/boot/*.elf
+	@rm -f $(ISO)/*.elf
 	@rm -f bin/*.iso
 
 run:

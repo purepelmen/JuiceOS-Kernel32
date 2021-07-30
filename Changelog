@@ -18,3 +18,4 @@ Update 1.0.2:
         - STDIO functions optimizations
         - Memory dumper: ASCII flag activation key changed
         - Unsupported keys like F1-F12, Ins, Del... now won't be showed as spaces
+        - IDT defined. Interrupts can be handled now 
