@@ -1,6 +1,6 @@
-#include "ports.h"
-#include "ps2.h"
-#include "stdio.h"
+#include "inc/ports.h"
+#include "inc/ps2.h"
+#include "inc/stdio.h"
 
 uint32_t cursorX = 0;
 uint32_t cursorY = 0;
@@ -220,6 +220,17 @@ void str_lower(const uint8_t* string, uint8_t* destination) {
         }
         i++;
     }
+}
+
+void str_concat(uint8_t* concatTo, uint8_t* from) {
+    int i = 0;
+    while(concatTo[i] != 0x0) i++;
+
+    int i2 = 0;
+    while(from[i2] != 0x0)
+        concatTo[i++] = from[i2++];
+    
+    concatTo[i] = 0x0;
 }
 
 // TODO: Find better solution for using this procedure

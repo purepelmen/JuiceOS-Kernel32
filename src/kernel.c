@@ -1,8 +1,10 @@
-#include "stdio.h"
-#include "ps2.h"
-#include "descriptor_tables.h"
-#include "kernel.h"
-#include "timer.h"
+#include "inc/stdio.h"
+#include "inc/ps2.h"
+#include "inc/descriptor_tables.h"
+#include "inc/kernel.h"
+#include "inc/timer.h"
+
+static uint8_t systemLogBuffer[2048];
 
 void kernel_main(void) {
     // Initialise all the ISRs and segmentation
@@ -99,8 +101,8 @@ void console(void) {
             print_string("EXIT - Quit from console to OS menu.\n");
             print_string("HELP - Print this message.\n");
             print_string("HELLO - Test command that say hello to you.\n");
-            print_string("INIT_PIT_TIMER - Init PIT timer.\n");
             print_string("MEMDUMP - Open Memory dumper.\n");
+            print_string("PITTEST - Init PIT timer to test it.\n");
             print_string("REBOOT - Reboot your PC.\n");
             print_string("SCANTEST - Print scancode of every pressed key.\n");
             print_string("SYSTEM - Print system information.\n");
@@ -129,11 +131,7 @@ void console(void) {
             continue;
         }
 
-        if(compare_string(command, "init_pit_timer")) {
-            asm volatile("int $0x3");
-            asm volatile("int $0x4");
-
-            asm volatile("sti");
+        if(compare_string(command, "pittest")) {
             init_timer(50);
             continue;
         }
@@ -186,7 +184,7 @@ void openMenu(void) {
             printColor = SELECTED_COLOR;
         else 
             printColor = NON_SELECTED_COLOR;
-        print_string("Halt CPU");
+        print_string("Reboot PC");
 
         cursorX = 6;
         cursorY = 7;
@@ -194,7 +192,7 @@ void openMenu(void) {
             printColor = SELECTED_COLOR;
         else 
             printColor = NON_SELECTED_COLOR;
-        print_string("Reboot PC");
+        print_string("Show system logs");
 
         // Getting input
         uint8_t key = ps2_waitScancode(true);
@@ -221,11 +219,12 @@ void openMenu(void) {
                 clear_screen();
             }
             if(currentPosition == 3) {
-                return;
-            }
-            if(currentPosition == 4) {
                 reset_idt();
                 __asm__ ("jmp 0xFFFF0");
+            }
+            if(currentPosition == 4) {
+                openSysLogs();
+                clear_screen();
             }
         }
     }
@@ -341,4 +340,15 @@ void openMemoryDumper(void) {
             asciiFlag = !asciiFlag;
         }
     }
+}
+
+void printLog(uint8_t* str) {
+    if(strlen((uint8_t*) &systemLogBuffer) + strlen(str) > 2046) return;
+    str_concat((uint8_t*) &systemLogBuffer, str);
+}
+
+void openSysLogs(void) {
+    clear_screen();
+    print_string((uint8_t*) &systemLogBuffer);
+    ps2_waitScancode(true);
 }

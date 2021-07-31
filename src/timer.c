@@ -1,9 +1,10 @@
 // timer.c -- Initialises the PIT, and handles clock updates.
 
-#include "timer.h"
-#include "isr.h"
-#include "stdio.h"
-#include "ports.h"
+#include "inc/timer.h"
+#include "inc/isr.h"
+#include "inc/stdio.h"
+#include "inc/kernel.h"
+#include "inc/ports.h"
 
 uint32_t tick = 0;
 
@@ -34,4 +35,6 @@ void init_timer(uint32_t freq) {
     // Send the frequency divisor.
     port_byte_out(0x40, l);
     port_byte_out(0x40, h);
+
+    printLog("PIT was initialized.");
 }

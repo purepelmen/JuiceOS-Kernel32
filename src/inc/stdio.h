@@ -56,6 +56,9 @@ void str_upper(const uint8_t* string, uint8_t* destination);
 /* Make text lowercase */
 void str_lower(const uint8_t* string, uint8_t* destination);
 
+/* Concat two strings */
+void str_concat(uint8_t* concatTo, uint8_t* from);
+
 /* Split string by separator */
 void str_split(const uint8_t* string, uint8_t* destination, uint8_t separator, uint32_t index);
 

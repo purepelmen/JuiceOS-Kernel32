@@ -1,5 +1,5 @@
-#include "stdio.h"
-#include "ports.h"
+#include "inc/stdio.h"
+#include "inc/ports.h"
 
 uint8_t port_byte_in(uint16_t port) {
     uint8_t result;

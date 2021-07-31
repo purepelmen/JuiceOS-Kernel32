@@ -1,6 +1,7 @@
-#include "stdio.h"
-#include "ports.h"
-#include "descriptor_tables.h"
+#include "inc/stdio.h"
+#include "inc/kernel.h"
+#include "inc/ports.h"
+#include "inc/descriptor_tables.h"
 
 extern void gdt_flush(uint32_t);
 extern void idt_flush(uint32_t);
@@ -18,6 +19,7 @@ idt_ptr_t   idt_ptr;
 void init_descriptor_tables() {
     init_gdt();
     init_idt();
+    printLog("GDT/IDT Tables was successfully inited and loaded.\n");
 }
 
 void reset_idt() {

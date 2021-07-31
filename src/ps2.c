@@ -1,11 +1,11 @@
-#include "stdio.h"
-#include "ports.h"
-#include "ps2.h"
+#include "inc/stdio.h"
+#include "inc/ports.h"
+#include "inc/ps2.h"
 
 const uint8_t* asciiTable = "\x00\x1B" "1234567890-=" "\x08\x09" "qwertyuiop[]" "\x0A\x00" "asdfghjkl;'`" "\x00" "\\zxcvbnm,./" "\x00" "*\x00" " " "\x00\x00\x00\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00" "789" "-" "456" "+" "1230" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 const uint8_t* asciiTableNumsShifted = ")!@#$%^&*(";
 
-uint8_t leftShiftPressed = 0;
+uint8_t shiftPressed = 0;
 uint8_t leftCtrlPressed = 0;
 uint8_t capsLockActive = 0;
 
@@ -37,11 +37,11 @@ uint8_t ps2_waitKey(void) {
     while(1) {
         uint8_t scan = ps2_keyboard_getKey();
 
-        if(scan == 0x2A) {
-            leftShiftPressed = 1;
+        if(scan == 0x2A || scan == 0x36) {
+            shiftPressed = 1;
             continue;
-        } else if(scan == 0xAA) {
-            leftShiftPressed = 0;
+        } else if(scan == 0xAA || scan == 0xB6) {
+            shiftPressed = 0;
             continue;
         } else if (scan == 0x1D) {
             leftCtrlPressed = 1;
@@ -67,7 +67,7 @@ uint8_t ps2_waitKey(void) {
 
         ourChar = asciiTable[scan];
 
-        if(capsLockActive == 0 && leftShiftPressed == 0)
+        if(capsLockActive == 0 && shiftPressed == 0)
             break;
 
         if(ourChar >= 'a' && ourChar <= 'z') {

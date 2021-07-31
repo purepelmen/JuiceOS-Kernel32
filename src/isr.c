@@ -1,6 +1,6 @@
-#include "stdio.h"
-#include "ports.h"
-#include "isr.h"
+#include "inc/stdio.h"
+#include "inc/ports.h"
+#include "inc/isr.h"
 
 isr_t interrupt_handlers[256];
 

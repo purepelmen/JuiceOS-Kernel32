@@ -21,3 +21,5 @@ Update 1.0.2:
         - IDT defined. Interrupts can be handled now 
         - Console style changes
         - PIT driver added
+    Beta4:
+        - Small fixes
