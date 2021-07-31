@@ -104,17 +104,26 @@ void update_scrolling(void) {
 }
 
 void update_cursor(void) {
-    uint16_t cX = cursorX;
-    uint16_t cY = cursorY;
-
-    cY *= 80;
-    cX += cY;
+    uint16_t cursorPosition = cursorY * 80 + cursorX;
 
     port_byte_out(0x03D4, 0x0F);
-    port_byte_out(0x03D5, cX & 0x00FF);
+    port_byte_out(0x03D5, cursorPosition);
 
     port_byte_out(0x03D4, 0x0E);
-    port_byte_out(0x03D5, cX >> 8);
+    port_byte_out(0x03D5, cursorPosition >> 8);
+}
+
+void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
+    port_byte_out(0x03D4, 0x0A);
+    port_byte_out(0x03D5, (port_byte_in(0x03D5) & 0xC0) | cursor_start);
+
+    port_byte_out(0x03D4, 0x0B);
+    port_byte_out(0x03D5, (port_byte_in(0x03D5) & 0xE0) | cursor_end);
+}
+
+void disable_cursor(void) {
+	port_byte_out(0x3D4, 0x0A);
+	port_byte_out(0x3D5, 0x20);
 }
 
 uint8_t* get_input() {

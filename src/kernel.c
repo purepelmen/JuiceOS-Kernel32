@@ -9,6 +9,7 @@ static uint8_t systemLogBuffer[2048];
 void kernel_init(void) {
     // Initialise all the ISRs and segmentation
     init_descriptor_tables();
+    enable_cursor(0xE, 0xF);
     printLog("Kernel initialization completed.");
 }
 

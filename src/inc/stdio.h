@@ -38,6 +38,12 @@ void update_scrolling(void);
 /* Cursor update function. Cursor moves to position that stores in cursorX and cursorY vars */
 void update_cursor(void);
 
+/* Enable the cursor. Parameters specifies size of cursor */
+void enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
+
+/* Disable the cursor. */
+void disable_cursor(void);
+
 /* Getting input and writting it to a string. Enter or Escape breaks the input loop */
 uint8_t* get_input();
 
