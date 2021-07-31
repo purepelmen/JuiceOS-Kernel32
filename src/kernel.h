@@ -9,11 +9,8 @@ extern uint8_t* cpuid_get_model(void);
 void kernel_main(void);
 
 void console(void);
-
 void openMenu(void);
-
 void openInfo(void);
-
 void openMemoryDumper(void);
 
 #endif

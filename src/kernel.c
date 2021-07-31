@@ -2,6 +2,7 @@
 #include "ps2.h"
 #include "descriptor_tables.h"
 #include "kernel.h"
+#include "timer.h"
 
 void kernel_main(void) {
     // Initialise all the ISRs and segmentation
@@ -98,6 +99,7 @@ void console(void) {
             print_string("EXIT - Quit from console to OS menu.\n");
             print_string("HELP - Print this message.\n");
             print_string("HELLO - Test command that say hello to you.\n");
+            print_string("INIT_PIT_TIMER - Init PIT timer.\n");
             print_string("MEMDUMP - Open Memory dumper.\n");
             print_string("REBOOT - Reboot your PC.\n");
             print_string("SCANTEST - Print scancode of every pressed key.\n");
@@ -124,6 +126,15 @@ void console(void) {
         if(compare_string(command, "test_int10h")) {
             asm volatile("int $0x10");
             print_char('\n');
+            continue;
+        }
+
+        if(compare_string(command, "init_pit_timer")) {
+            asm volatile("int $0x3");
+            asm volatile("int $0x4");
+
+            asm volatile("sti");
+            init_timer(50);
             continue;
         }
         
