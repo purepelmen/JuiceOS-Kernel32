@@ -13,6 +13,7 @@ uint8_t ps2_keyboard_getKey(void) {
     while(1) {
         uint8_t ch = port_byte_in(0x64);
         if(ch & 1) break;
+        asm volatile("hlt");
     }
 
     uint8_t result = port_byte_in(0x60);

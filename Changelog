@@ -23,3 +23,4 @@ Update 1.0.2:
         - PIT driver added
     Beta4:
         - Small fixes
+        - PS/2 driver omptimized. Now it takes less CPU and battery usage.

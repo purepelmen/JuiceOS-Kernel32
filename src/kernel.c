@@ -6,17 +6,15 @@
 
 static uint8_t systemLogBuffer[2048];
 
-void kernel_main(void) {
+void kernel_init(void) {
     // Initialise all the ISRs and segmentation
     init_descriptor_tables();
-    openMenu();
+    printLog("Kernel initialization completed.");
+}
 
-    // Halting CPU
-    clear_screen();
-    cursorY = 24;
-    cursorX = 13;
-    print_string("CPU is halted! Turn off PC to exit from this state.");
-    return;
+void kernel_main(void) {
+    kernel_init();
+    openMenu();
 }
 
 void console(void) {

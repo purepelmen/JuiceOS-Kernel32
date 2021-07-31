@@ -27,7 +27,7 @@ start:
     call check_cpuid
 
     call kernel_main
-    hlt
+    jmp $
 
 verify_multiboot:
     cmp eax, 0x36d76289
