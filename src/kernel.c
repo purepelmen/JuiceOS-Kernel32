@@ -35,40 +35,40 @@ void console(void) {
             command = "exit";
         }
 
-        if(strlen(command) == 0) {
+        if(str_len(command) == 0) {
             // If nothing was printed
             continue;
         }
 
-        if(compare_string(command, "hello")) {
+        if(str_compare(command, "hello")) {
             print_string("Helloooo :)\n\n");
             continue;
         }
 
-        if(compare_string(command, "reboot")) {
+        if(str_compare(command, "reboot")) {
             reset_idt();
             __asm__("jmp 0xFFFF0");
             continue;
         }
 
-        if(compare_string(command, "cls")) {
+        if(str_compare(command, "cls")) {
             clear_screen();
             continue;
         }
 
-        if(compare_string(command, "system")) {
+        if(str_compare(command, "system")) {
             print_string("JuiceOS Kernel32 v" KERNEL_VERSION "\n\n");
             continue;
         }
 
-        if(compare_string(command, "exit")) {
+        if(str_compare(command, "exit")) {
             return;
         }
 
-        if(compare_string(command, "ascii")) {
+        if(str_compare(command, "ascii")) {
             print_string("Type any char.\n");
 
-            uint8_t key = ps2_waitKey();
+            uint8_t key = ps2_readKey();
             print_string("ASCII code of typed key is: 0x");
             print_hexb(key);
             print_string("\nIt displays as: ");
@@ -78,7 +78,7 @@ void console(void) {
             continue;
         }
 
-        if(compare_string(command, "cpuid")) {
+        if(str_compare(command, "cpuid")) {
             print_string("CPUID: ");
             print_string(cpuid_get_id());
             print_string("\nCPU Model: ");
@@ -87,13 +87,13 @@ void console(void) {
             continue;
         }
 
-        if(compare_string(command, "memdump")) {
+        if(str_compare(command, "memdump")) {
             openMemoryDumper();
             clear_screen();
             continue;
         }
 
-        if(compare_string(command, "help")) {
+        if(str_compare(command, "help")) {
             print_string("ASCII - Print hex representation of a typed char.\n");
             print_string("CLS - Clear the console.\n");
             print_string("CPUID - Print CPUID information.\n");
@@ -109,11 +109,11 @@ void console(void) {
             continue;
         }
 
-        if(compare_string(command, "scantest")) {
-            ps2_keyboard_getKey();
+        if(str_compare(command, "scantest")) {
+            ps2_scancode(false);
 
             while (1) {
-                uint8_t scancode = ps2_keyboard_getKey();
+                uint8_t scancode = ps2_scancode(false);
 
                 print_string("0x");
                 print_hexb(scancode);
@@ -124,13 +124,13 @@ void console(void) {
             continue;
         }
 
-        if(compare_string(command, "test_int10h")) {
+        if(str_compare(command, "test_int10h")) {
             asm volatile("int $0x10");
             print_char('\n');
             continue;
         }
 
-        if(compare_string(command, "pittest")) {
+        if(str_compare(command, "pittest")) {
             init_timer(50);
             continue;
         }
@@ -194,7 +194,7 @@ void openMenu(void) {
         print_string("Show system logs");
 
         // Getting input
-        uint8_t key = ps2_waitScancode(true);
+        uint8_t key = ps2_scancode(true);
         if(key == 0x48) {
             if(currentPosition == 0) currentPosition = ITEMS_AMOUNT;
             else currentPosition--;
@@ -267,7 +267,7 @@ void openInfo(void) {
     cursorY = 24;
     printColor = STANDART_INVERTED_SCREEN_COLOR;
     print_string_noupdates("                        Click any key to back to menu...                        ");
-    ps2_waitKey();
+    ps2_readKey();
 }
 
 void openMemoryDumper(void) {
@@ -315,7 +315,7 @@ void openMemoryDumper(void) {
         cursorY = 0;
         update_cursor();
 
-        uint8_t key = ps2_waitScancode(true);
+        uint8_t key = ps2_scancode(true);
         if(key == 0x01) {
             break;
         }
@@ -342,12 +342,12 @@ void openMemoryDumper(void) {
 }
 
 void printLog(uint8_t* str) {
-    if(strlen((uint8_t*) &systemLogBuffer) + strlen(str) > 2046) return;
+    if(str_len((uint8_t*) &systemLogBuffer) + str_len(str) > 2046) return;
     str_concat((uint8_t*) &systemLogBuffer, str);
 }
 
 void openSysLogs(void) {
     clear_screen();
     print_string((uint8_t*) &systemLogBuffer);
-    ps2_waitScancode(true);
+    ps2_scancode(true);
 }

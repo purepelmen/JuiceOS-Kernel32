@@ -1,20 +1,18 @@
-ASM_SRC = $(wildcard src/asm/*.asm)
-ASM_OBJS = $(ASM_SRC:.asm=.o)
-C_SRC = $(wildcard src/*.c)
-C_OBJS = $(C_SRC:.c=.o)
+ASM_SRC   = $(wildcard src/asm/*.asm)
+ASM_OBJS  = $(ASM_SRC:.asm=.o)
+C_SRC	  = $(wildcard src/*.c)
+C_OBJS	  = $(C_SRC:.c=.o)
 
-ISO_FILE = bin/JuiceOS.iso
-OBJECTS = bin/build/objs
-LINK = bin/linkers
-BUILD = bin/build
-ISO = bin/iso
+ISO_FILE  = bin/JuiceOS.iso
+LINK 	  = bin/linkers
+BUILD 	  = bin/build
+OBJECTS	  = bin/build/objects
+ISO 	  = bin/iso
 
-build: cleanObjs $(ASM_OBJS) $(C_OBJS)
-	@echo "LD $(ASM_OBJS) $(C_OBJS)"
-	@ld -m elf_i386 -T $(LINK)/kernel.ld -o $(BUILD)/juiceos_k32.elf $(ASM_OBJS) $(C_OBJS)
+build: cleanObjects $(ASM_OBJS) $(C_OBJS)
+	@echo "LD $(ASM_OBJS:src/asm%=$(OBJECTS)%) $(C_OBJS:src%=$(OBJECTS)%)"
+	@ld -m elf_i386 -T $(LINK)/kernel.ld -o $(BUILD)/juiceos_k32.elf $(ASM_OBJS:src/asm%=$(OBJECTS)%) $(C_OBJS:src%=$(OBJECTS)%)
 	
-	@rm -f src/asm/*.o
-	@rm -f src/*.o
 	@cp $(BUILD)/juiceos_k32.elf $(ISO)/
 
 	@grub-mkrescue -V "JuiceOS" -o $(ISO_FILE) $(ISO)
@@ -22,20 +20,19 @@ build: cleanObjs $(ASM_OBJS) $(C_OBJS)
 
 $(ASM_OBJS):
 	@echo "NASM $(@:.o=.asm)"
-	@nasm -f elf32 -o $@ $(@:.o=.asm)
+	@nasm -f elf32 -o $(@:src/asm%=$(OBJECTS)%) $(@:.o=.asm)
 
 $(C_OBJS):
 	@echo "GCC $(@:.o=.c)"
-	@gcc -m32 -o $@ -c $(@:.o=.c)
-
-cleanObjs:
-	@rm -f src/asm/*.o
-	@rm -f src/*.o
+	@gcc -m32 -o $(@:src%=$(OBJECTS)%) -c $(@:.o=.c)
 
 clean:
 	@rm -f $(BUILD)/*.elf
 	@rm -f $(ISO)/*.elf
 	@rm -f bin/*.iso
+
+cleanObjects:
+	@rm -f bin/build/objects/*.o
 
 run:
 	@qemu-system-x86_64 -cdrom $(ISO_FILE)

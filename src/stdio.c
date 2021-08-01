@@ -138,7 +138,7 @@ uint8_t* get_input() {
 
     // Input loop
     while(1) {
-        uint8_t key = ps2_waitKey();
+        uint8_t key = ps2_readKey();
 
         if(key == 0x0) continue;
 
@@ -176,7 +176,7 @@ uint8_t* get_input() {
     return (uint8_t*) &inputBuffer;
 }
 
-uint32_t strlen(const uint8_t* str) {
+uint32_t str_len(const uint8_t* str) {
     uint32_t i = 0;
     while(str[i] != 0x0) {
         i++;
@@ -184,14 +184,14 @@ uint32_t strlen(const uint8_t* str) {
     return i;
 }
 
-uint8_t strlen_cmp(const uint8_t* str1, const uint8_t* str2) {
-    unsigned fst = strlen(str1);
-    unsigned snd = strlen(str2);
+uint8_t str_copmare_len(const uint8_t* str1, const uint8_t* str2) {
+    unsigned fst = str_len(str1);
+    unsigned snd = str_len(str2);
     return fst == snd;
 }
 
-uint8_t compare_string(const uint8_t* str1, const uint8_t* str2) {
-    if(!strlen_cmp(str1, str2)) 
+uint8_t str_compare(const uint8_t* str1, const uint8_t* str2) {
+    if(!str_copmare_len(str1, str2)) 
         return 0;
 
     uint8_t result = 1;
@@ -290,7 +290,7 @@ void print_hexdw(uint32_t dword) {
     print_hexw(dword & 0x0000FFFF);
 }
 
-void memcopy(uint8_t* source, uint8_t* destination, uint32_t bytesAmount) {
+void mem_copy(uint8_t* source, uint8_t* destination, uint32_t bytesAmount) {
     for(int i=0; i < bytesAmount; i++) {
         destination[i] = source[i];
     }

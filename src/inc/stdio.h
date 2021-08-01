@@ -48,13 +48,13 @@ void disable_cursor(void);
 uint8_t* get_input();
 
 /* Count the string length */
-uint32_t strlen(const uint8_t* str);
+uint32_t str_len(const uint8_t* str);
 
 /* Compare the lengths of two strings */
-uint8_t strlen_cmp(const uint8_t* str1, const uint8_t* str2);
+uint8_t str_copmare_len(const uint8_t* str1, const uint8_t* str2);
 
 /* Compare two strings */
-uint8_t compare_string(const uint8_t* str1, const uint8_t* str2);
+uint8_t str_compare(const uint8_t* str1, const uint8_t* str2);
 
 /* Make text uppercase */
 void str_upper(const uint8_t* string, uint8_t* destination);
@@ -68,9 +68,6 @@ void str_concat(uint8_t* concatTo, uint8_t* from);
 /* Split string by separator */
 void str_split(const uint8_t* string, uint8_t* destination, uint8_t separator, uint32_t index);
 
-/* Print 4-bit number as HEX */
-void print_hex4bit(uint8_t char4bit);
-
 /* Print 8-bit number as HEX */
 void print_hexb(uint8_t byte);
 
@@ -81,7 +78,7 @@ void print_hexw(uint16_t word);
 void print_hexdw(uint32_t dword);
 
 /* Copy 'bytesAmount' bytes of memory from 'source' to 'destination' */
-void memcopy(uint8_t* source, uint8_t* destination, uint32_t bytesAmount);
+void mem_copy(uint8_t* source, uint8_t* destination, uint32_t bytesAmount);
 
 /* Fill memory by given byte */
 void mem_set(uint8_t* ptr, uint8_t byte, uint32_t amount);

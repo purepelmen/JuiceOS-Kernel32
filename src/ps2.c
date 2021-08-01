@@ -9,20 +9,14 @@ uint8_t shiftPressed = 0;
 uint8_t leftCtrlPressed = 0;
 uint8_t capsLockActive = 0;
 
-uint8_t ps2_keyboard_getKey(void) {
+uint8_t ps2_scancode(uint8_t ignoreReleases) {
     while(1) {
-        uint8_t ch = port_byte_in(0x64);
-        if(ch & 1) break;
-        asm volatile("hlt");
-    }
+        uint8_t scan = port_byte_in(0x64);
+        if(!(scan & 1)) {
+            asm volatile("hlt");
+            continue;
+        }
 
-    uint8_t result = port_byte_in(0x60);
-    return result;
-}
-
-uint8_t ps2_waitScancode(uint8_t ignoreReleases) {
-    while(1) {
-        uint8_t scan = ps2_keyboard_getKey();
         if(ignoreReleases) {
             if(scan & (1 << 7)) 
                 continue;
@@ -31,12 +25,15 @@ uint8_t ps2_waitScancode(uint8_t ignoreReleases) {
         } else
             break;
     }
+
+    uint8_t result = port_byte_in(0x60);
+    return result;
 }
 
-uint8_t ps2_waitKey(void) {
-    uint8_t ourChar;
+uint8_t ps2_readKey(void) {
+    uint8_t _char;
     while(1) {
-        uint8_t scan = ps2_keyboard_getKey();
+        uint8_t scan = ps2_scancode(false);
 
         if(scan == 0x2A || scan == 0x36) {
             shiftPressed = 1;
@@ -62,49 +59,49 @@ uint8_t ps2_waitKey(void) {
         }
         
         if(scan == 0x5b) {
-            ourChar = 0xF0;
+            _char = 0xF0;
             break;
         }
 
-        ourChar = asciiTable[scan];
+        _char = asciiTable[scan];
 
         if(capsLockActive == 0 && shiftPressed == 0)
             break;
 
-        if(ourChar >= 'a' && ourChar <= 'z') {
-            ourChar -= 0x20;
+        if(_char >= 'a' && _char <= 'z') {
+            _char -= 0x20;
             break;
         }
-        if(ourChar >= '0' && ourChar <= '9') {
-            ourChar -= 0x30;
-            ourChar = asciiTableNumsShifted[ourChar];
+        if(_char >= '0' && _char <= '9') {
+            _char -= 0x30;
+            _char = asciiTableNumsShifted[_char];
             break;
         }
 
-        if(ourChar == '=') 
-            ourChar = '+';
-        if(ourChar == '/') 
-            ourChar = '?';
-        if(ourChar == '-') 
-            ourChar = '_';
-        if(ourChar == '`') 
-            ourChar = '~';
-        if(ourChar == '[') 
-            ourChar = '{';
-        if(ourChar == ']') 
-            ourChar = '}';
-        if(ourChar == ';') 
-            ourChar = ':';
-        if(ourChar == '\'') 
-            ourChar = '"';
-        if(ourChar == ',') 
-            ourChar = '<';
-        if(ourChar == '.') 
-            ourChar = '>';
+        if(_char == '=') 
+            _char = '+';
+        if(_char == '/') 
+            _char = '?';
+        if(_char == '-') 
+            _char = '_';
+        if(_char == '`') 
+            _char = '~';
+        if(_char == '[') 
+            _char = '{';
+        if(_char == ']') 
+            _char = '}';
+        if(_char == ';') 
+            _char = ':';
+        if(_char == '\'') 
+            _char = '"';
+        if(_char == ',') 
+            _char = '<';
+        if(_char == '.') 
+            _char = '>';
 
         break;
     }
-    return ourChar;
+    return _char;
 }
 
 // UP_ARROW = 48 (c8 - release)

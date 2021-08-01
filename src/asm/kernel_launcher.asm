@@ -16,7 +16,7 @@ header_end:
 extern kernel_main
 extern clear_screen
 extern print_string
-extern ps2_waitKey
+extern ps2_readKey
 
 global start
 
@@ -39,7 +39,7 @@ verify_multiboot:
     push no_multiboot_str
     call print_string
     add esp, 4
-    call ps2_waitKey
+    call ps2_readKey
     jmp 0xffff0
 
 check_cpuid:
@@ -62,7 +62,7 @@ check_cpuid:
     push no_cpuid_str
     call print_string
     add esp, 4
-    call ps2_waitKey
+    call ps2_readKey
     jmp 0xffff0
 
 no_multiboot_str: db "Kernel booted without multiboot! You cannot continue loading this OS.", 0xA
