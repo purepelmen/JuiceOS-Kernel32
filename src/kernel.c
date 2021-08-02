@@ -3,7 +3,6 @@
 #include "inc/descriptor_tables.h"
 #include "inc/kernel.h"
 #include "inc/timer.h"
-#include "inc/paging.h"
 
 static uint8_t systemLogBuffer[2048];
 
@@ -12,7 +11,6 @@ void kernel_init(void) {
     init_descriptor_tables();
     enable_cursor(0xE, 0xF);
     clear_screen();
-    initialise_paging();
 
     print_log("Kernel initialization completed.");
 }
