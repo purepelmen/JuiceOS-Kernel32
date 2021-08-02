@@ -4,7 +4,7 @@
 #include "inc/kernel.h"
 #include "inc/timer.h"
 
-static uint8_t systemLogBuffer[2048];
+static uint8 systemLogBuffer[2048];
 
 void kernel_init(void) {
     // Initialise all the ISRs and segmentation
@@ -12,7 +12,7 @@ void kernel_init(void) {
     enable_cursor(0xE, 0xF);
     clear_screen();
 
-    print_log("Kernel initialization completed.");
+    print_log("Kernel initialization completed.\n");
 }
 
 void kernel_main(void) {
@@ -28,7 +28,7 @@ void console(void) {
         print_string("PC:>>");
         printColor = STANDART_SCREEN_COLOR;
 
-        uint8_t* command = get_input();
+        uint8* command = get_input();
         str_lower(command, command);
         print_char(0xA);
 
@@ -70,7 +70,7 @@ void console(void) {
         if(str_compare(command, "ascii")) {
             print_string("Type any char.\n");
 
-            uint8_t key = ps2_readKey();
+            uint8 key = ps2_readKey();
             print_string("ASCII code of typed key is: 0x");
             print_hexb(key);
             print_string("\nIt displays as: ");
@@ -115,7 +115,7 @@ void console(void) {
             ps2_scancode(false);
 
             while (1) {
-                uint8_t scancode = ps2_scancode(false);
+                uint8 scancode = ps2_scancode(false);
 
                 print_string("0x");
                 print_hexb(scancode);
@@ -143,11 +143,11 @@ void console(void) {
 
 void openMenu(void) {
     clear_screen();
-    const uint8_t NON_SELECTED_COLOR = STANDART_SCREEN_COLOR;
-    const uint8_t SELECTED_COLOR = STANDART_INVERTED_SCREEN_COLOR;
-    const uint8_t ITEMS_AMOUNT = 4;         // Zero means - 1
+    const uint8 NON_SELECTED_COLOR = STANDART_SCREEN_COLOR;
+    const uint8 SELECTED_COLOR = STANDART_INVERTED_SCREEN_COLOR;
+    const uint8 ITEMS_AMOUNT = 4;         // Zero means - 1
 
-    uint8_t currentPosition = 0;
+    uint8 currentPosition = 0;
     while(1) {
         printColor = NON_SELECTED_COLOR;
 
@@ -196,7 +196,7 @@ void openMenu(void) {
         print_string("Show system logs");
 
         // Getting input
-        uint8_t key = ps2_scancode(true);
+        uint8 key = ps2_scancode(true);
         if(key == 0x48) {
             if(currentPosition == 0) currentPosition = ITEMS_AMOUNT;
             else currentPosition--;
@@ -273,8 +273,8 @@ void openInfo(void) {
 }
 
 void openMemoryDumper(void) {
-    uint8_t* memPtr = (uint8_t*) 0x0;
-    uint8_t asciiFlag = false;
+    uint8* memPtr = (uint8*) 0x0;
+    uint8 asciiFlag = false;
     clear_screen();
 
     while(1) {
@@ -303,9 +303,9 @@ void openMemoryDumper(void) {
         cursorX = 0;
         cursorY = 24;
         print_string("Dump: 0x");
-        print_hexdw((uint32_t) memPtr);
+        print_hexdw((uint32) memPtr);
         print_string(" - 0x");
-        print_hexdw((uint32_t) memPtr + 511);
+        print_hexdw((uint32) memPtr + 511);
         print_string(" | ASCII Flag = ");
         if(asciiFlag)
             print_string("ON ");
@@ -317,7 +317,7 @@ void openMemoryDumper(void) {
         cursorY = 0;
         update_cursor();
 
-        uint8_t key = ps2_scancode(true);
+        uint8 key = ps2_scancode(true);
         if(key == 0x01) {
             break;
         }
@@ -343,13 +343,13 @@ void openMemoryDumper(void) {
     }
 }
 
-void print_log(uint8_t* str) {
-    if(str_len((uint8_t*) &systemLogBuffer) + str_len(str) > 2046) return;
-    str_concat((uint8_t*) &systemLogBuffer, str);
+void print_log(uint8* str) {
+    if(str_len((uint8*) &systemLogBuffer) + str_len(str) > 2046) return;
+    str_concat((uint8*) &systemLogBuffer, str);
 }
 
 void openSysLogs(void) {
     clear_screen();
-    print_string((uint8_t*) &systemLogBuffer);
+    print_string((uint8*) &systemLogBuffer);
     ps2_readKey();
 }

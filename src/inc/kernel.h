@@ -3,8 +3,8 @@
 
 #define KERNEL_VERSION "1.0.2"
 
-extern uint8_t* cpuid_get_id(void);
-extern uint8_t* cpuid_get_model(void);
+extern uint8* cpuid_get_id(void);
+extern uint8* cpuid_get_model(void);
 
 /* Initalize all descriptor tables, setup interrupts and so on... */
 void kernel_init(void);
@@ -22,6 +22,6 @@ void openMemoryDumper(void);
 /* Open system logs */
 void openSysLogs(void);
 /* Print new string to logs */
-void print_log(uint8_t* str);
+void print_log(uint8* str);
 
 #endif

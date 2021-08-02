@@ -2,12 +2,12 @@
 #include "inc/ps2.h"
 #include "inc/stdio.h"
 
-uint32_t cursorX = 0;
-uint32_t cursorY = 0;
-uint8_t printColor = STANDART_SCREEN_COLOR;
-uint8_t inputExitCode = 0x0;
+uint32 cursorX = 0;
+uint32 cursorY = 0;
+uint8 printColor = STANDART_SCREEN_COLOR;
+uint8 inputExitCode = 0x0;
 
-uint8_t* VIDMEM = (uint8_t*) 0xb8000;
+uint8* VIDMEM = (uint8*) 0xb8000;
 
 void clear_screen(void) {
     printColor = STANDART_SCREEN_COLOR;
@@ -24,8 +24,8 @@ void clear_screen(void) {
     update_cursor();
 }
 
-void print_char(uint8_t aChar) {
-    uint8_t* adressToPrint = (uint8_t*) VIDMEM + (cursorX * 2 + cursorY * 160);
+void print_char(uint8 aChar) {
+    uint8* adressToPrint = (uint8*) VIDMEM + (cursorX * 2 + cursorY * 160);
 
     if(aChar == 0xA) {
         // New line
@@ -36,7 +36,7 @@ void print_char(uint8_t aChar) {
         if(cursorX != 0) {
             cursorX -= 1;
 
-            adressToPrint = (uint8_t*) VIDMEM + (cursorX * 2 + cursorY * 160);
+            adressToPrint = (uint8*) VIDMEM + (cursorX * 2 + cursorY * 160);
             adressToPrint[0] = ' ';
             adressToPrint[1] = printColor;
         }
@@ -55,8 +55,8 @@ void print_char(uint8_t aChar) {
     update_cursor();
 }
 
-void print_char_noupdates(uint8_t aChar) {
-    uint8_t* adressToPrint = (uint8_t*) VIDMEM + (cursorX * 2 + cursorY * 160);
+void print_char_noupdates(uint8 aChar) {
+    uint8* adressToPrint = (uint8*) VIDMEM + (cursorX * 2 + cursorY * 160);
 
     adressToPrint[0] = aChar;
     adressToPrint[1] = printColor;
@@ -68,16 +68,16 @@ void print_char_noupdates(uint8_t aChar) {
     }
 }
 
-void print_string(const uint8_t* string) {
-    uint32_t i = 0;
+void print_string(const uint8* string) {
+    uint32 i = 0;
     while(string[i] != 0x0) {
         print_char(string[i]);
         i += 1;
     }
 }
 
-void print_string_noupdates(const uint8_t* string) {
-    uint32_t i = 0;
+void print_string_noupdates(const uint8* string) {
+    uint32 i = 0;
     while(string[i] != 0x0) {
         print_char_noupdates(string[i]);
         i += 1;
@@ -86,14 +86,14 @@ void print_string_noupdates(const uint8_t* string) {
 
 void update_scrolling(void) {
     if(cursorY >= 25) {
-        uint8_t* si = (uint8_t*) VIDMEM+(80*2);
-        uint8_t* di = (uint8_t*) VIDMEM;
+        uint8* si = (uint8*) VIDMEM+(80*2);
+        uint8* di = (uint8*) VIDMEM;
 
         for(int i=0; i < 80*24*2; i++) {
             di[i] = si[i];
         }
 
-        di = (uint8_t*) VIDMEM+(80*24*2);
+        di = (uint8*) VIDMEM+(80*24*2);
         for(int i=0; i < 80*2; i++) {
             di[i] = ' ';
             i++;
@@ -104,7 +104,7 @@ void update_scrolling(void) {
 }
 
 void update_cursor(void) {
-    uint16_t cursorPosition = cursorY * 80 + cursorX;
+    uint16 cursorPosition = cursorY * 80 + cursorX;
 
     port_byte_out(0x03D4, 0x0F);
     port_byte_out(0x03D5, cursorPosition);
@@ -113,7 +113,7 @@ void update_cursor(void) {
     port_byte_out(0x03D5, cursorPosition >> 8);
 }
 
-void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
+void enable_cursor(uint8 cursor_start, uint8 cursor_end) {
     port_byte_out(0x03D4, 0x0A);
     port_byte_out(0x03D5, (port_byte_in(0x03D5) & 0xC0) | cursor_start);
 
@@ -126,19 +126,19 @@ void disable_cursor(void) {
 	port_byte_out(0x3D5, 0x20);
 }
 
-uint8_t* get_input() {
-    static uint8_t inputBuffer[60];
+uint8* get_input() {
+    static uint8 inputBuffer[60];
     unsigned int inputBufferCounter = 0;
 
     // Reset input buffer
-    uint8_t* di = (uint8_t*) &inputBuffer;
+    uint8* di = (uint8*) &inputBuffer;
     for(int i=0; i < 60; i++) {
         di[i] = 0x0;
     }
 
     // Input loop
     while(1) {
-        uint8_t key = ps2_readKey();
+        uint8 key = ps2_readKey();
 
         if(key == 0x0) continue;
 
@@ -173,29 +173,29 @@ uint8_t* get_input() {
         inputBuffer[inputBufferCounter] = key;
         inputBufferCounter += 1;
     }
-    return (uint8_t*) &inputBuffer;
+    return (uint8*) &inputBuffer;
 }
 
-uint32_t str_len(const uint8_t* str) {
-    uint32_t i = 0;
+uint32 str_len(const uint8* str) {
+    uint32 i = 0;
     while(str[i] != 0x0) {
         i++;
     }
     return i;
 }
 
-uint8_t str_copmare_len(const uint8_t* str1, const uint8_t* str2) {
+uint8 str_copmare_len(const uint8* str1, const uint8* str2) {
     unsigned fst = str_len(str1);
     unsigned snd = str_len(str2);
     return fst == snd;
 }
 
-uint8_t str_compare(const uint8_t* str1, const uint8_t* str2) {
+uint8 str_compare(const uint8* str1, const uint8* str2) {
     if(!str_copmare_len(str1, str2)) 
         return 0;
 
-    uint8_t result = 1;
-    uint32_t i = 0;
+    uint8 result = 1;
+    uint32 i = 0;
     while(str1[i] != 0x0 || str2[i] != 0x0) {
         if(str1[i] == str2[i]) {
             i += 1;
@@ -207,8 +207,8 @@ uint8_t str_compare(const uint8_t* str1, const uint8_t* str2) {
     return result;
 }
 
-void str_upper(const uint8_t* string, uint8_t* destination) {
-    uint32_t i = 0;
+void str_upper(const uint8* string, uint8* destination) {
+    uint32 i = 0;
     while(string[i] != 0x0) {
         if(string[i] >= 'a' && string[i] <= 'z') {
             destination[i] -= 0x20;
@@ -219,8 +219,8 @@ void str_upper(const uint8_t* string, uint8_t* destination) {
     }
 }
 
-void str_lower(const uint8_t* string, uint8_t* destination) {
-    uint32_t i = 0;
+void str_lower(const uint8* string, uint8* destination) {
+    uint32 i = 0;
     while(string[i] != 0x0) {
         if(string[i] >= 'A' && string[i] <= 'Z') {
             destination[i] += 0x20;
@@ -231,7 +231,7 @@ void str_lower(const uint8_t* string, uint8_t* destination) {
     }
 }
 
-void str_concat(uint8_t* concatTo, uint8_t* from) {
+void str_concat(uint8* concatTo, uint8* from) {
     int i = 0;
     while(concatTo[i] != 0x0) i++;
 
@@ -243,10 +243,10 @@ void str_concat(uint8_t* concatTo, uint8_t* from) {
 }
 
 // TODO: Find better solution for using this procedure
-void str_split(const uint8_t* string, uint8_t* destination, uint8_t separator, uint32_t index) {
-    uint32_t parsingIndex = 0;
-    uint32_t destIndex = 0;
-    uint32_t i = 0;
+void str_split(const uint8* string, uint8* destination, uint8 separator, uint32 index) {
+    uint32 parsingIndex = 0;
+    uint32 destIndex = 0;
+    uint32 i = 0;
     while(string[i] != 0x0) {
         if(index < parsingIndex) {
             break;
@@ -265,7 +265,7 @@ void str_split(const uint8_t* string, uint8_t* destination, uint8_t separator, u
     }
 }
 
-void print_hex4bit(uint8_t char4bit) {
+void print_hex4bit(uint8 char4bit) {
     char4bit += 0x30;
     if(char4bit <= 0x39) {
         print_char(char4bit);
@@ -275,34 +275,34 @@ void print_hex4bit(uint8_t char4bit) {
     }
 }
 
-void print_hexb(uint8_t byte) {
+void print_hexb(uint8 byte) {
     print_hex4bit(byte >> 4);
     print_hex4bit(byte & 0x0F);
 }
 
-void print_hexw(uint16_t word) {
+void print_hexw(uint16 word) {
     print_hexb(word >> 8);
     print_hexb(word & 0x00FF);
 }
 
-void print_hexdw(uint32_t dword) {
+void print_hexdw(uint32 dword) {
     print_hexw(dword >> 16);
     print_hexw(dword & 0x0000FFFF);
 }
 
-void mem_copy(uint8_t* source, uint8_t* destination, uint32_t bytesAmount) {
+void mem_copy(uint8* source, uint8* destination, uint32 bytesAmount) {
     for(int i=0; i < bytesAmount; i++) {
         destination[i] = source[i];
     }
 }
 
-void mem_set(uint8_t* ptr, uint8_t byte, uint32_t amount) {
+void mem_set(uint8* ptr, uint8 byte, uint32 amount) {
     for(int i=0; i < amount; i++) {
         ptr[i] = byte;
     }
 }
 
-void panic(const uint8_t* message, const char *file, uint32_t line) {
+void panic(const uint8* message, const char *file, uint32 line) {
     asm volatile("cli");
     print_string("PANIC (");
     print_string(message);

@@ -6,7 +6,7 @@
 #include "inc/kernel.h"
 #include "inc/ports.h"
 
-uint32_t tick = 0;
+uint32 tick = 0;
 
 static void timer_callback(registers_t regs) {
     tick++;
@@ -15,7 +15,7 @@ static void timer_callback(registers_t regs) {
     print_string("\n");
 }
 
-void init_timer(uint32_t freq) {
+void init_timer(uint32 freq) {
     // Firstly, register our timer callback.
     register_interrupt_handler(IRQ0, &timer_callback);
 
@@ -23,14 +23,14 @@ void init_timer(uint32_t freq) {
     // (1193180 Hz) by, to get our required frequency. Important to note is
     // that the divisor must be small enough to fit into 16-bits.
 
-    uint32_t divisor = 1193180 / freq;
+    uint32 divisor = 1193180 / freq;
 
     // Send the command byte
     port_byte_out(0x43, 0x36);
 
     // Divisor has to be sent byte-wise, so split here into upper/lower bytes.
-    uint8_t l = (uint8_t)(divisor & 0xFF);
-    uint8_t h = (uint8_t)( (divisor>>8) & 0xFF );
+    uint8 l = (uint8)(divisor & 0xFF);
+    uint8 h = (uint8)( (divisor>>8) & 0xFF );
 
     // Send the frequency divisor.
     port_byte_out(0x40, l);

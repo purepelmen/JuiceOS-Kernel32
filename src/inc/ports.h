@@ -4,15 +4,15 @@
 #include "stdio.h"
 
 /* Read byte from port */
-uint8_t port_byte_in(uint16_t port);
+uint8 port_byte_in(uiuint16ort);
 
 /* Write byte to port */
-void port_byte_out(uint16_t port, uint8_t data);
+void port_byte_out(uint16 port, uint8 data);
 
 /* Read word from port */
-uint16_t port_word_in(uint16_t port);
+uint16 port_word_in(uint16 port);
 
 /* Write word to port */
-void port_word_out(uint16_t port, uint16_t data);
+void port_word_out(uint16 port, uint16 data);
 
 #endif
