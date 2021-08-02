@@ -1,17 +1,17 @@
 Update 1.0.2:
-    Beta1:
+    Change [1]:
         - 'Test' command deleted
         - Memory dumper added
         - Types lib deleted. Its function moved to STDIO lib
         - Few changes with 'print_char_noupdates' function
         - And other omptimizations and fixes
-    Beta2:
+    Change [2]:
         - 'scantest' command omptimized
         - Multiboot verifying and cpuid support check added to kernel
         - PS/2 driver optimization
         - New STDIO method: 'memcopy'
         - Stdio, PS/2 driver and Ports lib function documentated
-    Beta3:
+    Change [3]:
         - PS/2 Driver Numpad support
         - PS/2 Driver handles right shift
         - STDIO functions optimizations
@@ -20,7 +20,7 @@ Update 1.0.2:
         - IDT defined. Interrupts can be handled now 
         - Console style changes
         - PIT driver added
-    Beta4:
+    Change [4]:
         - Small fixes
         - PS/2 driver omptimized. Now it takes less CPU and battery usage.
         - GRUB now won't show the list of operating systems, now it boots the kernel immediately.

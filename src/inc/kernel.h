@@ -1,7 +1,7 @@
 #ifndef C_KERNEL
 #define C_KERNEL
 
-#define KERNEL_VERSION "1.0.2-Beta4"
+#define KERNEL_VERSION "1.0.2"
 
 extern uint8_t* cpuid_get_id(void);
 extern uint8_t* cpuid_get_model(void);
