@@ -301,3 +301,15 @@ void mem_set(uint8_t* ptr, uint8_t byte, uint32_t amount) {
         ptr[i] = byte;
     }
 }
+
+void panic(const uint8_t* message, const char *file, uint32_t line) {
+    asm volatile("cli");
+    print_string("PANIC (");
+    print_string(message);
+    print_string(") at ");
+    print_string(file);
+    print_string(":");
+    print_hexdw(line);
+    print_string("\n");
+    for(;;);
+}

@@ -83,4 +83,8 @@ void mem_copy(uint8_t* source, uint8_t* destination, uint32_t bytesAmount);
 /* Fill memory by given byte */
 void mem_set(uint8_t* ptr, uint8_t byte, uint32_t amount);
 
+#define PANIC(msg) panic(msg, __FILE__, __LINE__);
+
+void panic(const uint8_t* message, const char *file, uint32_t line);
+
 #endif

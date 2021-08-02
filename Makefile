@@ -24,7 +24,7 @@ $(ASM_OBJS):
 
 $(C_OBJS):
 	@echo "GCC $(@:.o=.c)"
-	@gcc -m32 -o $(@:src%=$(OBJECTS)%) -c $(@:.o=.c)
+	@gcc -ffreestanding -m32 -o $(@:src%=$(OBJECTS)%) -c $(@:.o=.c)
 
 clean:
 	@rm -f $(BUILD)/*.elf

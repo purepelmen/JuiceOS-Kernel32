@@ -25,3 +25,9 @@ Update 1.0.2:
         - PS/2 driver omptimized. Now it takes less CPU and battery usage.
         - GRUB now won't show the list of operating systems, now it boots the kernel immediately.
         - Text cursor controll functions added.
+        - Functions refactoring.
+        - GCC compilation changed a little.
+        - Paging is set up.
+        - Basic memory managment is implemented(heap).
+        - More fixes.
+        - Added PANIC function that stops execution and halt the system.

@@ -19,7 +19,7 @@ idt_ptr_t   idt_ptr;
 void init_descriptor_tables() {
     init_gdt();
     init_idt();
-    printLog("GDT/IDT Tables was successfully inited and loaded.\n");
+    print_log("GDT/IDT Tables was successfully inited and loaded.\n");
 }
 
 void reset_idt() {

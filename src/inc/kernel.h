@@ -22,6 +22,6 @@ void openMemoryDumper(void);
 /* Open system logs */
 void openSysLogs(void);
 /* Print new string to logs */
-void printLog(uint8_t* str);
+void print_log(uint8_t* str);
 
 #endif

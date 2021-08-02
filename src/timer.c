@@ -36,5 +36,5 @@ void init_timer(uint32_t freq) {
     port_byte_out(0x40, l);
     port_byte_out(0x40, h);
 
-    printLog("PIT was initialized.");
+    print_log("PIT was initialized.");
 }

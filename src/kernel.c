@@ -3,6 +3,7 @@
 #include "inc/descriptor_tables.h"
 #include "inc/kernel.h"
 #include "inc/timer.h"
+#include "inc/paging.h"
 
 static uint8_t systemLogBuffer[2048];
 
@@ -10,7 +11,10 @@ void kernel_init(void) {
     // Initialise all the ISRs and segmentation
     init_descriptor_tables();
     enable_cursor(0xE, 0xF);
-    printLog("Kernel initialization completed.");
+    clear_screen();
+    initialise_paging();
+
+    print_log("Kernel initialization completed.");
 }
 
 void kernel_main(void) {
@@ -341,7 +345,7 @@ void openMemoryDumper(void) {
     }
 }
 
-void printLog(uint8_t* str) {
+void print_log(uint8_t* str) {
     if(str_len((uint8_t*) &systemLogBuffer) + str_len(str) > 2046) return;
     str_concat((uint8_t*) &systemLogBuffer, str);
 }
@@ -349,5 +353,5 @@ void printLog(uint8_t* str) {
 void openSysLogs(void) {
     clear_screen();
     print_string((uint8_t*) &systemLogBuffer);
-    ps2_scancode(true);
+    ps2_readKey();
 }

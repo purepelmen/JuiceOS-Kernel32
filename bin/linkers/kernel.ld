@@ -12,4 +12,16 @@ SECTIONS {
     {
         *(.text)
     }
+
+    .data :
+    {
+        *(.data)
+    }
+
+    .bss :
+    {
+        *(.bss)
+    }
+
+    end = .;
 }
