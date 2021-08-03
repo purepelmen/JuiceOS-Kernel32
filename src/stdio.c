@@ -1,3 +1,12 @@
+/*
+    *
+    **
+    *** STDIO.C -- provides basic functions for printing strings, getting the input, 
+    *** working with strings and memory.
+    **
+    *
+*/
+
 #include "inc/ports.h"
 #include "inc/ps2.h"
 #include "inc/stdio.h"

@@ -20,17 +20,17 @@
 #define IRQ14 46
 #define IRQ15 47
 
+// Pack of register and data that passes to interrupt handlers
 typedef struct registers {
-    uint32 ds;                  // Data segment selector
-    uint32 edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
-    uint32 int_no, err_code;    // Interrupt number and error code (if applicable)
-    uint32 eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
+    uint32 ds;
+    uint32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
+    uint32 int_no, err_code;
+    uint32 eip, cs, eflags, useresp, ss;
 } registers_t;
 
 // Enables registration of callbacks for interrupts or IRQs.
-// For IRQs, to ease confusion, use the #defines above as the
-// first parameter.
 typedef void (*isr_t)(registers_t);
+
 void register_interrupt_handler(uint8 n, isr_t handler);
 
 #endif

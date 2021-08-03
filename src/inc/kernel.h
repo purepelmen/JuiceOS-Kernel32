@@ -3,7 +3,9 @@
 
 #define KERNEL_VERSION "1.0.2"
 
+// Return CPU ID
 extern uint8* cpuid_get_id(void);
+// Return the model of processor
 extern uint8* cpuid_get_model(void);
 
 /* Initalize all descriptor tables, setup interrupts and so on... */

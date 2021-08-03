@@ -1,3 +1,11 @@
+/*
+    *
+    **
+    *** PORTS.C -- provides functions for I/O operations with ports.
+    **
+    *
+*/
+
 #include "inc/stdio.h"
 #include "inc/ports.h"
 

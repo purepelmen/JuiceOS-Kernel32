@@ -4,8 +4,6 @@
 ;;
 ;
 
-; This macro creates a stub for an ISR which does NOT pass it's own
-; error code (adds a dummy errcode byte).
 %macro ISR_NOERRCODE 1
   global isr%1
   isr%1:
@@ -15,8 +13,6 @@
     jmp isr_common_stub         ; Go to our common handler code.
 %endmacro
 
-; This macro creates a stub for an ISR which passes it's own
-; error code.
 %macro ISR_ERRCODE 1
   global isr%1
   isr%1:
@@ -25,8 +21,6 @@
     jmp isr_common_stub
 %endmacro
 
-; This macro creates a stub for an IRQ - the first parameter is
-; the IRQ number, the second is the ISR number it is remapped to.
 %macro IRQ 2
   global irq%1
   irq%1:
@@ -86,11 +80,8 @@ IRQ  14,    46
 IRQ  15,    47
 
 ; In isr.c
-extern isr_handler
+[extern isr_handler]
 
-; This is our common ISR stub. It saves the processor state, sets
-; up for kernel mode segments, calls the C-level fault handler,
-; and finally restores the stack frame.
 isr_common_stub:
     pusha                    ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
@@ -117,11 +108,8 @@ isr_common_stub:
     iret           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
 ; In isr.c
-extern irq_handler
+[extern irq_handler]
 
-; This is our common IRQ stub. It saves the processor state, sets
-; up for kernel mode segments, calls the C-level fault handler,
-; and finally restores the stack frame.
 irq_common_stub:
     pusha                    ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
@@ -146,6 +134,3 @@ irq_common_stub:
     add esp, 8     ; Cleans up the pushed error code and pushed ISR number
     sti
     iret           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
-
-
-        

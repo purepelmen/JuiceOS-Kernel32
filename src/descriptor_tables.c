@@ -1,3 +1,11 @@
+/*
+    *
+    **
+    *** DESCRIPTOR_TABLES.C -- Initialises GDT/IDT and flushes it. 
+    **
+    *
+*/
+
 #include "inc/stdio.h"
 #include "inc/kernel.h"
 #include "inc/ports.h"

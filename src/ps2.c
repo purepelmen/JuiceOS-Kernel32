@@ -1,3 +1,11 @@
+/*
+    *
+    **
+    *** PS2.C -- PS/2 keyboard driver.
+    **
+    *
+*/
+
 #include "inc/stdio.h"
 #include "inc/ports.h"
 #include "inc/ps2.h"

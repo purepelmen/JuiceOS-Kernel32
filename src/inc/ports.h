@@ -4,7 +4,7 @@
 #include "stdio.h"
 
 /* Read byte from port */
-uint8 port_byte_in(uiuint16ort);
+uint8 port_byte_in(uint16 port);
 
 /* Write byte to port */
 void port_byte_out(uint16 port, uint8 data);

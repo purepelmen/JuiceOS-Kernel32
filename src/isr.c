@@ -8,12 +8,7 @@ void register_interrupt_handler(uint8 n, isr_t handler) {
     interrupt_handlers[n] = handler;
 }
 
-// This gets called from our ASM interrupt handler stub.
 void isr_handler(registers_t regs) {
-    print_string("\nRecieved interrupt: 0x");
-    print_hexb(regs.int_no);
-    print_char('\n');
-
     if (interrupt_handlers[regs.int_no] != 0) {
         isr_t handler = interrupt_handlers[regs.int_no];
         handler(regs);
@@ -28,9 +23,9 @@ void irq_handler(registers_t regs) {
         port_byte_out(0xA0, 0x20);
     }
 
+    // Send reset signal to master. (As well as slave, if necessary).
     port_byte_out(0x20, 0x20);
 
-    // Send reset signal to master. (As well as slave, if necessary).
     if(interrupt_handlers[regs.int_no] != 0) {
         isr_t handler = interrupt_handlers[regs.int_no];
         handler(regs);

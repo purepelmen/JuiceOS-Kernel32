@@ -12,6 +12,8 @@ typedef unsigned int    uint32;
 #define STANDART_INVERTED_SCREEN_COLOR  0x70
 #define STANDART_CONSOLE_PREFIX_COLOR   0x02
 
+#define PANIC(msg) panic(msg, __FILE__, __LINE__);
+
 extern uint32   cursorX;
 extern uint32   cursorY;
 extern uint8    printColor;
@@ -83,8 +85,7 @@ void mem_copy(uint8* source, uint8* destination, uint32 bytesAmount);
 /* Fill memory by given byte */
 void mem_set(uint8* ptr, uint8 byte, uint32 amount);
 
-#define PANIC(msg) panic(msg, __FILE__, __LINE__);
-
-void panic(const uint8* message, const char *file, uint32 line);
+// Cause panic. It shows error message and halts the system.
+void panic(const uint8* message, const char* file, uint32 line);
 
 #endif

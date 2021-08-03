@@ -1,4 +1,10 @@
-// timer.c -- Initialises the PIT, and handles clock updates.
+/*
+    *
+    **
+    *** TIMER.C -- Initialises the PIT timer and handles its updates.
+    **
+    *
+*/
 
 #include "inc/timer.h"
 #include "inc/isr.h"
