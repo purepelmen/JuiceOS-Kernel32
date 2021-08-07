@@ -14,7 +14,7 @@
 
 uint32 tick = 0;
 
-static void timer_callback(registers_t regs) {
+static void timer_callback(registers_t* regs) {
     tick++;
     print_string("Tick: ");
     print_hexdw(tick);

@@ -1,9 +1,11 @@
-#include "inc/stdio.h"
-#include "inc/ps2.h"
 #include "inc/descriptor_tables.h"
 #include "inc/kernel.h"
 #include "inc/timer.h"
+#include "inc/stdio.h"
+#include "inc/ps2.h"
+#include "inc/system.h"
 
+// Buffer of the system log
 static uint8 systemLogBuffer[2048];
 
 void kernel_init(void) {
@@ -11,7 +13,8 @@ void kernel_init(void) {
     init_descriptor_tables();
     enable_cursor(0xE, 0xF);
     clear_screen();
-
+    registerSystemHandlers();
+    
     print_log("Kernel initialization completed.\n");
 }
 
@@ -106,8 +109,7 @@ void console(void) {
             print_string("PITTEST - Init PIT timer to test it.\n");
             print_string("REBOOT - Reboot your PC.\n");
             print_string("SCANTEST - Print scancode of every pressed key.\n");
-            print_string("SYSTEM - Print system information.\n");
-            print_string("TEST_INT10H - Test IDT. It calls 0x10 interrupt.\n\n");
+            print_string("SYSTEM - Print system information.\n\n");
             continue;
         }
 
@@ -126,18 +128,12 @@ void console(void) {
             continue;
         }
 
-        if(str_compare(command, "test_int10h")) {
-            asm volatile("int $0x10");
-            print_char('\n');
-            continue;
-        }
-
         if(str_compare(command, "pittest")) {
             init_timer(50);
             continue;
         }
         
-        print_string("Your typed command is not found.\n\n");
+        print_string("Unknown command.\n\n");
     }
 }
 

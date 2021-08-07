@@ -1,7 +1,9 @@
 #ifndef C_KERNEL
 #define C_KERNEL
 
-#define KERNEL_VERSION "1.0.2"
+#define KERNEL_VERSION "1.0.3"
+
+#include "stdio.h"
 
 // Return CPU ID
 extern uint8* cpuid_get_id(void);

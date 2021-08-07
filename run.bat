@@ -1,1 +1,1 @@
-qemu-system-x86_64 \\wsl$\Ubuntu-20.04\home\daniel\kernel32\bin\JuiceOS.iso
+qemu-system-x86_64 -cdrom \\wsl$\Ubuntu-20.04\home\daniel\kernel32\bin\JuiceOS.iso -m 256M -display sdl -vga std -name JuiceOS -machine q35

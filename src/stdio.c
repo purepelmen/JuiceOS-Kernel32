@@ -140,10 +140,7 @@ uint8* get_input() {
     unsigned int inputBufferCounter = 0;
 
     // Reset input buffer
-    uint8* di = (uint8*) &inputBuffer;
-    for(int i=0; i < 60; i++) {
-        di[i] = 0x0;
-    }
+    mem_set((uint8*) &inputBuffer, 0x0, 60);
 
     // Input loop
     while(1) {
@@ -193,13 +190,13 @@ uint32 str_len(const uint8* str) {
     return i;
 }
 
-uint8 str_copmare_len(const uint8* str1, const uint8* str2) {
+boolean str_copmare_len(const uint8* str1, const uint8* str2) {
     unsigned fst = str_len(str1);
     unsigned snd = str_len(str2);
     return fst == snd;
 }
 
-uint8 str_compare(const uint8* str1, const uint8* str2) {
+boolean str_compare(const uint8* str1, const uint8* str2) {
     if(!str_copmare_len(str1, str2)) 
         return 0;
 
@@ -321,4 +318,35 @@ void panic(const uint8* message, const char *file, uint32 line) {
     print_hexdw(line);
     print_string("\n");
     for(;;);
+}
+
+void showError(const uint8* error, const uint8* causedBy, const uint8* handledBy, const uint8* details) {
+    printColor = 0x04;
+    print_string("SYSTEM ERROR! (");
+    printColor = 0x0F;
+    print_string(error);
+    printColor = 0x04;
+    print_string(")");
+    print_string("\n");
+
+    print_string("Caused by: ");
+    printColor = 0x0F;
+    print_string(causedBy);
+    print_string("\n");
+
+    printColor = 0x04;
+    print_string("Handled by: ");
+    printColor = 0x0F;
+    print_string(handledBy);
+    print_string("\n");
+
+    if(str_len(details) > 0) {
+        printColor = 0x04;
+        print_string("Detailed information: ");
+        printColor = 0x0F;
+        print_string(details);
+        print_string("\n");
+    }
+
+    printColor = STANDART_SCREEN_COLOR;
 }

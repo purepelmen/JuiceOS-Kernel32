@@ -4,6 +4,7 @@
 typedef unsigned char   uint8;
 typedef unsigned short  uint16;
 typedef unsigned int    uint32;
+typedef unsigned char   boolean;
 
 #define true                            1
 #define false                           0
@@ -53,10 +54,10 @@ uint8* get_input();
 uint32 str_len(const uint8* str);
 
 /* Compare the lengths of two strings */
-uint8 str_copmare_len(const uint8* str1, const uint8* str2);
+boolean str_copmare_len(const uint8* str1, const uint8* str2);
 
 /* Compare two strings */
-uint8 str_compare(const uint8* str1, const uint8* str2);
+boolean str_compare(const uint8* str1, const uint8* str2);
 
 /* Make text uppercase */
 void str_upper(const uint8* string, uint8* destination);
@@ -87,5 +88,8 @@ void mem_set(uint8* ptr, uint8 byte, uint32 amount);
 
 // Cause panic. It shows error message and halts the system.
 void panic(const uint8* message, const char* file, uint32 line);
+
+// Show an error.
+void showError(const uint8* error, const uint8* causedBy, const uint8* handledBy, const uint8* details);
 
 #endif
