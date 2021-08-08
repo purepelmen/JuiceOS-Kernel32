@@ -10,6 +10,7 @@
 #include "inc/ports.h"
 #include "inc/ps2.h"
 #include "inc/stdio.h"
+#include "inc/heap.h"
 
 uint32 cursorX = 0;
 uint32 cursorY = 0;
@@ -136,11 +137,11 @@ void disable_cursor(void) {
 }
 
 uint8* get_input() {
-    static uint8 inputBuffer[60];
+    uint8* inputBuffer = malloc(60);
     unsigned int inputBufferCounter = 0;
 
     // Reset input buffer
-    mem_set((uint8*) &inputBuffer, 0x0, 60);
+    mem_set(inputBuffer, 0x0, 60);
 
     // Input loop
     while(1) {
@@ -179,7 +180,7 @@ uint8* get_input() {
         inputBuffer[inputBufferCounter] = key;
         inputBufferCounter += 1;
     }
-    return (uint8*) &inputBuffer;
+    return inputBuffer;
 }
 
 uint32 str_len(const uint8* str) {
@@ -294,6 +295,33 @@ void print_hexw(uint16 word) {
 void print_hexdw(uint32 dword) {
     print_hexw(dword >> 16);
     print_hexw(dword & 0x0000FFFF);
+}
+
+void print_number(uint32 num) {
+    if (num == 0) {
+        print_char('0');
+        return;
+    }
+
+    int acc = num;
+    char c[32];
+    int i = 0;
+    while (acc > 0) {
+        c[i] = '0' + acc%10;
+        acc /= 10;
+        i++;
+    }
+
+    c[i] = 0;
+
+    char c2[32];
+    c2[i--] = 0;
+    int j = 0;
+    while(i >= 0) {
+        c2[i--] = c[j++];
+    }
+
+    print_string(c2);
 }
 
 void mem_copy(uint8* source, uint8* destination, uint32 bytesAmount) {

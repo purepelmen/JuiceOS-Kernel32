@@ -11,6 +11,7 @@ header_start:
     dd 8
 header_end:
 
+section .text
 [bits 32]
 
 extern kernel_main
@@ -65,10 +66,125 @@ check_cpuid:
     call ps2_readKey
     jmp 0xffff0
 
+
+;; CPUID functions definition
+
+[global cpuid_get_id]
+[global cpuid_get_model]
+
+cpuid_get_id:
+    push ebp
+    mov ebp, esp
+    pushad
+    
+    mov edi, cpuInfoStr
+    xor eax, eax
+    cpuid
+
+    ; EBX
+    mov eax, ebx
+    stosd
+    ; EDX
+    mov eax, edx
+    stosd
+    ; ECX
+    mov eax, ecx
+    stosd
+
+    popad
+    mov eax, cpuInfoStr
+    pop ebp
+    ret
+
+cpuid_get_model:
+    push ebp
+    mov ebp, esp
+    pushad
+
+    mov edi, cpuModelInfoStr
+    mov eax, 0x80000002
+    cpuid
+
+    ; EAX
+    stosd
+    ; EBX
+    mov eax, ebx
+    stosd
+    ; ECX
+    mov eax, ecx
+    stosd
+    ; EDX
+    mov eax, edx
+    stosd
+
+    mov eax, 0x80000003
+    cpuid
+
+    ; EAX
+    stosd
+    ; EBX
+    mov eax, ebx
+    stosd
+    ; ECX
+    mov eax, ecx
+    stosd
+    ; EDX
+    mov eax, edx
+    stosd
+
+    mov eax, 0x80000004
+    cpuid
+
+    ; EAX
+    stosd
+    ; EBX
+    mov eax, ebx
+    stosd
+    ; ECX
+    mov eax, ecx
+    stosd
+    ; EDX
+    mov eax, edx
+    stosd
+
+    popad
+    mov eax, cpuModelInfoStr
+    pop ebp
+    ret
+
+;; GDT/IDT flush function definition
+
+[global gdt_flush]
+[global idt_flush]
+
+gdt_flush:
+    mov eax, [esp+4]  ; Get the pointer to the GDT, passed as a parameter.
+    lgdt [eax]        ; Load the new GDT pointer
+
+    mov ax, 0x10      ; 0x10 is the offset in the GDT to our data segment
+    mov ds, ax        ; Load all data segment selectors
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov ss, ax
+    jmp 0x08:.flush   ; 0x08 is the offset to our code segment: Far jump!
+.flush:
+    ret
+
+idt_flush:
+    mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter. 
+    lidt [eax]        ; Load the IDT pointer.
+    sti               ; Enable interrupts
+    ret
+
+
 no_multiboot_str: db "Kernel booted without multiboot! You cannot continue loading this OS.", 0xA
                   db "Press any key to reboot...", 0
 no_cpuid_str:     db "CPUID is not supported on this PC! You cannot continue loading this OS.", 0xA
                   db "Press any key to reboot...", 0
+
+cpuInfoStr: times 14 db 0
+cpuModelInfoStr: times 50 db 0
 
 section .bss
 stack_bottom:

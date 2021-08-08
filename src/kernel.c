@@ -1,9 +1,11 @@
 #include "inc/descriptor_tables.h"
 #include "inc/kernel.h"
+#include "inc/system.h"
 #include "inc/timer.h"
 #include "inc/stdio.h"
+#include "inc/ports.h"
+#include "inc/heap.h"
 #include "inc/ps2.h"
-#include "inc/system.h"
 
 // Buffer of the system log
 static uint8 systemLogBuffer[2048];
@@ -11,6 +13,7 @@ static uint8 systemLogBuffer[2048];
 void kernel_init(void) {
     // Initialise all the ISRs and segmentation
     init_descriptor_tables();
+    init_heap();
     enable_cursor(0xE, 0xF);
     clear_screen();
     registerSystemHandlers();
@@ -141,7 +144,7 @@ void openMenu(void) {
     clear_screen();
     const uint8 NON_SELECTED_COLOR = STANDART_SCREEN_COLOR;
     const uint8 SELECTED_COLOR = STANDART_INVERTED_SCREEN_COLOR;
-    const uint8 ITEMS_AMOUNT = 4;         // Zero means - 1
+    const uint8 ITEMS_AMOUNT = 5;         // Zero means - 1
 
     uint8 currentPosition = 0;
     while(1) {
@@ -191,6 +194,14 @@ void openMenu(void) {
             printColor = NON_SELECTED_COLOR;
         print_string("Show system logs");
 
+        cursorX = 6;
+        cursorY = 8;
+        if(currentPosition == 5)
+            printColor = SELECTED_COLOR;
+        else 
+            printColor = NON_SELECTED_COLOR;
+        print_string("Debug");
+
         // Getting input
         uint8 key = ps2_scancode(true);
         if(key == 0x48) {
@@ -221,6 +232,10 @@ void openMenu(void) {
             }
             if(currentPosition == 4) {
                 openSysLogs();
+                clear_screen();
+            }
+            if(currentPosition == 5) {
+                openDebug();
                 clear_screen();
             }
         }
@@ -348,4 +363,143 @@ void openSysLogs(void) {
     clear_screen();
     print_string((uint8*) &systemLogBuffer);
     ps2_readKey();
+}
+
+void openDebug(void) {
+    clear_screen();
+
+    while(1) {
+        uint32 res;
+
+        cursorX = 0;
+        cursorY = 0;
+
+        printColor = STANDART_INVERTED_SCREEN_COLOR;
+        print_string("                                    Debugger                                    ");
+        printColor = STANDART_SCREEN_COLOR;
+
+        // EBP ---------------------------------
+        cursorX = 2;
+        cursorY = 2;
+        print_string("EBP: 0x");
+
+        __asm__("mov %%ebp, %%edx" : "=d" (res));
+        print_hexdw(res);
+
+        // ESP ---------------------------------
+        cursorX = 22;
+        cursorY = 2;
+        print_string("ESP: 0x");
+
+        __asm__("mov %%esp, %%edx" : "=d" (res));
+        print_hexdw(res);
+
+        // CS ---------------------------------
+        cursorX = 42;
+        cursorY = 2;
+        print_string("CS: 0x");
+
+        __asm__("mov %%cs, %%edx" : "=d" (res));
+        print_hexdw(res);
+
+        // DS ---------------------------------
+        cursorX = 62;
+        cursorY = 2;
+        print_string("DS: 0x");
+
+        __asm__("mov %%ds, %%edx" : "=d" (res));
+        print_hexdw(res);
+
+        // ES ---------------------------------
+        cursorX = 2;
+        cursorY = 4;
+        print_string("ES: 0x");
+
+        __asm__("mov %%es, %%edx" : "=d" (res));
+        print_hexdw(res);
+
+        // GS ---------------------------------
+        cursorX = 22;
+        cursorY = 4;
+        print_string("GS: 0x");
+
+        __asm__("mov %%gs, %%edx" : "=d" (res));
+        print_hexdw(res);
+
+        // FS ---------------------------------
+        cursorX = 42;
+        cursorY = 4;
+        print_string("FS: 0x");
+
+        __asm__("mov %%fs, %%edx" : "=d" (res));
+        print_hexdw(res);
+
+        // SS ---------------------------------
+        cursorX = 62;
+        cursorY = 4;
+        print_string("SS: 0x");
+
+        __asm__("mov %%ss, %%edx" : "=d" (res));
+        print_hexdw(res);
+
+        // CR0 --------------------------------
+        cursorX = 2;
+        cursorY = 6;
+        print_string("CR0: 0x");
+
+        __asm__("mov %%cr0, %%edx" : "=d" (res));
+        print_hexdw(res);
+
+        // CR2 --------------------------------
+        cursorX = 22;
+        cursorY = 6;
+        print_string("CR2: 0x");
+
+        __asm__("mov %%cr2, %%edx" : "=d" (res));
+        print_hexdw(res);
+
+        // CR3 --------------------------------
+        cursorX = 42;
+        cursorY = 6;
+        print_string("CR3: 0x");
+
+        __asm__("mov %%cr3, %%edx" : "=d" (res));
+        print_hexdw(res);
+
+        // CR4 --------------------------------
+        cursorX = 62;
+        cursorY = 6;
+        print_string("CR4: 0x");
+
+        __asm__("mov %%cr4, %%edx" : "=d" (res));
+        print_hexdw(res);
+
+        cursorX = 2;
+        cursorY = 8;
+        print_string("----------------------------------------------------------------------------");
+
+        // Heap -------------------------------
+        cursorX = 2;
+        cursorY = 10;
+        print_string("Heap allocated: ");
+
+        uint32 allocatedHeap = currentHeapValue - heapStartValue;
+        if(allocatedHeap / 1048576 > 0) {
+            print_number(allocatedHeap / 1048576);
+            print_string(" MB.");
+        } else if(allocatedHeap / 1024 > 0) {
+            print_number(allocatedHeap / 1024);
+            print_string(" KB.");
+        } else {
+            print_number(allocatedHeap);
+            print_string(" B.");
+        }
+
+        uint8 key = ps2_keyDown();
+        if(key == 0x01) {
+            break;
+        }
+
+        asm volatile("hlt");
+    }
 }

@@ -80,6 +80,9 @@ void print_hexw(uint16 word);
 /* Print 32-bit number as HEX */
 void print_hexdw(uint32 dword);
 
+/* Print 32-bit number as usual decimal number */
+void print_number(uint32 num);
+
 /* Copy 'bytesAmount' bytes of memory from 'source' to 'destination' */
 void mem_copy(uint8* source, uint8* destination, uint32 bytesAmount);
 

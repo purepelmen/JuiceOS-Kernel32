@@ -1,9 +1,7 @@
 ENTRY(start)
 
 SECTIONS {
-    . = 1M;
-
-    .boot :
+    .boot 0x100000:
     {
         *(.multiboot_header)
     }
@@ -16,10 +14,13 @@ SECTIONS {
     .data :
     {
         *(.data)
+        *(.rodata)
     }
 
     .bss :
     {
         *(.bss)
     }
+
+    end = .; _end = .; __end = .;
 }

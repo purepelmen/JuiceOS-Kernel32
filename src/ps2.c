@@ -17,6 +17,16 @@ uint8 shiftPressed = 0;
 uint8 leftCtrlPressed = 0;
 uint8 capsLockActive = 0;
 
+uint8 ps2_keyDown() {
+    uint8 scan = port_byte_in(0x64);
+        if(scan & 1) {
+            uint8 result = port_byte_in(0x60);
+            if(!(result & (1 << 7))) {
+                return result;
+            }
+        }
+}
+
 uint8 ps2_scancode(uint8 ignoreReleases) {
     while(1) {
         uint8 scan = port_byte_in(0x64);
@@ -119,3 +129,4 @@ uint8 ps2_readKey(void) {
 // CapsLock = 3a (ba release)
 // ESCAPE = 01 (81 release)
 // Right Shift = 36 (b6 release)
+// Delete = 53 (d3 release)
