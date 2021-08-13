@@ -75,11 +75,6 @@ uint8 ps2_readKey(void) {
             // On command sent
             continue;
         }
-        
-        if(scan == 0x5b) {
-            _char = 0xF0;
-            break;
-        }
 
         _char = asciiTable[scan];
 

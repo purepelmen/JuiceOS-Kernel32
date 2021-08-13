@@ -1,7 +1,6 @@
-#include "inc/descriptor_tables.h"
+#include "inc/gdt_idt.h"
 #include "inc/kernel.h"
 #include "inc/system.h"
-#include "inc/timer.h"
 #include "inc/stdio.h"
 #include "inc/ports.h"
 #include "inc/heap.h"
@@ -12,10 +11,10 @@ static uint8 systemLogBuffer[2048];
 
 void kernel_init(void) {
     // Initialise all the ISRs and segmentation
-    init_descriptor_tables();
     init_heap();
-    enable_cursor(0xE, 0xF);
     clear_screen();
+    enable_cursor(0xE, 0xF);
+    loadDescriptorTables();
     registerSystemHandlers();
     
     print_log("Kernel initialization completed.\n");
@@ -38,11 +37,6 @@ void console(void) {
         str_lower(command, command);
         print_char(0xA);
 
-        if(inputExitCode == 0xF0) {
-            // If WinLeft pressed
-            command = "exit";
-        }
-
         if(str_len(command) == 0) {
             // If nothing was printed
             continue;
@@ -53,9 +47,9 @@ void console(void) {
             continue;
         }
 
+        // TO FIX: This not working (all just hangs)
         if(str_compare(command, "reboot")) {
-            reset_idt();
-            __asm__("jmp 0xFFFF0");
+            print_string("This does not work for now.");
             continue;
         }
 
@@ -109,7 +103,6 @@ void console(void) {
             print_string("HELP - Print this message.\n");
             print_string("HELLO - Test command that say hello to you.\n");
             print_string("MEMDUMP - Open Memory dumper.\n");
-            print_string("PITTEST - Init PIT timer to test it.\n");
             print_string("REBOOT - Reboot your PC.\n");
             print_string("SCANTEST - Print scancode of every pressed key.\n");
             print_string("SYSTEM - Print system information.\n\n");
@@ -131,9 +124,8 @@ void console(void) {
             continue;
         }
 
-        if(str_compare(command, "pittest")) {
-            init_timer(50);
-            continue;
+        if(str_compare(command, "\x1B")) {
+            return;
         }
         
         print_string("Unknown command.\n\n");
@@ -192,7 +184,7 @@ void openMenu(void) {
             printColor = SELECTED_COLOR;
         else 
             printColor = NON_SELECTED_COLOR;
-        print_string("Show system logs");
+        print_string("System logs");
 
         cursorX = 6;
         cursorY = 8;
@@ -227,7 +219,6 @@ void openMenu(void) {
                 clear_screen();
             }
             if(currentPosition == 3) {
-                reset_idt();
                 __asm__ ("jmp 0xFFFF0");
             }
             if(currentPosition == 4) {
@@ -295,18 +286,40 @@ void openMemoryDumper(void) {
         printColor = STANDART_SCREEN_COLOR;
         cursorX = 0;
         cursorY = 2;
-        for(int i=0; i < 512; i++) {
+
+        print_string("    Offset: 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
+
+        cursorX = 0;
+        cursorY = 4;
+
+        for(int i=0; i < 256; i++) {
             if(asciiFlag) {
-                printColor = 0x07;
-                print_char_noupdates(memPtr[i]);
-                update_cursor();
-                printColor = STANDART_SCREEN_COLOR;
-                print_string("  ");
+                print_string("0x");
+                print_hexdw((uint32) memPtr + i);
+                print_string(": ");
+
+                for(int ii=0; ii < 16; ii++) {
+                    printColor = 0x07;
+                    print_char_noupdates(memPtr[i + ii]);
+                    update_cursor();
+                    printColor = STANDART_SCREEN_COLOR;
+                    print_string("  ");
+                }
+                i += 15;
+                print_char('\n');
             } else {
-                printColor = 0x07;
-                print_hexb(memPtr[i]);
-                printColor = STANDART_SCREEN_COLOR;
-                print_char(' ');
+                print_string("0x");
+                print_hexdw((uint32) memPtr + i);
+                print_string(": ");
+
+                for(int ii=0; ii < 16; ii++) {
+                    printColor = 0x07;
+                    print_hexb(memPtr[i + ii]);
+                    printColor = STANDART_SCREEN_COLOR;
+                    print_char(' ');
+                }
+                i += 15;
+                print_char('\n');
             }
         }
 
@@ -316,7 +329,7 @@ void openMemoryDumper(void) {
         print_string("Dump: 0x");
         print_hexdw((uint32) memPtr);
         print_string(" - 0x");
-        print_hexdw((uint32) memPtr + 511);
+        print_hexdw((uint32) memPtr + 255);
         print_string(" | ASCII Flag = ");
         if(asciiFlag)
             print_string("ON ");
@@ -334,11 +347,11 @@ void openMemoryDumper(void) {
         }
         if(key == 0x4D) {
             // Right arrow
-            memPtr += 512;
+            memPtr += 0x100;
         }
         if(key == 0x4B) {
             // Left arrow
-            memPtr -= 512;
+            memPtr -= 0x100;
         }
         if(key == 0x50) {
             // Down arrow

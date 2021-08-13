@@ -1,7 +1,7 @@
 /*
     *
     **
-    *** DESCRIPTOR_TABLES.C -- Initialises GDT/IDT and flushes it. 
+    *** GDT_IDT.C -- Initialises GDT/IDT and flushes it. 
     **
     *
 */
@@ -9,34 +9,30 @@
 #include "inc/stdio.h"
 #include "inc/kernel.h"
 #include "inc/ports.h"
-#include "inc/descriptor_tables.h"
+#include "inc/gdt_idt.h"
 
 extern void gdt_flush(uint32);
 extern void idt_flush(uint32);
 
-static void init_gdt();
-static void init_idt();
+static void initGDT();
+static void initIDT();
 static void gdt_set_gate(int,uint32,uint32,uint8,uint8);
 static void idt_set_gate(uint8,uint32,uint16,uint8);
 
-gdt_entry_t gdt_entries[5];
-gdt_ptr_t   gdt_ptr;
-idt_entry_t idt_entries[256];
-idt_ptr_t   idt_ptr;
+GDT_Entry     gdt_entries[5];
+GDT_Pointer   gdt_ptr;
+IDT_Entry     idt_entries[256];
+IDT_Pointer   idt_ptr;
 
-void init_descriptor_tables() {
-    init_gdt();
-    init_idt();
+void loadDescriptorTables() {
+    initGDT();
+    initIDT();
     print_log("GDT/IDT Tables was successfully inited and loaded.\n");
 }
 
-void reset_idt() {
-    gdt_flush((uint32) 0x0);
-}
-
-static void init_gdt() {
-    gdt_ptr.limit = (sizeof(gdt_entry_t) * 5) - 1;
-    gdt_ptr.base  = (uint32)&gdt_entries;
+static void initGDT() {
+    gdt_ptr.limit = (sizeof(GDT_Entry) * 5) - 1;
+    gdt_ptr.base  = (uint32) &gdt_entries;
 
     gdt_set_gate(0, 0, 0, 0, 0);                // Null segment
     gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // Code segment
@@ -44,27 +40,14 @@ static void init_gdt() {
     gdt_set_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // User mode code segment
     gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // User mode data segment
 
-    gdt_flush((uint32)&gdt_ptr);
+    gdt_flush((uint32) &gdt_ptr);
 }
 
-// Set the value of one GDT entry.
-static void gdt_set_gate(int num, uint32 base, uint32 limit, uint8 access, uint8 gran) {
-    gdt_entries[num].base_low    = (base & 0xFFFF);
-    gdt_entries[num].base_middle = (base >> 16) & 0xFF;
-    gdt_entries[num].base_high   = (base >> 24) & 0xFF;
-
-    gdt_entries[num].limit_low   = (limit & 0xFFFF);
-    gdt_entries[num].granularity = (limit >> 16) & 0x0F;
-    
-    gdt_entries[num].granularity |= gran & 0xF0;
-    gdt_entries[num].access      = access;
-}
-
-static void init_idt() {
-    idt_ptr.limit = sizeof(idt_entry_t) * 256 -1;
+static void initIDT() {
+    idt_ptr.limit = sizeof(IDT_Entry) * 256 -1;
     idt_ptr.base  = (uint32)&idt_entries;
 
-    mem_set((uint8*) &idt_entries, 0, sizeof(idt_entry_t)*256);
+    mem_set((uint8*) &idt_entries, 0, sizeof(IDT_Entry)*256);
 
     port_byte_out(0x20, 0x11);
     port_byte_out(0xA0, 0x11);
@@ -127,7 +110,20 @@ static void init_idt() {
     idt_set_gate(46, (uint32)irq14, 0x08, 0x8E);
     idt_set_gate(47, (uint32)irq15, 0x08, 0x8E);
 
-    idt_flush((uint32)&idt_ptr);
+    idt_flush((uint32) &idt_ptr);
+}
+
+// Set the value of one GDT entry.
+static void gdt_set_gate(int num, uint32 base, uint32 limit, uint8 access, uint8 gran) {
+    gdt_entries[num].base_low    = (base & 0xFFFF);
+    gdt_entries[num].base_middle = (base >> 16) & 0xFF;
+    gdt_entries[num].base_high   = (base >> 24) & 0xFF;
+
+    gdt_entries[num].limit_low   = (limit & 0xFFFF);
+    gdt_entries[num].granularity = (limit >> 16) & 0x0F;
+    
+    gdt_entries[num].granularity |= gran & 0xF0;
+    gdt_entries[num].access      = access;
 }
 
 static void idt_set_gate(uint8 num, uint32 base, uint16 sel, uint8 flags) {

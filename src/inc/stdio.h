@@ -18,7 +18,6 @@ typedef unsigned char   boolean;
 extern uint32   cursorX;
 extern uint32   cursorY;
 extern uint8    printColor;
-extern uint8    inputExitCode;
 
 /* Clear the screen */
 void clear_screen(void);
@@ -69,7 +68,7 @@ void str_lower(const uint8* string, uint8* destination);
 void str_concat(uint8* concatTo, uint8* from);
 
 /* Split string by separator */
-void str_split(const uint8* string, uint8* destination, uint8 separator, uint32 index);
+uint8** str_split(const uint8* string, uint8 separator);
 
 /* Print 8-bit number as HEX */
 void print_hexb(uint8 byte);

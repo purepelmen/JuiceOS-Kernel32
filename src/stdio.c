@@ -21,12 +21,11 @@ uint8* VIDMEM = (uint8*) 0xb8000;
 
 void clear_screen(void) {
     printColor = STANDART_SCREEN_COLOR;
-    unsigned int i = 0;
-    while(i < 80 * 25 * 2) {
+    
+    for(int i=0; i < 80 * 25 * 2; i++) {
         VIDMEM[i] = ' ';
         i++;
         VIDMEM[i] = printColor;
-        i++;
     }
 
     cursorX = 0;
@@ -34,14 +33,14 @@ void clear_screen(void) {
     update_cursor();
 }
 
-void print_char(uint8 aChar) {
+void print_char(uint8 _char) {
     uint8* adressToPrint = (uint8*) VIDMEM + (cursorX * 2 + cursorY * 160);
 
-    if(aChar == 0xA) {
+    if(_char == 0xA) {
         // New line
         cursorY += 1;
         cursorX = 0;
-    } else if (aChar == 0x08) {
+    } else if (_char == 0x08) {
         // Backspace
         if(cursorX != 0) {
             cursorX -= 1;
@@ -51,7 +50,7 @@ void print_char(uint8 aChar) {
             adressToPrint[1] = printColor;
         }
     } else {
-        adressToPrint[0] = aChar;
+        adressToPrint[0] = _char;
         adressToPrint[1] = printColor;
 
         cursorX += 1;
@@ -79,18 +78,14 @@ void print_char_noupdates(uint8 aChar) {
 }
 
 void print_string(const uint8* string) {
-    uint32 i = 0;
-    while(string[i] != 0x0) {
+    for(int i=0; string[i] != 0x0; i++) {
         print_char(string[i]);
-        i += 1;
     }
 }
 
 void print_string_noupdates(const uint8* string) {
-    uint32 i = 0;
-    while(string[i] != 0x0) {
+    for(int i=0; string[i] != 0x0; i++) {
         print_char_noupdates(string[i]);
-        i += 1;
     }
 }
 
@@ -151,13 +146,6 @@ uint8* get_input() {
 
         if(key == 0xA) {
             // Enter pressed
-            inputExitCode = key;
-            break;
-        }
-
-        if(key == 0xF0) {
-            // Windows Left pressed
-            inputExitCode = key;
             break;
         }
 
@@ -183,18 +171,14 @@ uint8* get_input() {
     return inputBuffer;
 }
 
-uint32 str_len(const uint8* str) {
+uint32 str_len(const uint8* string) {
     uint32 i = 0;
-    while(str[i] != 0x0) {
-        i++;
-    }
+    for(; string[i] != 0x0; i++);
     return i;
 }
 
 boolean str_copmare_len(const uint8* str1, const uint8* str2) {
-    unsigned fst = str_len(str1);
-    unsigned snd = str_len(str2);
-    return fst == snd;
+    return str_len(str1) == str_len(str2);
 }
 
 boolean str_compare(const uint8* str1, const uint8* str2) {
@@ -247,29 +231,6 @@ void str_concat(uint8* concatTo, uint8* from) {
         concatTo[i++] = from[i2++];
     
     concatTo[i] = 0x0;
-}
-
-// TODO: Find better solution for using this procedure
-void str_split(const uint8* string, uint8* destination, uint8 separator, uint32 index) {
-    uint32 parsingIndex = 0;
-    uint32 destIndex = 0;
-    uint32 i = 0;
-    while(string[i] != 0x0) {
-        if(index < parsingIndex) {
-            break;
-        }
-        if(string[i] == separator) {
-            parsingIndex++;
-            i++;
-            continue;
-        }
-
-        if(index == parsingIndex) {
-            destination[destIndex] = string[i];
-            destIndex++;
-        }
-        i++;
-    }
 }
 
 void print_hex4bit(uint8 char4bit) {
