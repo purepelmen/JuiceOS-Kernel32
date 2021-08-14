@@ -6,9 +6,9 @@
     *
 */
 
-#include "inc/stdio.h"
-#include "inc/ports.h"
-#include "inc/ps2.h"
+#include "stdio.h"
+#include "ports.h"
+#include "ps2.h"
 
 const uint8* asciiTable = "\x00\x1B" "1234567890-=" "\x08\x09" "qwertyuiop[]" "\x0A\x00" "asdfghjkl;'`" "\x00" "\\zxcvbnm,./" "\x00" "*\x00" " " "\x00\x00\x00\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00" "789" "-" "456" "+" "1230" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 const uint8* asciiTableNumsShifted = ")!@#$%^&*(";

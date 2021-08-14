@@ -1,6 +1,6 @@
-#include "inc/stdio.h"
-#include "inc/kernel.h"
-#include "inc/heap.h"
+#include "stdio.h"
+#include "kernel.h"
+#include "heap.h"
 
 void init_heap(void) {
     currentHeapValue = (uint32) &end;

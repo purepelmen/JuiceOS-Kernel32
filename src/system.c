@@ -1,7 +1,8 @@
-#include "inc/kernel.h"
-#include "inc/system.h"
-#include "inc/stdio.h"
-#include "inc/isr.h"
+#include "screen.h"
+#include "kernel.h"
+#include "system.h"
+#include "stdio.h"
+#include "isr.h"
 
 void zeroDeletionHandler(registers_t* regs) {
     showError("Divided by zero", "unknown", "System Interrupt Handler", "Caused by 0x00 interrupt");

@@ -6,8 +6,8 @@
     *
 */
 
-#include "inc/stdio.h"
-#include "inc/ports.h"
+#include "stdio.h"
+#include "ports.h"
 
 uint8 port_byte_in(uint16 port) {
     uint8 result;

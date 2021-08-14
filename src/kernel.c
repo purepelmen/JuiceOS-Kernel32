@@ -1,10 +1,11 @@
-#include "inc/gdt_idt.h"
-#include "inc/kernel.h"
-#include "inc/system.h"
-#include "inc/stdio.h"
-#include "inc/ports.h"
-#include "inc/heap.h"
-#include "inc/ps2.h"
+#include "screen.h"
+#include "gdt_idt.h"
+#include "kernel.h"
+#include "system.h"
+#include "stdio.h"
+#include "ports.h"
+#include "heap.h"
+#include "ps2.h"
 
 // Buffer of the system log
 static uint8 systemLogBuffer[2048];
@@ -80,15 +81,6 @@ void console(void) {
             continue;
         }
 
-        if(str_compare(command, "cpuid")) {
-            print_string("CPUID: ");
-            print_string(cpuid_get_id());
-            print_string("\nCPU Model: ");
-            print_string(cpuid_get_model());
-            print_string("\n\n");
-            continue;
-        }
-
         if(str_compare(command, "memdump")) {
             openMemoryDumper();
             clear_screen();
@@ -98,7 +90,6 @@ void console(void) {
         if(str_compare(command, "help")) {
             print_string("ASCII - Print hex representation of a typed char.\n");
             print_string("CLS - Clear the console.\n");
-            print_string("CPUID - Print CPUID information.\n");
             print_string("EXIT - Quit from console to OS menu.\n");
             print_string("HELP - Print this message.\n");
             print_string("HELLO - Test command that say hello to you.\n");

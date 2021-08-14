@@ -6,10 +6,10 @@
     *
 */
 
-#include "inc/stdio.h"
-#include "inc/kernel.h"
-#include "inc/ports.h"
-#include "inc/gdt_idt.h"
+#include "stdio.h"
+#include "kernel.h"
+#include "ports.h"
+#include "gdt_idt.h"
 
 extern void gdt_flush(uint32);
 extern void idt_flush(uint32);
