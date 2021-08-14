@@ -5,11 +5,6 @@
 
 #include "stdio.h"
 
-// Return CPU ID
-extern uint8* cpuid_get_id(void);
-// Return the model of processor
-extern uint8* cpuid_get_model(void);
-
 /* Initalize all descriptor tables, setup interrupts and so on... */
 void kernel_init(void);
 /* Kernel entry point */
@@ -19,8 +14,6 @@ void kernel_main(void);
 void console(void);
 /* Open OS menu */
 void openMenu(void);
-/* Open OS information */
-void openInfo(void);
 /* Open Memory dumper */
 void openMemoryDumper(void);
 /* Open system logs */

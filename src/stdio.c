@@ -8,70 +8,61 @@
 */
 
 #include "screen.h"
-#include "ps2.h"
 #include "stdio.h"
 #include "heap.h"
+#include "ps2.h"
 
-uint8 inputExitCode = 0x0;
+uint8* inputBuffer = 0;
 
 uint8* get_input() {
-    uint8* inputBuffer = malloc(60);
-    unsigned int inputBufferCounter = 0;
+    if(inputBuffer == 0)
+        inputBuffer = malloc(60);
 
     // Reset input buffer
     mem_set(inputBuffer, 0x0, 60);
-
+    
     // Input loop
-    while(1) {
+    for(int counter=0; true;) {
         uint8 key = ps2_readKey();
 
         if(key == 0x0) continue;
-
-        if(key == 0xA) {
-            // Enter pressed
-            break;
-        }
-
+        if(key == 0xA) break;
         if(key == 0x08) {
-            // Backspace pressed
-
-            if(inputBufferCounter <= 0) {
-                continue;
-            }
+            if(counter <= 0) continue;
 
             print_char(key);
-            inputBufferCounter -= 1;
-            inputBuffer[inputBufferCounter] = 0x0;
-            continue;
-        } 
-        if(inputBufferCounter >= 58) {
+            counter -= 1;
+            inputBuffer[counter] = 0x0;
             continue;
         }
+        if(counter >= 58) continue;
+        
         print_char(key);
-        inputBuffer[inputBufferCounter] = key;
-        inputBufferCounter += 1;
+        inputBuffer[counter] = key;
+        counter += 1;
     }
+
     return inputBuffer;
 }
 
-uint32 str_len(const uint8* string) {
+uint32 str_len(const uint8* _string) {
     uint32 i = 0;
-    for(; string[i] != 0x0; i++);
+    for(; _string[i] != 0x0; i++);
     return i;
 }
 
-boolean str_copmare_len(const uint8* str1, const uint8* str2) {
-    return str_len(str1) == str_len(str2);
+bool str_copmare_len(const uint8* _string1, const uint8* _string2) {
+    return str_len(_string1) == str_len(_string2);
 }
 
-boolean str_compare(const uint8* str1, const uint8* str2) {
-    if(!str_copmare_len(str1, str2)) 
+bool str_compare(const uint8* _string1, const uint8* _string2) {
+    if(!str_copmare_len(_string1, _string2)) 
         return 0;
 
     uint8 result = 1;
     uint32 i = 0;
-    while(str1[i] != 0x0 || str2[i] != 0x0) {
-        if(str1[i] == str2[i]) {
+    while(_string1[i] != 0x0 || _string2[i] != 0x0) {
+        if(_string1[i] == _string2[i]) {
             i += 1;
             continue;
         }
@@ -81,13 +72,13 @@ boolean str_compare(const uint8* str1, const uint8* str2) {
     return result;
 }
 
-void str_upper(const uint8* string, uint8* destination) {
+void str_upper(const uint8* original, uint8* destination) {
     uint32 i = 0;
-    while(string[i] != 0x0) {
-        if(string[i] >= 'a' && string[i] <= 'z') {
+    while(original[i] != 0x0) {
+        if(original[i] >= 'a' && original[i] <= 'z') {
             destination[i] -= 0x20;
         } else {
-            destination[i] = string[i];
+            destination[i] = original[i];
         }
         i++;
     }

@@ -4,7 +4,7 @@
 typedef unsigned char   uint8;
 typedef unsigned short  uint16;
 typedef unsigned int    uint32;
-typedef unsigned char   boolean;
+typedef unsigned char   bool;
 
 #define true                            1
 #define false                           0
@@ -18,13 +18,13 @@ uint8* get_input();
 uint32 str_len(const uint8* str);
 
 /* Compare the lengths of two strings */
-boolean str_copmare_len(const uint8* str1, const uint8* str2);
+bool str_copmare_len(const uint8* _string1, const uint8* _string2);
 
 /* Compare two strings */
-boolean str_compare(const uint8* str1, const uint8* str2);
+bool str_compare(const uint8* _string1, const uint8* _string2);
 
 /* Make text uppercase */
-void str_upper(const uint8* string, uint8* destination);
+void str_upper(const uint8* original, uint8* destination);
 
 /* Make text lowercase */
 void str_lower(const uint8* string, uint8* destination);

@@ -1,11 +1,11 @@
+#include "stdio.h"
 #include "screen.h"
+#include "heap.h"
+#include "ps2.h"
+
 #include "gdt_idt.h"
 #include "kernel.h"
 #include "system.h"
-#include "stdio.h"
-#include "ports.h"
-#include "heap.h"
-#include "ps2.h"
 
 // Buffer of the system log
 static uint8 systemLogBuffer[2048];
@@ -127,7 +127,7 @@ void openMenu(void) {
     clear_screen();
     const uint8 NON_SELECTED_COLOR = STANDART_SCREEN_COLOR;
     const uint8 SELECTED_COLOR = STANDART_INVERTED_SCREEN_COLOR;
-    const uint8 ITEMS_AMOUNT = 5;         // Zero means - 1
+    const uint8 ITEMS_AMOUNT = 3;         // Zero means - 1
 
     uint8 currentPosition = 0;
     while(1) {
@@ -159,27 +159,11 @@ void openMenu(void) {
             printColor = SELECTED_COLOR;
         else 
             printColor = NON_SELECTED_COLOR;
-        print_string("Information");
+        print_string("System logs");
 
         cursorX = 6;
         cursorY = 6;
         if(currentPosition == 3)
-            printColor = SELECTED_COLOR;
-        else 
-            printColor = NON_SELECTED_COLOR;
-        print_string("Reboot PC");
-
-        cursorX = 6;
-        cursorY = 7;
-        if(currentPosition == 4)
-            printColor = SELECTED_COLOR;
-        else 
-            printColor = NON_SELECTED_COLOR;
-        print_string("System logs");
-
-        cursorX = 6;
-        cursorY = 8;
-        if(currentPosition == 5)
             printColor = SELECTED_COLOR;
         else 
             printColor = NON_SELECTED_COLOR;
@@ -206,63 +190,15 @@ void openMenu(void) {
                 clear_screen();
             }
             if(currentPosition == 2) {
-                openInfo();
-                clear_screen();
-            }
-            if(currentPosition == 3) {
-                __asm__ ("jmp 0xFFFF0");
-            }
-            if(currentPosition == 4) {
                 openSysLogs();
                 clear_screen();
             }
-            if(currentPosition == 5) {
+            if(currentPosition == 3) {
                 openDebug();
                 clear_screen();
             }
         }
     }
-}
-
-void openInfo(void) {
-    clear_screen();
-    cursorX = 25;
-    cursorY = 1;
-    print_string("Juice OS - Kernel32 v" KERNEL_VERSION);
-
-    cursorX = 34;
-    cursorY = 2;
-    print_string("by purepelmen");
-
-    cursorX = 2;
-    cursorY = 4;
-    print_string("JuiceOS Kernel32 - it is my 32-bit operating system. For now there is only a");
-
-    cursorX = 2;
-    cursorY = 5;
-    print_string("console with few commands and a menu. But I'm trying to develop this OS. I'm");
-
-    cursorX = 2;
-    cursorY = 6;
-    print_string("finding some information on a different sites about ports description to ");
-
-    cursorX = 2;
-    cursorY = 7;
-    print_string("improve OS features. I don't know what to say, so... maybe that's all that");
-
-    cursorX = 2;
-    cursorY = 8;
-    print_string("I want to say. Good luck to you, man! Tq for testing my OS :)");
-
-    cursorX = 2;
-    cursorY = 9;
-    print_string("Oh, and by the way, sorry for my bad English. I don't know it very well.");
-
-    cursorX = 0;
-    cursorY = 24;
-    printColor = STANDART_INVERTED_SCREEN_COLOR;
-    print_string_noupdates("                        Click any key to back to menu...                        ");
-    ps2_readKey();
 }
 
 void openMemoryDumper(void) {
