@@ -6,7 +6,7 @@
     *
 */
 
-#include "stdio.h"
+#include "../stdio.h"
 #include "ports.h"
 #include "ps2.h"
 

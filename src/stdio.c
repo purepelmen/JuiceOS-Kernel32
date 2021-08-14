@@ -7,10 +7,10 @@
     *
 */
 
-#include "screen.h"
+#include "drivers/screen.h"
+#include "drivers/ps2.h"
 #include "stdio.h"
 #include "heap.h"
-#include "ps2.h"
 
 uint8* inputBuffer = 0;
 

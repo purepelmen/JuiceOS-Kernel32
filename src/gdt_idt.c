@@ -6,9 +6,9 @@
     *
 */
 
+#include "drivers/ports.h"
 #include "stdio.h"
 #include "kernel.h"
-#include "ports.h"
 #include "gdt_idt.h"
 
 extern void gdt_flush(uint32);

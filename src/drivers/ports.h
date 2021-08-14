@@ -1,7 +1,7 @@
 #ifndef C_PORTS_LIB
 #define C_PORTS_LIB
 
-#include "stdio.h"
+#include "../stdio.h"
 
 /* Read byte from port */
 uint8 port_byte_in(uint16 port);

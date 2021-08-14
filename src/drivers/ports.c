@@ -6,7 +6,6 @@
     *
 */
 
-#include "stdio.h"
 #include "ports.h"
 
 uint8 port_byte_in(uint16 port) {

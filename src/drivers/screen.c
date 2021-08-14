@@ -1,4 +1,4 @@
-#include "stdio.h"
+#include "../stdio.h"
 #include "screen.h"
 
 uint32 cursorX = 0;

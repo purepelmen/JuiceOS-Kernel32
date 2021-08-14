@@ -1,7 +1,7 @@
 #include "stdio.h"
-#include "screen.h"
+#include "drivers/screen.h"
+#include "drivers/ps2.h"
 #include "heap.h"
-#include "ps2.h"
 
 #include "gdt_idt.h"
 #include "kernel.h"

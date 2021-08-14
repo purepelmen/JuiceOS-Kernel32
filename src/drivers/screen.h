@@ -1,7 +1,7 @@
 #ifndef C_SCREEN_DRIVER_LIB
 #define C_SCREEN_DRIVER_LIB
 
-#include "stdio.h"
+#include "../stdio.h"
 #include "ports.h"
 
 #define STANDART_SCREEN_COLOR           0x07
