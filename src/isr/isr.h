@@ -1,7 +1,7 @@
 #ifndef C_ISR_LIB
 #define C_ISR_LIB
 
-#include "stdio.h"
+#include "../stdio.h"
 
 #define IRQ0 32
 #define IRQ1 33

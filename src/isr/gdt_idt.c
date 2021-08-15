@@ -6,18 +6,18 @@
     *
 */
 
-#include "drivers/ports.h"
-#include "stdio.h"
-#include "kernel.h"
+#include "../drivers/ports.h"
+#include "../stdio.h"
+#include "../kernel.h"
 #include "gdt_idt.h"
 
 extern void gdt_flush(uint32);
 extern void idt_flush(uint32);
 
-static void initGDT();
-static void initIDT();
-static void gdt_set_gate(int,uint32,uint32,uint8,uint8);
-static void idt_set_gate(uint8,uint32,uint16,uint8);
+void initGDT();
+void initIDT();
+void gdt_set_gate(int,uint32,uint32,uint8,uint8);
+void idt_set_gate(uint8,uint32,uint16,uint8);
 
 GDT_Entry     gdt_entries[5];
 GDT_Pointer   gdt_ptr;
@@ -30,7 +30,7 @@ void loadDescriptorTables() {
     print_log("GDT/IDT Tables was successfully inited and loaded.\n");
 }
 
-static void initGDT() {
+void initGDT() {
     gdt_ptr.limit = (sizeof(GDT_Entry) * 5) - 1;
     gdt_ptr.base  = (uint32) &gdt_entries;
 
@@ -43,7 +43,7 @@ static void initGDT() {
     gdt_flush((uint32) &gdt_ptr);
 }
 
-static void initIDT() {
+void initIDT() {
     idt_ptr.limit = sizeof(IDT_Entry) * 256 -1;
     idt_ptr.base  = (uint32)&idt_entries;
 
@@ -114,7 +114,7 @@ static void initIDT() {
 }
 
 // Set the value of one GDT entry.
-static void gdt_set_gate(int num, uint32 base, uint32 limit, uint8 access, uint8 gran) {
+void gdt_set_gate(int num, uint32 base, uint32 limit, uint8 access, uint8 gran) {
     gdt_entries[num].base_low    = (base & 0xFFFF);
     gdt_entries[num].base_middle = (base >> 16) & 0xFF;
     gdt_entries[num].base_high   = (base >> 24) & 0xFF;
@@ -126,7 +126,8 @@ static void gdt_set_gate(int num, uint32 base, uint32 limit, uint8 access, uint8
     gdt_entries[num].access      = access;
 }
 
-static void idt_set_gate(uint8 num, uint32 base, uint16 sel, uint8 flags) {
+// Set the value of one IDT entry.
+void idt_set_gate(uint8 num, uint32 base, uint16 sel, uint8 flags) {
     idt_entries[num].base_lo = base & 0xFFFF;
     idt_entries[num].base_hi = (base >> 16) & 0xFFFF;
 

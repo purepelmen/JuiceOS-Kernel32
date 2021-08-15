@@ -1,7 +1,7 @@
 /*
     *
     **
-    *** STDIO.C -- provides basic functions for printing strings, getting the input, 
+    *** STDIO.C -- provides basic functions for getting the input, 
     *** working with strings and memory.
     **
     *

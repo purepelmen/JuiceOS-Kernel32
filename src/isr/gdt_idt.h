@@ -1,7 +1,7 @@
 #ifndef C_GDT_IDT_LIB
 #define C_GDT_IDT_LIB
 
-#include "stdio.h"
+#include "../stdio.h"
 
 /* Entry of Global Descriptor Table */
 typedef struct GDT_Entry {

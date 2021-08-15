@@ -3,7 +3,7 @@
 #include "drivers/ps2.h"
 #include "heap.h"
 
-#include "gdt_idt.h"
+#include "isr/gdt_idt.h"
 #include "kernel.h"
 #include "system.h"
 

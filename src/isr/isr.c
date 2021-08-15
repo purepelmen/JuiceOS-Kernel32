@@ -1,5 +1,5 @@
-#include "drivers/ports.h"
-#include "stdio.h"
+#include "../drivers/ports.h"
+#include "../stdio.h"
 #include "isr.h"
 
 isr_t interrupt_handlers[256];
