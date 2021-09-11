@@ -5,7 +5,7 @@ uint32 cursorX = 0;
 uint32 cursorY = 0;
 uint8 printColor = STANDART_SCREEN_COLOR;
 
-uint8* VIDMEM = (uint8*) 0xb8000;
+uint8* VIDMEM = (uint8*) 0xB8000;
 
 void enable_cursor(uint8 cursor_start, uint8 cursor_end) {
     port_byte_out(0x03D4, 0x0A);

@@ -165,6 +165,14 @@ void mem_copy(uint8* source, uint8* destination, uint32 bytesAmount) {
     }
 }
 
+bool mem_cmp(uint8* first, uint8* seconds, uint32 bytesAmount) {
+    for(int i=0; i < bytesAmount; i++) {
+        if(first[i] != seconds[i]) return false;
+    }
+
+    return true;
+}
+
 void mem_set(uint8* ptr, uint8 byte, uint32 amount) {
     for(int i=0; i < amount; i++) {
         ptr[i] = byte;

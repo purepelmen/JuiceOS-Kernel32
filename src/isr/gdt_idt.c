@@ -7,6 +7,7 @@
 */
 
 #include "../drivers/ports.h"
+#include "../drivers/screen.h"
 #include "../stdio.h"
 #include "../kernel.h"
 #include "gdt_idt.h"
@@ -25,9 +26,12 @@ IDT_Entry     idt_entries[256];
 IDT_Pointer   idt_ptr;
 
 void loadDescriptorTables() {
+    print_string("GDT/IDT Tables initialization...\n");
+    
     initGDT();
     initIDT();
     print_log("GDT/IDT Tables was successfully inited and loaded.\n");
+    print_string("GDT/IDT Tables was successfully inited and loaded.\n");
 }
 
 void initGDT() {

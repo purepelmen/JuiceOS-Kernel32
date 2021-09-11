@@ -1,3 +1,4 @@
+#include "drivers/screen.h"
 #include "stdio.h"
 #include "kernel.h"
 #include "heap.h"
@@ -5,7 +6,9 @@
 void init_heap(void) {
     currentHeapValue = (uint32) &end;
     heapStartValue = currentHeapValue;
+
     print_log("Heap was initialised.\n");
+    print_string("Heap was initialised.\n");
 }
 
 void reset_heap(void) {

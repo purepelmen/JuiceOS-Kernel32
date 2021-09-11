@@ -1,6 +1,6 @@
-#include "stdio.h"
 #include "drivers/screen.h"
 #include "drivers/ps2.h"
+#include "stdio.h"
 #include "heap.h"
 
 #include "isr/gdt_idt.h"
@@ -11,13 +11,14 @@
 static uint8 systemLogBuffer[2048];
 
 void kernel_init(void) {
+    clear_screen();
+    
     // Initialise all the ISRs and segmentation
     init_heap();
-    clear_screen();
     enable_cursor(0xE, 0xF);
     loadDescriptorTables();
     registerSystemHandlers();
-    
+
     print_log("Kernel initialization completed.\n");
 }
 
@@ -418,9 +419,26 @@ void openDebug(void) {
         cursorY = 8;
         print_string("----------------------------------------------------------------------------");
 
-        // Heap -------------------------------
+        // System memory ----------------------
         cursorX = 2;
         cursorY = 10;
+        print_string("Memory allocated for the system: ");
+
+        uint32 systemMemory = heapStartValue - 0x100000;
+        if(systemMemory / 1048576 > 0) {
+            print_number(systemMemory / 1048576);
+            print_string(" MB.");
+        } else if(systemMemory / 1024 > 0) {
+            print_number(systemMemory / 1024);
+            print_string(" KB.");
+        } else {
+            print_number(systemMemory);
+            print_string(" B.");
+        }
+
+        // Heap -------------------------------
+        cursorX = 2;
+        cursorY = 12;
         print_string("Heap allocated: ");
 
         uint32 allocatedHeap = currentHeapValue - heapStartValue;
@@ -434,6 +452,12 @@ void openDebug(void) {
             print_number(allocatedHeap);
             print_string(" B.");
         }
+
+        // Heap memory location ---------------
+        cursorX = 2;
+        cursorY = 14;
+        print_string("Heap located at: 0x");
+        print_hexdw(heapStartValue);
 
         uint8 key = ps2_keyDown();
         if(key == 0x01) {

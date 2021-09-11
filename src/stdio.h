@@ -50,6 +50,9 @@ void print_number(uint32 num);
 /* Copy 'bytesAmount' bytes of memory from 'source' to 'destination' */
 void mem_copy(uint8* source, uint8* destination, uint32 bytesAmount);
 
+/* Compare two parts of memory */
+bool mem_cmp(uint8* first, uint8* seconds, uint32 bytesAmount);
+
 /* Fill memory by given byte */
 void mem_set(uint8* ptr, uint8 byte, uint32 amount);
 
