@@ -10,459 +10,498 @@
 // Buffer of the system log
 static uint8 systemLogBuffer[2048];
 
-void kernel_init(void) {
-    clear_screen();
+void InitializeKernel(void)
+{
+    ClearScreen();
     
     // Initialise all the ISRs and segmentation
-    init_heap();
-    enable_cursor(0xE, 0xF);
-    loadDescriptorTables();
-    registerSystemHandlers();
+    InitializeHeap();
+    EnableCursor(0xE, 0xF);
+    LoadDescTables();
+    RegisterSysHandlers();
 
-    print_log("Kernel initialization completed.\n");
+    PrintLog("Kernel initialization completed.\n");
 }
 
-void kernel_main(void) {
-    kernel_init();
-    openMenu();
+void kernel_main(void)
+{
+    InitializeKernel();
+    OpenMenu();
 }
 
-void console(void) {
-    clear_screen();
+void OpenConsole(void)
+{
+    ClearScreen();
 
-    while(1) {
-        printColor = STANDART_CONSOLE_PREFIX_COLOR;
-        print_string("PC:>>");
-        printColor = STANDART_SCREEN_COLOR;
+    while(true)
+    {
+        PrintColor = STANDART_CONSOLE_PREFIX_COLOR;
+        Print("PC:>>");
+        PrintColor = STANDART_SCREEN_COLOR;
 
-        uint8* command = get_input();
-        str_lower(command, command);
-        print_char(0xA);
+        uint8* command = ReadString();
+        ToLowerCase(command, command);
+        PrintChar(0xA);
 
-        if(str_len(command) == 0) {
+        if(GetStringLength(command) == 0)
+        {
             // If nothing was printed
             continue;
         }
 
-        if(str_compare(command, "hello")) {
-            print_string("Helloooo :)\n\n");
+        if(CompareString(command, "hello"))
+        {
+            Print("Helloooo :)\n\n");
             continue;
         }
 
         // TO FIX: This not working (all just hangs)
-        if(str_compare(command, "reboot")) {
-            print_string("This does not work for now.");
+        if(CompareString(command, "reboot"))
+        {
+            Print("This command doesn't work for now. It will be fixed soon.\n");
             continue;
         }
 
-        if(str_compare(command, "cls")) {
-            clear_screen();
+        if(CompareString(command, "cls"))
+        {
+            ClearScreen();
             continue;
         }
 
-        if(str_compare(command, "system")) {
-            print_string("JuiceOS Kernel32 v" KERNEL_VERSION "\n\n");
+        if(CompareString(command, "system"))
+        {
+            Print("JuiceOS Kernel32 v" KERNEL_VERSION "\n\n");
             continue;
         }
 
-        if(str_compare(command, "exit")) {
+        if(CompareString(command, "exit"))
+        {
             return;
         }
 
-        if(str_compare(command, "ascii")) {
-            print_string("Type any char.\n");
+        if(CompareString(command, "ascii"))
+        {
+            Print("Type any char.\n");
 
-            uint8 key = ps2_readKey();
-            print_string("ASCII code of typed key is: 0x");
-            print_hexb(key);
-            print_string("\nIt displays as: ");
+            uint8 key = ReadKey();
+            Print("ASCII code of typed key is: 0x");
+            PrintByteAsString(key);
+            Print("\nIt displays as: ");
 
-            print_char(key);
-            print_string("\n\n");
+            PrintChar(key);
+            Print("\n\n");
             continue;
         }
 
-        if(str_compare(command, "memdump")) {
-            openMemoryDumper();
-            clear_screen();
+        if(CompareString(command, "memdump"))
+        {
+            OpenMemDumper();
+            ClearScreen();
             continue;
         }
 
-        if(str_compare(command, "help")) {
-            print_string("ASCII - Print hex representation of a typed char.\n");
-            print_string("CLS - Clear the console.\n");
-            print_string("EXIT - Quit from console to OS menu.\n");
-            print_string("HELP - Print this message.\n");
-            print_string("HELLO - Test command that say hello to you.\n");
-            print_string("MEMDUMP - Open Memory dumper.\n");
-            print_string("REBOOT - Reboot your PC.\n");
-            print_string("SCANTEST - Print scancode of every pressed key.\n");
-            print_string("SYSTEM - Print system information.\n\n");
+        if(CompareString(command, "help"))
+        {
+            Print("ASCII - Print hex representation of a typed char.\n");
+            Print("CLS - Clear the console.\n");
+            Print("EXIT - Quit from console to OS menu.\n");
+            Print("HELP - Print this message.\n");
+            Print("HELLO - Test command that say hello to you.\n");
+            Print("MEMDUMP - Open Memory dumper.\n");
+            Print("REBOOT - Reboot your PC.\n");
+            Print("SCANTEST - Print scancode of every pressed key.\n");
+            Print("SYSTEM - Print system information.\n\n");
             continue;
         }
 
-        if(str_compare(command, "scantest")) {
+        if(CompareString(command, "scantest"))
+        {
             ps2_scancode(false);
 
-            while (1) {
+            while(true)
+            {
                 uint8 scancode = ps2_scancode(false);
 
-                print_string("0x");
-                print_hexb(scancode);
-                print_string("\n");
+                Print("0x");
+                PrintByteAsString(scancode);
+                Print("\n");
                 if(scancode == 0x81) break;
             }
-            print_char('\n');
+            PrintChar('\n');
             continue;
         }
 
-        if(str_compare(command, "\x1B")) {
+        if(CompareString(command, "\x1B"))
             return;
-        }
         
-        print_string("Unknown command.\n\n");
+        Print("Unknown command.\n\n");
     }
 }
 
-void openMenu(void) {
-    clear_screen();
+void OpenMenu(void)
+{
+    ClearScreen();
     const uint8 NON_SELECTED_COLOR = STANDART_SCREEN_COLOR;
     const uint8 SELECTED_COLOR = STANDART_INVERTED_SCREEN_COLOR;
     const uint8 ITEMS_AMOUNT = 3;         // Zero means - 1
 
     uint8 currentPosition = 0;
-    while(1) {
-        printColor = NON_SELECTED_COLOR;
+    while(true)
+    {
+        PrintColor = NON_SELECTED_COLOR;
 
         cursorX = 25;
         cursorY = 1;
-        print_string("Juice OS v" KERNEL_VERSION " Menu");
+        Print("Juice OS v" KERNEL_VERSION " Menu");
 
         cursorX = 6;
         cursorY = 3;
         if(currentPosition == 0)
-            printColor = SELECTED_COLOR;
+            PrintColor = SELECTED_COLOR;
         else 
-            printColor = NON_SELECTED_COLOR;
-        print_string("Open console");
+            PrintColor = NON_SELECTED_COLOR;
+        Print("Open console");
 
         cursorX = 6;
         cursorY = 4;
         if(currentPosition == 1)
-            printColor = SELECTED_COLOR;
+            PrintColor = SELECTED_COLOR;
         else 
-            printColor = NON_SELECTED_COLOR;
-        print_string("Memory dumper");
+            PrintColor = NON_SELECTED_COLOR;
+        Print("Memory dumper");
 
         cursorX = 6;
         cursorY = 5;
         if(currentPosition == 2)
-            printColor = SELECTED_COLOR;
+            PrintColor = SELECTED_COLOR;
         else 
-            printColor = NON_SELECTED_COLOR;
-        print_string("System logs");
+            PrintColor = NON_SELECTED_COLOR;
+        Print("System logs");
 
         cursorX = 6;
         cursorY = 6;
         if(currentPosition == 3)
-            printColor = SELECTED_COLOR;
+            PrintColor = SELECTED_COLOR;
         else 
-            printColor = NON_SELECTED_COLOR;
-        print_string("Debug");
+            PrintColor = NON_SELECTED_COLOR;
+        Print("Debug");
 
         // Getting input
         uint8 key = ps2_scancode(true);
-        if(key == 0x48) {
+        if(key == 0x48)
+        {
             if(currentPosition == 0) currentPosition = ITEMS_AMOUNT;
             else currentPosition--;
         }
-        if(key == 0x50) {
+        if(key == 0x50)
+        {
             if(currentPosition == ITEMS_AMOUNT) currentPosition = 0;
             else currentPosition++;
         }
-        if(key == 0x1C) {
-            printColor = NON_SELECTED_COLOR;
-            if(currentPosition == 0) {
-                console();
-                clear_screen();
+
+        if(key == 0x1C)
+        {
+            PrintColor = NON_SELECTED_COLOR;
+            if(currentPosition == 0)
+            {
+                OpenConsole();
+                ClearScreen();
             }
-            if(currentPosition == 1) {
-                openMemoryDumper();
-                clear_screen();
+            if(currentPosition == 1)
+            {
+                OpenMemDumper();
+                ClearScreen();
             }
-            if(currentPosition == 2) {
-                openSysLogs();
-                clear_screen();
+            if(currentPosition == 2)
+            {
+                OpenSysLogs();
+                ClearScreen();
             }
-            if(currentPosition == 3) {
-                openDebug();
-                clear_screen();
+            if(currentPosition == 3)
+            {
+                OpenDebug();
+                ClearScreen();
             }
         }
     }
 }
 
-void openMemoryDumper(void) {
+void OpenMemDumper(void)
+{
     uint8* memPtr = (uint8*) 0x0;
     uint8 asciiFlag = false;
-    clear_screen();
+    ClearScreen();
 
-    while(1) {
-        printColor = STANDART_INVERTED_SCREEN_COLOR;
-        print_string("                             Juice OS Memory Dumper                             ");
+    while(true)
+    {
+        PrintColor = STANDART_INVERTED_SCREEN_COLOR;
+        Print("                             Juice OS Memory Dumper                             ");
 
-        printColor = STANDART_SCREEN_COLOR;
+        PrintColor = STANDART_SCREEN_COLOR;
         cursorX = 0;
         cursorY = 2;
 
-        print_string("    Offset: 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
+        Print("    Offset: 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
 
         cursorX = 0;
         cursorY = 4;
 
-        for(int i=0; i < 256; i++) {
-            if(asciiFlag) {
-                print_string("0x");
-                print_hexdw((uint32) memPtr + i);
-                print_string(": ");
+        for(int i=0; i < 256; i++)
+        {
+            if(asciiFlag)
+            {
+                Print("0x");
+                PrintIntAsString((uint32) memPtr + i);
+                Print(": ");
 
-                for(int ii=0; ii < 16; ii++) {
-                    printColor = 0x07;
+                for(int ii=0; ii < 16; ii++)
+                {
+                    PrintColor = 0x07;
                     print_char_noupdates(memPtr[i + ii]);
-                    update_cursor();
-                    printColor = STANDART_SCREEN_COLOR;
-                    print_string("  ");
+                    UpdateCursor();
+                    PrintColor = STANDART_SCREEN_COLOR;
+                    Print("  ");
                 }
                 i += 15;
-                print_char('\n');
-            } else {
-                print_string("0x");
-                print_hexdw((uint32) memPtr + i);
-                print_string(": ");
+                PrintChar('\n');
+            } 
+            else
+            {
+                Print("0x");
+                PrintIntAsString((uint32) memPtr + i);
+                Print(": ");
 
-                for(int ii=0; ii < 16; ii++) {
-                    printColor = 0x07;
-                    print_hexb(memPtr[i + ii]);
-                    printColor = STANDART_SCREEN_COLOR;
-                    print_char(' ');
+                for(int ii=0; ii < 16; ii++)
+                {
+                    PrintColor = 0x07;
+                    PrintByteAsString(memPtr[i + ii]);
+                    PrintColor = STANDART_SCREEN_COLOR;
+                    PrintChar(' ');
                 }
+
                 i += 15;
-                print_char('\n');
+                PrintChar('\n');
             }
         }
 
-        printColor = STANDART_INVERTED_SCREEN_COLOR;
+        PrintColor = STANDART_INVERTED_SCREEN_COLOR;
         cursorX = 0;
         cursorY = 24;
-        print_string("Dump: 0x");
-        print_hexdw((uint32) memPtr);
-        print_string(" - 0x");
-        print_hexdw((uint32) memPtr + 255);
-        print_string(" | ASCII Flag = ");
+        Print("Dump: 0x");
+        PrintIntAsString((uint32) memPtr);
+        Print(" - 0x");
+        PrintIntAsString((uint32) memPtr + 255);
+        Print(" | ASCII Flag = ");
         if(asciiFlag)
-            print_string("ON ");
+            Print("ON ");
         else
-            print_string("OFF");
+            Print("OFF");
         print_string_noupdates("                                     ");
 
         cursorX = 0;
         cursorY = 0;
-        update_cursor();
+        UpdateCursor();
 
         uint8 key = ps2_scancode(true);
-        if(key == 0x01) {
+        if(key == 0x01)
             break;
-        }
-        if(key == 0x4D) {
+        if(key == 0x4D)
             // Right arrow
             memPtr += 0x100;
-        }
-        if(key == 0x4B) {
+        if(key == 0x4B)
             // Left arrow
             memPtr -= 0x100;
-        }
-        if(key == 0x50) {
+        if(key == 0x50)
             // Down arrow
             memPtr += 0x1000;
-        }
-        if(key == 0x48) {
+        if(key == 0x48)
             // Up arrow
             memPtr -= 0x1000;
-        }
-        if(key == 0x2A) {
+        if(key == 0x2A)
             asciiFlag = !asciiFlag;
-        }
     }
 }
 
-void print_log(uint8* str) {
-    if(str_len((uint8*) &systemLogBuffer) + str_len(str) > 2046) return;
-    str_concat((uint8*) &systemLogBuffer, str);
+void PrintLog(uint8* str)
+{
+    if(GetStringLength((uint8*) &systemLogBuffer) + GetStringLength(str) > 2046) return;
+    ConcatString((uint8*) &systemLogBuffer, str);
 }
 
-void openSysLogs(void) {
-    clear_screen();
-    print_string((uint8*) &systemLogBuffer);
-    ps2_readKey();
+void OpenSysLogs(void)
+{
+    ClearScreen();
+    Print((uint8*) &systemLogBuffer);
+    ReadKey();
 }
 
-void openDebug(void) {
-    clear_screen();
+void OpenDebug(void)
+{
+    ClearScreen();
 
-    while(1) {
+    while(true)
+    {
         uint32 res;
 
         cursorX = 0;
         cursorY = 0;
 
-        printColor = STANDART_INVERTED_SCREEN_COLOR;
-        print_string("                                    Debugger                                    ");
-        printColor = STANDART_SCREEN_COLOR;
+        PrintColor = STANDART_INVERTED_SCREEN_COLOR;
+        Print("                                    Debugger                                    ");
+        PrintColor = STANDART_SCREEN_COLOR;
 
         // EBP ---------------------------------
         cursorX = 2;
         cursorY = 2;
-        print_string("EBP: 0x");
+        Print("EBP: 0x");
 
         __asm__("mov %%ebp, %%edx" : "=d" (res));
-        print_hexdw(res);
+        PrintIntAsString(res);
 
         // ESP ---------------------------------
         cursorX = 22;
         cursorY = 2;
-        print_string("ESP: 0x");
+        Print("ESP: 0x");
 
         __asm__("mov %%esp, %%edx" : "=d" (res));
-        print_hexdw(res);
+        PrintIntAsString(res);
 
         // CS ---------------------------------
         cursorX = 42;
         cursorY = 2;
-        print_string("CS: 0x");
+        Print("CS: 0x");
 
         __asm__("mov %%cs, %%edx" : "=d" (res));
-        print_hexdw(res);
+        PrintIntAsString(res);
 
         // DS ---------------------------------
         cursorX = 62;
         cursorY = 2;
-        print_string("DS: 0x");
+        Print("DS: 0x");
 
         __asm__("mov %%ds, %%edx" : "=d" (res));
-        print_hexdw(res);
+        PrintIntAsString(res);
 
         // ES ---------------------------------
         cursorX = 2;
         cursorY = 4;
-        print_string("ES: 0x");
+        Print("ES: 0x");
 
         __asm__("mov %%es, %%edx" : "=d" (res));
-        print_hexdw(res);
+        PrintIntAsString(res);
 
         // GS ---------------------------------
         cursorX = 22;
         cursorY = 4;
-        print_string("GS: 0x");
+        Print("GS: 0x");
 
         __asm__("mov %%gs, %%edx" : "=d" (res));
-        print_hexdw(res);
+        PrintIntAsString(res);
 
         // FS ---------------------------------
         cursorX = 42;
         cursorY = 4;
-        print_string("FS: 0x");
+        Print("FS: 0x");
 
         __asm__("mov %%fs, %%edx" : "=d" (res));
-        print_hexdw(res);
+        PrintIntAsString(res);
 
         // SS ---------------------------------
         cursorX = 62;
         cursorY = 4;
-        print_string("SS: 0x");
+        Print("SS: 0x");
 
         __asm__("mov %%ss, %%edx" : "=d" (res));
-        print_hexdw(res);
+        PrintIntAsString(res);
 
         // CR0 --------------------------------
         cursorX = 2;
         cursorY = 6;
-        print_string("CR0: 0x");
+        Print("CR0: 0x");
 
         __asm__("mov %%cr0, %%edx" : "=d" (res));
-        print_hexdw(res);
+        PrintIntAsString(res);
 
         // CR2 --------------------------------
         cursorX = 22;
         cursorY = 6;
-        print_string("CR2: 0x");
+        Print("CR2: 0x");
 
         __asm__("mov %%cr2, %%edx" : "=d" (res));
-        print_hexdw(res);
+        PrintIntAsString(res);
 
         // CR3 --------------------------------
         cursorX = 42;
         cursorY = 6;
-        print_string("CR3: 0x");
+        Print("CR3: 0x");
 
         __asm__("mov %%cr3, %%edx" : "=d" (res));
-        print_hexdw(res);
+        PrintIntAsString(res);
 
         // CR4 --------------------------------
         cursorX = 62;
         cursorY = 6;
-        print_string("CR4: 0x");
+        Print("CR4: 0x");
 
         __asm__("mov %%cr4, %%edx" : "=d" (res));
-        print_hexdw(res);
+        PrintIntAsString(res);
 
         cursorX = 2;
         cursorY = 8;
-        print_string("----------------------------------------------------------------------------");
+        Print("----------------------------------------------------------------------------");
 
         // System memory ----------------------
         cursorX = 2;
         cursorY = 10;
-        print_string("Memory allocated for the system: ");
+        Print("Memory allocated for the system: ");
 
         uint32 systemMemory = heapStartValue - 0x100000;
-        if(systemMemory / 1048576 > 0) {
-            print_number(systemMemory / 1048576);
-            print_string(" MB.");
-        } else if(systemMemory / 1024 > 0) {
-            print_number(systemMemory / 1024);
-            print_string(" KB.");
-        } else {
-            print_number(systemMemory);
-            print_string(" B.");
+        if(systemMemory / 1048576 > 0)
+        {
+            PrintNum(systemMemory / 1048576);
+            Print(" MB.");
+        } 
+        else if(systemMemory / 1024 > 0)
+        {
+            PrintNum(systemMemory / 1024);
+            Print(" KB.");
+        }
+        else
+        {
+            PrintNum(systemMemory);
+            Print(" B.");
         }
 
         // Heap -------------------------------
         cursorX = 2;
         cursorY = 12;
-        print_string("Heap allocated: ");
+        Print("Heap allocated: ");
 
         uint32 allocatedHeap = currentHeapValue - heapStartValue;
-        if(allocatedHeap / 1048576 > 0) {
-            print_number(allocatedHeap / 1048576);
-            print_string(" MB.");
-        } else if(allocatedHeap / 1024 > 0) {
-            print_number(allocatedHeap / 1024);
-            print_string(" KB.");
-        } else {
-            print_number(allocatedHeap);
-            print_string(" B.");
+        if(allocatedHeap / 1048576 > 0) 
+        {
+            PrintNum(allocatedHeap / 1048576);
+            Print(" MB.");
+        }
+        else if(allocatedHeap / 1024 > 0)
+        {
+            PrintNum(allocatedHeap / 1024);
+            Print(" KB.");
+        }
+        else
+        {
+            PrintNum(allocatedHeap);
+            Print(" B.");
         }
 
         // Heap memory location ---------------
         cursorX = 2;
         cursorY = 14;
-        print_string("Heap located at: 0x");
-        print_hexdw(heapStartValue);
+        Print("Heap located at: 0x");
+        PrintIntAsString(heapStartValue);
 
         uint8 key = ps2_keyDown();
-        if(key == 0x01) {
-            break;
-        }
+        if(key == 0x01) break;
 
         asm volatile("hlt");
     }

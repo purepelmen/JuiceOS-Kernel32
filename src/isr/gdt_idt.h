@@ -4,7 +4,8 @@
 #include "../stdio.h"
 
 /* Entry of Global Descriptor Table */
-typedef struct GDT_Entry {
+typedef struct GDT_Entry
+{
     // The lower 16 bits of the limit.
     uint16 limit_low;
     // The lower 16 bits of the base.
@@ -19,7 +20,8 @@ typedef struct GDT_Entry {
 } __attribute__((packed)) GDT_Entry;
 
 /* Pointer to Global Descriptor Table */
-typedef struct GDT_Pointer {
+typedef struct GDT_Pointer
+{
     // The upper 16 bits of all selector limits.
     uint16 limit;
     // The address of the first GDT_Entry struct.
@@ -27,7 +29,8 @@ typedef struct GDT_Pointer {
 } __attribute__((packed)) GDT_Pointer;
 
 /* Entry of Interrupt Descriptor Table */
-typedef struct IDT_Entry {
+typedef struct IDT_Entry
+{
     uint16 base_lo;             // The lower 16 bits of the address to jump to when this interrupt fires.
     uint16 sel;                 // Kernel segment selector.
     uint8  always0;             // This must always be zero.
@@ -36,13 +39,14 @@ typedef struct IDT_Entry {
 } __attribute__((packed)) IDT_Entry;
 
 /* Pointer to Interrupt Descriptor Table */
-typedef struct IDT_Pointer {
+typedef struct IDT_Pointer
+{
     uint16 limit;
     uint32 base;                // The address of the first element in our idt_entry_t array.
 } __attribute__((packed)) IDT_Pointer;
 
 // Load GDT/IDT
-void loadDescriptorTables();
+void LoadDescTables();
 
 // ISR/IRQ that defined in Assembly
 extern void isr0 ();

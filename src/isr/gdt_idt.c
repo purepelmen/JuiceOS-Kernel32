@@ -25,16 +25,18 @@ GDT_Pointer   gdt_ptr;
 IDT_Entry     idt_entries[256];
 IDT_Pointer   idt_ptr;
 
-void loadDescriptorTables() {
-    print_string("GDT/IDT Tables initialization...\n");
+void LoadDescTables()
+{
+    Print("GDT/IDT Tables initialization...\n");
     
     initGDT();
     initIDT();
-    print_log("GDT/IDT Tables was successfully inited and loaded.\n");
-    print_string("GDT/IDT Tables was successfully inited and loaded.\n");
+    PrintLog("GDT/IDT Tables was successfully inited and loaded.\n");
+    Print("GDT/IDT Tables was successfully inited and loaded.\n");
 }
 
-void initGDT() {
+void initGDT()
+{
     gdt_ptr.limit = (sizeof(GDT_Entry) * 5) - 1;
     gdt_ptr.base  = (uint32) &gdt_entries;
 
@@ -47,22 +49,23 @@ void initGDT() {
     gdt_flush((uint32) &gdt_ptr);
 }
 
-void initIDT() {
+void initIDT()
+{
     idt_ptr.limit = sizeof(IDT_Entry) * 256 -1;
     idt_ptr.base  = (uint32)&idt_entries;
 
-    mem_set((uint8*) &idt_entries, 0, sizeof(IDT_Entry)*256);
+    FillMem((uint8*) &idt_entries, 0, sizeof(IDT_Entry)*256);
 
-    port_byte_out(0x20, 0x11);
-    port_byte_out(0xA0, 0x11);
-    port_byte_out(0x21, 0x20);
-    port_byte_out(0xA1, 0x28);
-    port_byte_out(0x21, 0x04);
-    port_byte_out(0xA1, 0x02);
-    port_byte_out(0x21, 0x01);
-    port_byte_out(0xA1, 0x01);
-    port_byte_out(0x21, 0x00);
-    port_byte_out(0xA1, 0x00);
+    WritePortByte(0x20, 0x11);
+    WritePortByte(0xA0, 0x11);
+    WritePortByte(0x21, 0x20);
+    WritePortByte(0xA1, 0x28);
+    WritePortByte(0x21, 0x04);
+    WritePortByte(0xA1, 0x02);
+    WritePortByte(0x21, 0x01);
+    WritePortByte(0xA1, 0x01);
+    WritePortByte(0x21, 0x00);
+    WritePortByte(0xA1, 0x00);
 
     idt_set_gate( 0, (uint32)isr0 , 0x08, 0x8E);
     idt_set_gate( 1, (uint32)isr1 , 0x08, 0x8E);
@@ -118,7 +121,8 @@ void initIDT() {
 }
 
 // Set the value of one GDT entry.
-void gdt_set_gate(int num, uint32 base, uint32 limit, uint8 access, uint8 gran) {
+void gdt_set_gate(int num, uint32 base, uint32 limit, uint8 access, uint8 gran)
+{
     gdt_entries[num].base_low    = (base & 0xFFFF);
     gdt_entries[num].base_middle = (base >> 16) & 0xFF;
     gdt_entries[num].base_high   = (base >> 24) & 0xFF;
@@ -131,7 +135,8 @@ void gdt_set_gate(int num, uint32 base, uint32 limit, uint8 access, uint8 gran) 
 }
 
 // Set the value of one IDT entry.
-void idt_set_gate(uint8 num, uint32 base, uint16 sel, uint8 flags) {
+void idt_set_gate(uint8 num, uint32 base, uint16 sel, uint8 flags)
+{
     idt_entries[num].base_lo = base & 0xFFFF;
     idt_entries[num].base_hi = (base >> 16) & 0xFFFF;
 

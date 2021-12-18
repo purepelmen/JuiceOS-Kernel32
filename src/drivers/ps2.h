@@ -14,6 +14,6 @@ uint8 ps2_keyDown();
 uint8 ps2_scancode(uint8 ignoreReleases);
 
 /* Return pressed key in ASCII */
-uint8 ps2_readKey(void);
+uint8 ReadKey(void);
 
 #endif

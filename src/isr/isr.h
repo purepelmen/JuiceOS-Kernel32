@@ -21,7 +21,8 @@
 #define IRQ15 47
 
 // Pack of register and data that passes to interrupt handlers
-typedef struct registers {
+typedef struct registers
+{
     uint32 ds;
     uint32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
     uint32 int_no, err_code;

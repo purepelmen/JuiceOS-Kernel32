@@ -18,9 +18,9 @@ uint8 leftCtrlPressed = 0;
 uint8 capsLockActive = 0;
 
 uint8 ps2_keyDown() {
-    uint8 scan = port_byte_in(0x64);
+    uint8 scan = ReadPortByte(0x64);
         if(scan & 1) {
-            uint8 result = port_byte_in(0x60);
+            uint8 result = ReadPortByte(0x60);
             if(!(result & (1 << 7))) {
                 return result;
             }
@@ -29,7 +29,7 @@ uint8 ps2_keyDown() {
 
 uint8 ps2_scancode(uint8 ignoreReleases) {
     while(1) {
-        uint8 scan = port_byte_in(0x64);
+        uint8 scan = ReadPortByte(0x64);
         if(!(scan & 1)) {
             asm volatile("hlt");
             continue;
@@ -44,11 +44,11 @@ uint8 ps2_scancode(uint8 ignoreReleases) {
             break;
     }
 
-    uint8 result = port_byte_in(0x60);
+    uint8 result = ReadPortByte(0x60);
     return result;
 }
 
-uint8 ps2_readKey(void) {
+uint8 ReadKey(void) {
     uint8 _char;
     while(1) {
         uint8 scan = ps2_scancode(false);

@@ -4,6 +4,6 @@
 #include "stdio.h"
 
 // Register all system handlers
-void registerSystemHandlers(void);
+void RegisterSysHandlers(void);
 
 #endif

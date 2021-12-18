@@ -15,9 +15,9 @@ section .text
 [bits 32]
 
 extern kernel_main
-extern clear_screen
-extern print_string
-extern ps2_readKey
+extern ClearScreen
+extern Print
+extern ReadKey
 
 global start
 
@@ -35,12 +35,12 @@ verify_multiboot:
     jne .fail
     ret
 .fail:
-    call clear_screen
+    call ClearScreen
 
     push no_multiboot_str
-    call print_string
+    call Print
     add esp, 4
-    call ps2_readKey
+    call ReadKey
     jmp 0xffff0
 
 check_cpuid:
@@ -58,12 +58,12 @@ check_cpuid:
 	je .no_cpuid
 	ret
 .no_cpuid:
-	call clear_screen
+	call ClearScreen
 
     push no_cpuid_str
-    call print_string
+    call Print
     add esp, 4
-    call ps2_readKey
+    call ReadKey
     jmp 0xffff0
 
 ;; GDT/IDT flush function definition
