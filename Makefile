@@ -21,6 +21,10 @@ ASM_FILES = $(OBJECTS)/interrupts.o \
 
 NEED_TO_COMPILE = $(ASM_FILES) $(C_FILES) $(C_DRIVERS_FILES) $(C_ISR_FILES)
 
+installdep:
+	apt install nasm gcc grub2 build-essentials mtools
+	
+
 build: delObjsAndInitFolders $(NEED_TO_COMPILE)
 	ld -m elf_i386 -T $(LINK)/kernel.ld -o $(BUILD)/juiceos_k32.elf $(NEED_TO_COMPILE)
 	
