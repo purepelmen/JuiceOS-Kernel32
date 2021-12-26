@@ -22,7 +22,7 @@ ASM_FILES = $(OBJECTS)/interrupts.o \
 NEED_TO_COMPILE = $(ASM_FILES) $(C_FILES) $(C_DRIVERS_FILES) $(C_ISR_FILES)
 
 installdep:
-	sudo apt install nasm gcc grub2 build-essentials mtools
+	sudo apt install nasm gcc grub2 build-essential mtools
 	
 
 build: delObjsAndInitFolders $(NEED_TO_COMPILE)
