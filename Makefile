@@ -16,17 +16,7 @@ ASM_FILES = $(OBJECTS)/kernel_launcher.o
 
 NEED_TO_COMPILE = $(ASM_FILES) $(C_FILES) $(C_DRIVERS_FILES)
 
-<<<<<<< HEAD
 build: cleanAndInitialize $(NEED_TO_COMPILE)
-=======
-NEED_TO_COMPILE = $(ASM_FILES) $(C_FILES) $(C_DRIVERS_FILES) $(C_ISR_FILES)
-
-installdep:
-	sudo apt install nasm gcc grub2 build-essential mtools
-	
-
-build: delObjsAndInitFolders $(NEED_TO_COMPILE)
->>>>>>> 0a3758836cbb95572ff3aeb245abf72cd0d762b6
 	ld -m elf_i386 -T $(LINK)/kernel.ld -o $(BUILD)/juiceos_k32.elf $(NEED_TO_COMPILE)
 	
 	@cp $(BUILD)/juiceos_k32.elf $(ISO)/
