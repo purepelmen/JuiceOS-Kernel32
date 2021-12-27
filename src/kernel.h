@@ -2,9 +2,9 @@
 
 #define KERNEL_VERSION "1.0.3"
 
-#include "stdio.h"
+#include "stdlib.h"
 
-/* Initalize all descriptor tables, setup interrupts and so on... */
+/* Initalizes the kernel */
 void InitializeKernel(void);
 
 /* Kernel entry point */
@@ -17,10 +17,10 @@ void OpenConsole(void);
 void OpenMenu(void);
 
 /* Open Memory dumper */
-void OpenMemDumper(void);
+void OpenMemoryDumper(void);
 
 /* Open system logs */
-void OpenSysLogs(void);
+void OpenSystemLogs(void);
 
 /* Open debug */
 void OpenDebug(void);

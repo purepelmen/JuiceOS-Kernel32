@@ -1,7 +1,7 @@
 #ifndef C_HEAP_LIB
 #define C_HEAP_LIB
 
-#include "stdio.h"
+#include "stdlib.h"
 
 uint32 heapStartValue;
 uint32 currentHeapValue;

@@ -17,7 +17,7 @@ section .text
 extern kernel_main
 extern ClearScreen
 extern Print
-extern ReadKey
+extern Ps2ReadKey
 
 global start
 
@@ -40,7 +40,7 @@ verify_multiboot:
     push no_multiboot_str
     call Print
     add esp, 4
-    call ReadKey
+    call Ps2ReadKey
     jmp 0xffff0
 
 check_cpuid:
@@ -63,33 +63,8 @@ check_cpuid:
     push no_cpuid_str
     call Print
     add esp, 4
-    call ReadKey
+    call Ps2ReadKey
     jmp 0xffff0
-
-;; GDT/IDT flush function definition
-[global gdt_flush]
-[global idt_flush]
-
-gdt_flush:
-    mov eax, [esp+4]  ; Get the pointer to the GDT, passed as a parameter.
-    lgdt [eax]        ; Load the new GDT pointer
-
-    mov ax, 0x10      ; 0x10 is the offset in the GDT to our data segment
-    mov ds, ax        ; Load all data segment selectors
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    mov ss, ax
-    jmp 0x08:.flush   ; 0x08 is the offset to our code segment: Far jump!
-.flush:
-    ret
-
-idt_flush:
-    mov eax, [esp+4]  ; Get the pointer to the IDT, passed as a parameter. 
-    lidt [eax]        ; Load the IDT pointer.
-    sti               ; Enable interrupts
-    ret
-
 
 no_multiboot_str: db "Kernel booted without multiboot! You cannot continue loading this OS.", 0xA
                   db "Press any key to reboot...", 0

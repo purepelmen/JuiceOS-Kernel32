@@ -1,4 +1,3 @@
-#include "../stdio.h"
 #include "screen.h"
 
 uint32 cursorX = 0;
@@ -103,7 +102,7 @@ void print_char_noupdates(uint8 aChar)
     }
 }
 
-void Print(const uint8* string)
+void PrintString(const uint8* string)
 {
     for(int i=0; string[i] != 0x0; i++)
         PrintChar(string[i]);
