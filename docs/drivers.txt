@@ -11,15 +11,4 @@ This is a PS/2 keyboard driver. It has functions for waiting for scancode and
 waiting for any key with returning its ASCII value. It can handle Shift, CapsLock and Ctrl.
 -----------------------------------------------------------------------------------------
 
-ATA_PIO.H / ATA_PIO.C --- ATA PIO driver ------------------------------------------------
-This driver works with ATA devices. It can read (but not write for now) sectors from a harddisk.
-Also it can detect which ATA device type (PATAPI, SATAPI, PATA, SATA) is using. I've tried to read
-some sectors but it fails. It just hangs at polling (Waiting when BSY bit of status register will be clear).
-When I've tried to detect my ATA device type... It didn't match with any of types. So it means that 
-master/slave ATA drives has unknown type. And this mean that the driver can't work with my emulator 
-harddisks. Also I've launched my OS on a real hardware. And... the result is the same as on the emulator.
-So maybe I need to create an AHCI driver for disk I/O functions, because ATA PIO is unsupported on 
-emulators and on any real hardware.
------------------------------------------------------------------------------------------
-
 P.S. My English is now very well, so... sorry for any errors, that you can see in this text.

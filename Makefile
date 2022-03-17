@@ -36,11 +36,9 @@ bin/build/objects/%.o: src/asm/%.asm
 cleanAndInitialize:
 	@mkdir -p $(OBJECTS)/
 	@mkdir -p $(OBJECTS)/drivers
-	@mkdir -p $(OBJECTS)/isr
 
 	@rm -f $(OBJECTS)/*.o
 	@rm -f $(OBJECTS)/drivers/*.o
-	@rm -f $(OBJECTS)/isr/*.o
 
 clean:
 	@rm -f $(BUILD)/*.elf

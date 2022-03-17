@@ -16,7 +16,7 @@ section .text
 
 extern kernel_main
 extern ClearScreen
-extern Print
+extern PrintString
 extern Ps2ReadKey
 
 global start
@@ -38,7 +38,7 @@ verify_multiboot:
     call ClearScreen
 
     push no_multiboot_str
-    call Print
+    call PrintString
     add esp, 4
     call Ps2ReadKey
     jmp 0xffff0
@@ -61,7 +61,7 @@ check_cpuid:
 	call ClearScreen
 
     push no_cpuid_str
-    call Print
+    call PrintString
     add esp, 4
     call Ps2ReadKey
     jmp 0xffff0
