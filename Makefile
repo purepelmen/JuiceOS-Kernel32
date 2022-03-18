@@ -6,7 +6,8 @@ ISO 	  = bin/iso
 
 C_FILES = $(OBJECTS)/heap.o \
 		  $(OBJECTS)/kernel.o \
-		  $(OBJECTS)/stdlib.o
+		  $(OBJECTS)/stdlib.o \
+		  $(OBJECTS)/string.o
 
 C_DRIVERS_FILES = $(OBJECTS)/drivers/ps2.o \
 		  		  $(OBJECTS)/drivers/screen.o \
@@ -24,11 +25,11 @@ build: cleanAndInitialize $(NEED_TO_COMPILE)
 	@grub-mkrescue -V "JuiceOS" -o $(ISO_FILE) $(ISO)
 	@echo "Build successfull!"
 
-$(OBJECTS)/%.o: src/%.c
-	gcc -ffreestanding -m32 -c $< -o $@
+$(OBJECTS)/%.o: src/%.cpp
+	g++ -ffreestanding -m32 -c $< -o $@
 
-$(OBJECTS)/drivers/%.o: src/drivers/%.c
-	gcc -ffreestanding -m32 -c $< -o $@
+$(OBJECTS)/drivers/%.o: src/drivers/%.cpp
+	g++ -ffreestanding -m32 -c $< -o $@
 
 bin/build/objects/%.o: src/asm/%.asm
 	nasm -f elf32 $< -o $@

@@ -15,8 +15,6 @@ section .text
 [bits 32]
 
 extern kernel_main
-extern ClearScreen
-extern PrintString
 extern Ps2ReadKey
 
 global start
@@ -35,10 +33,6 @@ verify_multiboot:
     jne .fail
     ret
 .fail:
-    call ClearScreen
-
-    push no_multiboot_str
-    call PrintString
     add esp, 4
     call Ps2ReadKey
     jmp 0xffff0
@@ -58,18 +52,9 @@ check_cpuid:
 	je .no_cpuid
 	ret
 .no_cpuid:
-	call ClearScreen
-
-    push no_cpuid_str
-    call PrintString
     add esp, 4
     call Ps2ReadKey
     jmp 0xffff0
-
-no_multiboot_str: db "Kernel booted without multiboot! You cannot continue loading this OS.", 0xA
-                  db "Press any key to reboot...", 0
-no_cpuid_str:     db "CPUID is not supported on this PC! You cannot continue loading this OS.", 0xA
-                  db "Press any key to reboot...", 0
 
 section .bss
 stack_bottom:
