@@ -1,22 +1,21 @@
-/*
-    *
-    **
-    *** PS2.C -- PS/2 keyboard driver.
-    **
-    *
-*/
+#include <drivers/ports.hpp>
+#include <drivers/ps2.hpp>
 
-#include "drivers/ports.hpp"
-#include "drivers/ps2.hpp"
-
-const char* asciiTable = "\x00\x1B" "1234567890-=" "\x08\x09" "qwertyuiop[]" "\x0A\x00" "asdfghjkl;'`" "\x00" "\\zxcvbnm,./" "\x00" "*\x00" " " "\x00\x00\x00\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00" "789" "-" "456" "+" "1230" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 const char* asciiTableNumsShifted = ")!@#$%^&*(";
+const char* asciiTable = "\x00\x1B" "1234567890-=" "\x08\x09" "qwertyuiop[]" 
+                         "\x0A\x00" "asdfghjkl;'`" "\x00" "\\zxcvbnm,./" "\x00"
+                         "*\x00" " " "\x00\x00\x00\x00\x00\x00\x00" "\x00\x00\x00\x00" 
+                         "\x00\x00" "789" "-" "456" "+" "1230" 
+                         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 
-uint8 shiftPressed = 0;
-uint8 leftCtrlPressed = 0;
-uint8 capsLockActive = 0;
+void Ps2::initialize()
+{
+    shiftPressed = false;
+    leftCtrlPressed = false;
+    capsLockEnabled = false;
+}
 
-uint8 Ps2KeyDown()
+uint8 Ps2::getCurrentKey()
 {
     uint8 scan = ReadPortByte(0x64);
 
@@ -27,9 +26,11 @@ uint8 Ps2KeyDown()
         if(!(result & (1 << 7)))
             return result;
     }
+
+    return 0;
 }
 
-uint8 Ps2GetScancode(uint8 ignoreReleases)
+uint8 Ps2::getScancode(bool ignoreReleases)
 {
     while(1)
     {
@@ -57,13 +58,13 @@ uint8 Ps2GetScancode(uint8 ignoreReleases)
     return result;
 }
 
-extern "C" uint8 Ps2ReadKey(void)
+uint8 Ps2::readAscii()
 {
     uint8 _char;
     
     while(1)
     {
-        uint8 scan = Ps2GetScancode(false);
+        uint8 scan = getScancode(false);
 
         if(scan == 0x2A || scan == 0x36)
         {
@@ -92,7 +93,7 @@ extern "C" uint8 Ps2ReadKey(void)
         }
         else if(scan == 0x3A)
         {
-            capsLockActive = !capsLockActive;
+            capsLockEnabled = !capsLockEnabled;
             continue;
         }
         else if(scan == 0xFA)
@@ -103,7 +104,7 @@ extern "C" uint8 Ps2ReadKey(void)
 
         _char = asciiTable[scan];
 
-        if(capsLockActive == 0 && shiftPressed == 0)
+        if(capsLockEnabled == 0 && shiftPressed == 0)
             break;
 
         if(_char >= 'a' && _char <= 'z')
@@ -143,6 +144,11 @@ extern "C" uint8 Ps2ReadKey(void)
         break;
     }
     return _char;
+}
+
+void Ps2::operator>>(uint8& var)
+{
+    var = readAscii();
 }
 
 // UP_ARROW = 48 (c8 - release)

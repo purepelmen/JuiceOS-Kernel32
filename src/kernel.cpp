@@ -5,14 +5,16 @@
 #include "heap.hpp"
 
 // Buffer of the system log
-static uint8 systemLogBuffer[2048];
+static char systemLogBuffer[2048];
 ScreenDriver screen;
+Ps2 ps2;
 
 void initializeKernel()
 {
     screen.initialize();
+    ps2.initialize();
+
     screen.clear();
-    
     InitializeHeap();
     screen.enableCursor(0xE, 0xF);
 
@@ -80,7 +82,7 @@ void OpenConsole(void)
         {
             screen << "Type any char.\n";
 
-            uint8 key = Ps2ReadKey();
+            uint8 key = ps2.readAscii();
             screen << "ASCII code of typed key is: 0x";
             PrintByteAsString(key);
             screen << "\nIt displays as: ";
@@ -113,11 +115,11 @@ void OpenConsole(void)
 
         if(command.compare("scantest"))
         {
-            Ps2GetScancode(false);
+            ps2.getScancode(false);
 
             while(true)
             {
-                uint8 scancode = Ps2GetScancode(false);
+                uint8 scancode = ps2.getScancode(false);
 
                 screen << "0x";
                 PrintByteAsString(scancode);
@@ -185,7 +187,7 @@ void OpenMenu(void)
         screen << "Debug";
 
         // Getting input
-        uint8 key = Ps2GetScancode(true);
+        uint8 key = ps2.getScancode(true);
         if(key == 0x48)
         {
             if(currentPosition == 0) currentPosition = ITEMS_AMOUNT;
@@ -301,7 +303,7 @@ void OpenMemoryDumper(void)
         screen.cursorY = 0;
         screen.updateCursor();
 
-        uint8 key = Ps2GetScancode(true);
+        uint8 key = ps2.getScancode(true);
         if(key == 0x01)
             break;
         if(key == 0x4D)
@@ -323,15 +325,15 @@ void OpenMemoryDumper(void)
 
 void PrintLog(string str)
 {
-    // if(GetStringLength((uint8*) &systemLogBuffer) + GetStringLength(str) > 2046) return;
-    // ConcatString((uint8*) &systemLogBuffer, str);
+    if(string(systemLogBuffer).length() + str.length() > 2046) return;
+    string(systemLogBuffer).concat(str);
 }
 
 void OpenSystemLogs(void)
 {
     screen.clear();
-    // PrintString((uint8*) &systemLogBuffer);
-    Ps2ReadKey();
+    screen << string(systemLogBuffer);
+    ps2.readAscii();
 }
 
 void OpenDebug(void)
@@ -499,7 +501,7 @@ void OpenDebug(void)
 
     while(true)
     {
-        uint8 key = Ps2KeyDown();
+        uint8 key = ps2.getCurrentKey();
         if(key == 0x01) return;
     }
 }

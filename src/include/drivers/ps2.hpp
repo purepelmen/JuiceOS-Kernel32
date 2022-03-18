@@ -1,19 +1,20 @@
-#ifndef C_PS2_DRIVER_LIB
-#define C_PS2_DRIVER_LIB
+#pragma once
 
-#include "../stdlib.hpp"
+#include <stdlib.hpp>
 
-extern uint8 leftShiftPressed;
-extern uint8 leftCtrlPressed;
-extern uint8 capsLockActive;
+class Ps2
+{
+public:
+    void initialize();
 
-/* Returns pressed key */
-uint8 Ps2KeyDown();
+    uint8 getCurrentKey();
+    uint8 getScancode(bool ignoreReleases);
+    uint8 readAscii();
 
-/* Wait for key and returns its scancode. (Can ignore key releases) */
-uint8 Ps2GetScancode(uint8 ignoreReleases);
+    void operator>>(uint8& var);
 
-/* Return pressed key in ASCII */
-extern "C" uint8 Ps2ReadKey(void);
-
-#endif
+private:
+    bool shiftPressed;
+    bool leftCtrlPressed;
+    bool capsLockEnabled;
+};

@@ -15,8 +15,6 @@ section .text
 [bits 32]
 
 extern kernel_main
-extern Ps2ReadKey
-
 global start
 
 start:
@@ -34,7 +32,6 @@ verify_multiboot:
     ret
 .fail:
     add esp, 4
-    call Ps2ReadKey
     jmp 0xffff0
 
 check_cpuid:
@@ -53,7 +50,6 @@ check_cpuid:
 	ret
 .no_cpuid:
     add esp, 4
-    call Ps2ReadKey
     jmp 0xffff0
 
 section .bss

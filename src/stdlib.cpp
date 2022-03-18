@@ -15,6 +15,7 @@
 
 uint8* inputBuffer = 0;
 extern ScreenDriver screen;
+extern Ps2 ps2;
 
 string ReadString()
 {
@@ -27,7 +28,7 @@ string ReadString()
     
     for(int i = 0; true; )
     {
-        uint8 key = Ps2ReadKey();
+        uint8 key = ps2.readAscii();
 
         if(key == 0x0) continue;
         if(key == 0xA) break;
