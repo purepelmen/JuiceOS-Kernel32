@@ -17,6 +17,7 @@ public:
     void concat(string from);
 
     char operator[](int element);
+    bool operator==(string str);
 
 private:
     char* pointer;

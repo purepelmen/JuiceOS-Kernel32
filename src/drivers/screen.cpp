@@ -12,17 +12,17 @@ void ScreenDriver::initialize()
 
 void ScreenDriver::enableCursor(uint8 cursor_start, uint8 cursor_end)
 {
-    WritePortByte(0x03D4, 0x0A);
-    WritePortByte(0x03D5, (ReadPortByte(0x03D5) & 0xC0) | cursor_start);
+    port_byte_out(0x03D4, 0x0A);
+    port_byte_out(0x03D5, (port_byte_in(0x03D5) & 0xC0) | cursor_start);
 
-    WritePortByte(0x03D4, 0x0B);
-    WritePortByte(0x03D5, (ReadPortByte(0x03D5) & 0xE0) | cursor_end);
+    port_byte_out(0x03D4, 0x0B);
+    port_byte_out(0x03D5, (port_byte_in(0x03D5) & 0xE0) | cursor_end);
 }
 
 void ScreenDriver::disableCursor()
 {
-	WritePortByte(0x3D4, 0x0A);
-	WritePortByte(0x3D5, 0x20);
+	port_byte_out(0x3D4, 0x0A);
+	port_byte_out(0x3D5, 0x20);
 }
 
 void ScreenDriver::clear()
@@ -134,11 +134,11 @@ void ScreenDriver::updateCursor()
 {
     uint16 cursorPosition = cursorY * 80 + cursorX;
 
-    WritePortByte(0x03D4, 0x0F);
-    WritePortByte(0x03D5, cursorPosition);
+    port_byte_out(0x03D4, 0x0F);
+    port_byte_out(0x03D5, cursorPosition);
 
-    WritePortByte(0x03D4, 0x0E);
-    WritePortByte(0x03D5, cursorPosition >> 8);
+    port_byte_out(0x03D4, 0x0E);
+    port_byte_out(0x03D5, cursorPosition >> 8);
 }
 
 void ScreenDriver::operator<<(string str)

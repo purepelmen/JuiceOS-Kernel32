@@ -48,37 +48,37 @@ void OpenConsole(void)
             continue;
         }
 
-        if(command.compare("hello"))
+        if(command == "hello")
         {
             screen << "Helloooo :)\n\n";
             continue;
         }
 
         // TO FIX: This not working (all just hangs) 
-        if(command.compare("reboot"))
+        if(command == "reboot")
         {
             screen << "This command doesn't work for now. It will be fixed soon.\n\n";
             continue;
         }
 
-        if(command.compare("cls"))
+        if(command == "cls")
         {
             screen.clear();
             continue;
         }
 
-        if(command.compare("system"))
+        if(command == "system")
         {
             screen << "JuiceOS Kernel32 v" KERNEL_VERSION "\n\n";
             continue;
         }
 
-        if(command.compare("exit"))
+        if(command == "exit")
         {
             return;
         }
 
-        if(command.compare("ascii"))
+        if(command == "ascii")
         {
             screen << "Type any char.\n";
 
@@ -92,14 +92,14 @@ void OpenConsole(void)
             continue;
         }
 
-        if(command.compare("memdump"))
+        if(command == "memdump")
         {
             OpenMemoryDumper();
             screen.clear();
             continue;
         }
 
-        if(command.compare("help"))
+        if(command == "help")
         {
             screen << "ASCII - Print hex representation of a typed char.\n";
             screen << "CLS - Clear the console.\n";
@@ -113,7 +113,7 @@ void OpenConsole(void)
             continue;
         }
 
-        if(command.compare("scantest"))
+        if(command == "scantest")
         {
             ps2.getScancode(false);
 
@@ -131,7 +131,7 @@ void OpenConsole(void)
             continue;
         }
 
-        if(command.compare("\x1B"))
+        if(command == "\x1B")
             return;
         
         screen << "Unknown command.\n\n";

@@ -7,8 +7,8 @@ string::string(const char* charSequence)
 
 uint32 string::length()
 {
-    uint32 i = 0;
-    for(; pointer[i] != 0x0; i++);
+    int i;
+    for(i = 0; pointer[i] != 0x0; i++);
 
     return i;
 }
@@ -42,7 +42,7 @@ bool string::compare(string otherStr)
 
 void string::toUpper(string destination)
 {
-    uint32 i = 0;
+    int i = 0;
     while(pointer[i] != 0x0)
     {
         if(pointer[i] >= 'a' && pointer[i] <= 'z')
@@ -56,7 +56,7 @@ void string::toUpper(string destination)
 
 void string::toLower(string destination)
 {
-    uint32 i = 0;
+    int i = 0;
     while(pointer[i] != 0x0)
     {
         if(pointer[i] >= 'A' && pointer[i] <= 'Z')
@@ -83,4 +83,9 @@ void string::concat(string from)
 char string::operator[](int element)
 {
     return pointer[element];
+}
+
+bool string::operator==(string str)
+{
+    return compare(str);
 }

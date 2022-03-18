@@ -17,11 +17,11 @@ void Ps2::initialize()
 
 uint8 Ps2::getCurrentKey()
 {
-    uint8 scan = ReadPortByte(0x64);
+    uint8 scan = port_byte_in(0x64);
 
     if(scan & 1)
     {
-        uint8 result = ReadPortByte(0x60);
+        uint8 result = port_byte_in(0x60);
         
         if(!(result & (1 << 7)))
             return result;
@@ -34,7 +34,7 @@ uint8 Ps2::getScancode(bool ignoreReleases)
 {
     while(1)
     {
-        uint8 scan = ReadPortByte(0x64);
+        uint8 scan = port_byte_in(0x64);
         if(!(scan & 1))
         {
             // asm volatile("hlt");
@@ -54,7 +54,7 @@ uint8 Ps2::getScancode(bool ignoreReleases)
         }
     }
 
-    uint8 result = ReadPortByte(0x60);
+    uint8 result = port_byte_in(0x60);
     return result;
 }
 
