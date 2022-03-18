@@ -4,6 +4,8 @@ BUILD 	  = bin/build
 OBJECTS	  = bin/build/objects
 ISO 	  = bin/iso
 
+CPP_INCLUDES = src/include
+
 C_FILES = $(OBJECTS)/heap.o \
 		  $(OBJECTS)/kernel.o \
 		  $(OBJECTS)/stdlib.o \
@@ -26,10 +28,10 @@ build: cleanAndInitialize $(NEED_TO_COMPILE)
 	@echo "Build successfull!"
 
 $(OBJECTS)/%.o: src/%.cpp
-	g++ -ffreestanding -m32 -c $< -o $@
+	g++ -I $(CPP_INCLUDES) -nostdlib -ffreestanding -m32 -c $< -o $@
 
 $(OBJECTS)/drivers/%.o: src/drivers/%.cpp
-	g++ -ffreestanding -m32 -c $< -o $@
+	g++ -I $(CPP_INCLUDES) -nostdlib -ffreestanding -m32 -c $< -o $@
 
 bin/build/objects/%.o: src/asm/%.asm
 	nasm -f elf32 $< -o $@

@@ -6,8 +6,8 @@
     *
 */
 
-#include "ports.hpp"
-#include "ps2.hpp"
+#include "drivers/ports.hpp"
+#include "drivers/ps2.hpp"
 
 const char* asciiTable = "\x00\x1B" "1234567890-=" "\x08\x09" "qwertyuiop[]" "\x0A\x00" "asdfghjkl;'`" "\x00" "\\zxcvbnm,./" "\x00" "*\x00" " " "\x00\x00\x00\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00" "789" "-" "456" "+" "1230" "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 const char* asciiTableNumsShifted = ")!@#$%^&*(";
