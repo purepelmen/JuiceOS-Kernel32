@@ -13,13 +13,13 @@ void InitializeHeap(void)
     currentHeapValue = (uint32) &end;
     heapStartValue = currentHeapValue;
 
-    PrintLog(string("Heap was initialised.\n"));
+    PrintLog("Heap was initialised.\n");
 }
 
 void reset_heap(void)
 {
     currentHeapValue = heapStartValue;
-    PrintLog(string("Heap resetting has been completed.\n"));
+    PrintLog("Heap resetting has been completed.\n");
 }
 
 uint8* malloc(uint32 size)
