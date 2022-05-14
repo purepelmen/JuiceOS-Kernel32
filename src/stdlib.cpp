@@ -17,14 +17,14 @@ uint8* inputBuffer = 0;
 extern ScreenDriver screen;
 extern Ps2 ps2;
 
-string ReadString()
+string read_string()
 {
     // Allocating 60 bytes for text
     if(inputBuffer == 0)
         inputBuffer = malloc(60);
 
     // Clearing allocated section
-    FillMem(inputBuffer, 0x0, 60);
+    mem_fill(inputBuffer, 0x0, 60);
     
     for(int i = 0; true; )
     {
@@ -53,7 +53,8 @@ string ReadString()
     return string((const char*) inputBuffer);
 }
 
-void PrintHalfByteAsString(uint8 char4bit) {
+void print_hex_4bit(uint8 char4bit)
+{
     char4bit += 0x30;
 
     if(char4bit <= 0x39)
@@ -65,25 +66,25 @@ void PrintHalfByteAsString(uint8 char4bit) {
     }
 }
 
-void PrintByteAsString(uint8 byte)
+void print_hex_8bit(uint8 byte)
 {
-    PrintHalfByteAsString(byte >> 4);
-    PrintHalfByteAsString(byte & 0x0F);
+    print_hex_4bit(byte >> 4);
+    print_hex_4bit(byte & 0x0F);
 }
 
-void PrintShortAsString(uint16 word)
+void print_hex_16bit(uint16 word)
 {
-    PrintByteAsString(word >> 8);
-    PrintByteAsString(word & 0x00FF);
+    print_hex_8bit(word >> 8);
+    print_hex_8bit(word & 0x00FF);
 }
 
-void PrintIntAsString(uint32 dword)
+void print_hex_32bit(uint32 dword)
 {
-    PrintShortAsString(dword >> 16);
-    PrintShortAsString(dword & 0x0000FFFF);
+    print_hex_16bit(dword >> 16);
+    print_hex_16bit(dword & 0x0000FFFF);
 }
 
-void PrintNum(uint32 num)
+void print_number(uint32 num)
 {
     if (num == 0)
     {
@@ -114,13 +115,13 @@ void PrintNum(uint32 num)
     screen << c2;
 }
 
-void CopyMem(uint8* source, uint8* destination, uint32 bytesAmount)
+void mem_copy(uint8* source, uint8* destination, uint32 bytesAmount)
 {
     for(int i = 0; i < bytesAmount; i++)
         destination[i] = source[i];
 }
 
-bool CompareMem(uint8* first, uint8* seconds, uint32 bytesAmount)
+bool mem_compare(uint8* first, uint8* seconds, uint32 bytesAmount)
 {
     for(int i = 0; i < bytesAmount; i++)
         if(first[i] != seconds[i]) return false;
@@ -128,13 +129,13 @@ bool CompareMem(uint8* first, uint8* seconds, uint32 bytesAmount)
     return true;
 }
 
-void FillMem(uint8* ptr, uint8 byte, uint32 amount)
+void mem_fill(uint8* ptr, uint8 byte, uint32 amount)
 {
     for(int i = 0; i < amount; i++)
         ptr[i] = byte;
 }
 
-void RaiseError(string message, const char *file, uint32 line)
+void raise_error(string message, const char *file, uint32 line)
 {
     asm volatile("cli");
 

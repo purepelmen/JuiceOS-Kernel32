@@ -6,30 +6,30 @@
 
 // Buffer of the system log
 static char systemLogBuffer[2048];
+
 ScreenDriver screen;
 Ps2 ps2;
 
-void initializeKernel()
+void init_kernel()
 {
     screen.initialize();
     ps2.initialize();
 
     screen.clear();
-    InitializeHeap();
+    init_heap();
     screen.enableCursor(0xE, 0xF);
 
-    PrintLog("Kernel initialization completed.\n");
+    kernel_print_log("Kernel initialization completed.\n");
 }
 
 extern "C" void kernel_main()
 {
-    initializeKernel();
-    OpenMenu();
+    init_kernel();
+    open_menu();
 }
 
-void OpenConsole(void)
+void open_console(void)
 {
-    
     screen.clear();
 
     while(true)
@@ -38,7 +38,7 @@ void OpenConsole(void)
         screen << "PC:>>";
         screen.printColor = STANDART_SCREEN_COLOR;
 
-        string command = ReadString();
+        string command = read_string();
         command.toLower(command);
         screen << 0xA;
 
@@ -54,6 +54,7 @@ void OpenConsole(void)
             continue;
         }
 
+        // Awaiting IDT re-implementation
         // TO FIX: This not working (all just hangs) 
         if(command == "reboot")
         {
@@ -84,7 +85,7 @@ void OpenConsole(void)
 
             uint8 key = ps2.readAscii();
             screen << "ASCII code of typed key is: 0x";
-            PrintByteAsString(key);
+            print_hex_8bit(key);
             screen << "\nIt displays as: ";
 
             screen << key;
@@ -94,7 +95,7 @@ void OpenConsole(void)
 
         if(command == "memdump")
         {
-            OpenMemoryDumper();
+            open_memdumper();
             screen.clear();
             continue;
         }
@@ -122,7 +123,7 @@ void OpenConsole(void)
                 uint8 scancode = ps2.getScancode(false);
 
                 screen << "0x";
-                PrintByteAsString(scancode);
+                print_hex_8bit(scancode);
                 screen << "\n";
                 if(scancode == 0x81) break;
             }
@@ -138,7 +139,7 @@ void OpenConsole(void)
     }
 }
 
-void OpenMenu(void)
+void open_menu(void)
 {
     screen.clear();
     const uint8 NON_SELECTED_COLOR = STANDART_SCREEN_COLOR;
@@ -204,29 +205,29 @@ void OpenMenu(void)
             screen.printColor = NON_SELECTED_COLOR;
             if(currentPosition == 0)
             {
-                OpenConsole();
+                open_console();
                 screen.clear();
             }
             if(currentPosition == 1)
             {
-                OpenMemoryDumper();
+                open_memdumper();
                 screen.clear();
             }
             if(currentPosition == 2)
             {
-                OpenSystemLogs();
+                open_syslogs();
                 screen.clear();
             }
             if(currentPosition == 3)
             {
-                OpenDebug();
+                open_debugger();
                 screen.clear();
             }
         }
     }
 }
 
-void OpenMemoryDumper(void)
+void open_memdumper(void)
 {
     uint8* memPtr = (uint8*) 0x0;
     uint8 asciiFlag = false;
@@ -251,7 +252,7 @@ void OpenMemoryDumper(void)
             if(asciiFlag)
             {
                 screen << "0x";
-                PrintIntAsString((uint32) memPtr + i);
+                print_hex_32bit((uint32) memPtr + i);
                 screen << ": ";
 
                 for(int ii = 0; ii < 16; ii++)
@@ -269,13 +270,13 @@ void OpenMemoryDumper(void)
             else
             {
                 screen <<"0x";
-                PrintIntAsString((uint32) memPtr + i);
+                print_hex_32bit((uint32) memPtr + i);
                 screen << ": ";
 
                 for(int ii = 0; ii < 16; ii++)
                 {
                     screen.printColor = 0x07;
-                    PrintByteAsString(memPtr[i + ii]);
+                    print_hex_8bit(memPtr[i + ii]);
                     screen.printColor = STANDART_SCREEN_COLOR;
                     screen << ' ';
                 }
@@ -289,9 +290,9 @@ void OpenMemoryDumper(void)
         screen.cursorX = 0;
         screen.cursorY = 24;
         screen << "Dump: 0x";
-        PrintIntAsString((uint32) memPtr);
+        print_hex_32bit((uint32) memPtr);
         screen << " - 0x";
-        PrintIntAsString((uint32) memPtr + 255);
+        print_hex_32bit((uint32) memPtr + 255);
         screen << " | ASCII Flag = ";
         if(asciiFlag)
             screen << "ON ";
@@ -323,20 +324,20 @@ void OpenMemoryDumper(void)
     }
 }
 
-void PrintLog(string str)
+void kernel_print_log(string str)
 {
     if(string(systemLogBuffer).length() + str.length() > 2046) return;
     string(systemLogBuffer).concat(str);
 }
 
-void OpenSystemLogs(void)
+void open_syslogs(void)
 {
     screen.clear();
     screen << string(systemLogBuffer);
     ps2.readAscii();
 }
 
-void OpenDebug(void)
+void open_debugger(void)
 {
     screen.clear();
 
@@ -355,7 +356,7 @@ void OpenDebug(void)
     screen << "EBP: 0x";
 
     __asm__("mov %%ebp, %%edx" : "=d" (res));
-    PrintIntAsString(res);
+    print_hex_32bit(res);
 
     // ESP ---------------------------------
     screen.cursorX = 22;
@@ -363,7 +364,7 @@ void OpenDebug(void)
     screen << "ESP: 0x";
 
     __asm__("mov %%esp, %%edx" : "=d" (res));
-    PrintIntAsString(res);
+    print_hex_32bit(res);
 
     // CS ---------------------------------
     screen.cursorX = 42;
@@ -371,7 +372,7 @@ void OpenDebug(void)
     screen << "CS: 0x";
 
     __asm__("mov %%cs, %%edx" : "=d" (res));
-    PrintIntAsString(res);
+    print_hex_32bit(res);
 
     // DS ---------------------------------
     screen.cursorX = 62;
@@ -379,7 +380,7 @@ void OpenDebug(void)
     screen << "DS: 0x";
 
     __asm__("mov %%ds, %%edx" : "=d" (res));
-    PrintIntAsString(res);
+    print_hex_32bit(res);
 
     // ES ---------------------------------
     screen.cursorX = 2;
@@ -387,7 +388,7 @@ void OpenDebug(void)
     screen << "ES: 0x";
 
     __asm__("mov %%es, %%edx" : "=d" (res));
-    PrintIntAsString(res);
+    print_hex_32bit(res);
 
     // GS ---------------------------------
     screen.cursorX = 22;
@@ -395,7 +396,7 @@ void OpenDebug(void)
     screen << "GS: 0x";
 
     __asm__("mov %%gs, %%edx" : "=d" (res));
-    PrintIntAsString(res);
+    print_hex_32bit(res);
 
     // FS ---------------------------------
     screen.cursorX = 42;
@@ -403,7 +404,7 @@ void OpenDebug(void)
     screen << "FS: 0x";
 
     __asm__("mov %%fs, %%edx" : "=d" (res));
-    PrintIntAsString(res);
+    print_hex_32bit(res);
 
     // SS ---------------------------------
     screen.cursorX = 62;
@@ -411,7 +412,7 @@ void OpenDebug(void)
     screen << "SS: 0x";
 
     __asm__("mov %%ss, %%edx" : "=d" (res));
-    PrintIntAsString(res);
+    print_hex_32bit(res);
 
     // CR0 --------------------------------
     screen.cursorX = 2;
@@ -419,7 +420,7 @@ void OpenDebug(void)
     screen << "CR0: 0x";
 
     __asm__("mov %%cr0, %%edx" : "=d" (res));
-    PrintIntAsString(res);
+    print_hex_32bit(res);
 
     // CR2 --------------------------------
     screen.cursorX = 22;
@@ -427,7 +428,7 @@ void OpenDebug(void)
     screen << "CR2: 0x";
 
     __asm__("mov %%cr2, %%edx" : "=d" (res));
-    PrintIntAsString(res);
+    print_hex_32bit(res);
 
     // CR3 --------------------------------
     screen.cursorX = 42;
@@ -435,7 +436,7 @@ void OpenDebug(void)
     screen << "CR3: 0x";
 
     __asm__("mov %%cr3, %%edx" : "=d" (res));
-    PrintIntAsString(res);
+    print_hex_32bit(res);
 
     // CR4 --------------------------------
     screen.cursorX = 62;
@@ -443,7 +444,7 @@ void OpenDebug(void)
     screen << "CR4: 0x";
 
     __asm__("mov %%cr4, %%edx" : "=d" (res));
-    PrintIntAsString(res);
+    print_hex_32bit(res);
 
     screen.cursorX = 2;
     screen.cursorY = 8;
@@ -454,20 +455,20 @@ void OpenDebug(void)
     screen.cursorY = 10;
     screen << "Memory allocated for the system: ";
 
-    uint32 systemMemory = heapStartValue - 0x100000;
+    uint32 systemMemory = head_start_value - 0x100000;
     if(systemMemory / 1048576 > 0)
     {
-        PrintNum(systemMemory / 1048576);
+        print_number(systemMemory / 1048576);
         screen << " MB.";
     } 
     else if(systemMemory / 1024 > 0)
     {
-        PrintNum(systemMemory / 1024);
+        print_number(systemMemory / 1024);
         screen << " KB.";
     }
     else
     {
-        PrintNum(systemMemory);
+        print_number(systemMemory);
         screen << " B.";
     }
 
@@ -476,20 +477,20 @@ void OpenDebug(void)
     screen.cursorY = 12;
     screen << "Heap allocated: ";
 
-    uint32 allocatedHeap = currentHeapValue - heapStartValue;
+    uint32 allocatedHeap = current_heap_value - head_start_value;
     if(allocatedHeap / 1048576 > 0) 
     {
-        PrintNum(allocatedHeap / 1048576);
+        print_number(allocatedHeap / 1048576);
         screen << " MB.";
     }
     else if(allocatedHeap / 1024 > 0)
     {
-        PrintNum(allocatedHeap / 1024);
+        print_number(allocatedHeap / 1024);
         screen << " KB.";
     }
     else
     {
-        PrintNum(allocatedHeap);
+        print_number(allocatedHeap);
         screen << " B.";
     }
 
@@ -497,7 +498,7 @@ void OpenDebug(void)
     screen.cursorX = 2;
     screen.cursorY = 14;
     screen << "Heap located at: 0x";
-    PrintIntAsString(heapStartValue);
+    print_hex_32bit(head_start_value);
 
     while(true)
     {

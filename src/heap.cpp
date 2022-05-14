@@ -5,26 +5,26 @@
 #include "heap.hpp"
 #include "string.hpp"
 
-uint32 heapStartValue;
-uint32 currentHeapValue;
+uint32 head_start_value;
+uint32 current_heap_value;
 
-void InitializeHeap(void)
+void init_heap(void)
 {
-    currentHeapValue = (uint32) &end;
-    heapStartValue = currentHeapValue;
+    current_heap_value = (uint32) &end;
+    head_start_value = current_heap_value;
 
-    PrintLog("Heap was initialised.\n");
+    kernel_print_log("Heap was initialised.\n");
 }
 
 void reset_heap(void)
 {
-    currentHeapValue = heapStartValue;
-    PrintLog("Heap resetting has been completed.\n");
+    current_heap_value = head_start_value;
+    kernel_print_log("Heap resetting has been completed.\n");
 }
 
 uint8* malloc(uint32 size)
 {
-    uint32 tmp = currentHeapValue;
-    currentHeapValue += (uint32) size;
+    uint32 tmp = current_heap_value;
+    current_heap_value += (uint32) size;
     return (uint8*) tmp;
 }

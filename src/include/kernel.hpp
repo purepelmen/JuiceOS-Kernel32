@@ -6,25 +6,25 @@
 #include "string.hpp"
 
 /* Initalizes the kernel */
-void InitializeKernel(void);
+void init_kernel(void);
 
 /* Kernel entry point */
 extern "C" void kernel_main();
 
 /* Open console */
-void OpenConsole(void);
+void open_console(void);
 
 /* Open OS menu */
-void OpenMenu(void);
+void open_menu(void);
 
 /* Open Memory dumper */
-void OpenMemoryDumper(void);
+void open_memdumper(void);
 
 /* Open system logs */
-void OpenSystemLogs(void);
+void open_syslogs(void);
 
 /* Open debug */
-void OpenDebug(void);
+void open_debugger(void);
 
 /* Print new string to logs */
-void PrintLog(string str);
+void kernel_print_log(string str);
