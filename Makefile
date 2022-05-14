@@ -21,10 +21,8 @@ ASM_FILES = $(OBJ_FILES)/kernel_launcher.o
 NEED_TO_COMPILE = $(ASM_FILES) $(C_FILES) $(C_DRIVERS_FILES)
 
 build: clean_and_init $(NEED_TO_COMPILE)
-	ld -m elf_i386 -T $(KERNEL_LINKER) -o $(BUILD_DIRECTORY)/juiceos_k32.elf $(NEED_TO_COMPILE)
+	ld -m elf_i386 -T $(KERNEL_LINKER) -o $(GRUB_FILES)/juiceos_k32.elf $(NEED_TO_COMPILE)
 	
-	@cp $(BUILD_DIRECTORY)/juiceos_k32.elf $(GRUB_FILES)/
-
 	@grub-mkrescue -V "JuiceOS" -o $(ISO_PATH) $(GRUB_FILES)
 	@echo "Build successfull!"
 

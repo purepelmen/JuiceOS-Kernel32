@@ -23,6 +23,7 @@ start:
     call verify_multiboot
     call check_cpuid
 
+    call gdt_initialize
     call kernel_main
     jmp $
 
@@ -51,6 +52,8 @@ check_cpuid:
 .no_cpuid:
     add esp, 4
     jmp 0xffff0
+
+%include "src/asm/gdt.asm"
 
 section .bss
 stack_bottom:
