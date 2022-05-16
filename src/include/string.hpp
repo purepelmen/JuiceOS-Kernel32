@@ -5,14 +5,14 @@
 class string
 {
 public:
-    string(const char* charSequence);
+    string(const char* char_sequence);
     uint32 length();
 
-    bool compare(string otherStr);
-    bool compareLength(string otherStr);
+    bool compare(string other_str);
+    bool compare_length(string other_str);
 
-    void toUpper(string destination);
-    void toLower(string destination);
+    void to_upper(string destination);
+    void to_lower(string destination);
 
     void concat(string from);
 

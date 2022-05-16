@@ -28,7 +28,7 @@ string read_string()
     
     for(int i = 0; true; )
     {
-        uint8 key = ps2.readAscii();
+        uint8 key = ps2.read_ascii();
 
         if(key == 0x0) continue;
         if(key == 0xA) break;
@@ -115,15 +115,15 @@ void print_number(uint32 num)
     screen << c2;
 }
 
-void mem_copy(uint8* source, uint8* destination, uint32 bytesAmount)
+void mem_copy(uint8* source, uint8* destination, uint32 bytes_amount)
 {
-    for(int i = 0; i < bytesAmount; i++)
+    for(int i = 0; i < bytes_amount; i++)
         destination[i] = source[i];
 }
 
-bool mem_compare(uint8* first, uint8* seconds, uint32 bytesAmount)
+bool mem_compare(uint8* first, uint8* seconds, uint32 bytes_amount)
 {
-    for(int i = 0; i < bytesAmount; i++)
+    for(int i = 0; i < bytes_amount; i++)
         if(first[i] != seconds[i]) return false;
 
     return true;

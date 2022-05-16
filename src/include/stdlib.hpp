@@ -4,7 +4,7 @@
 #include "stdint.h"
 #include "string.hpp"
 
-#define RAISE_ERROR(message) panic(message, __FILE__, __LINE__);
+#define RAISE_ERROR(message) raise_error(message, __FILE__, __LINE__);
 
 /* Read input untill Escape or Enter pressed, then returns an input string */
 string read_string();
@@ -22,10 +22,10 @@ void print_hex_32bit(uint32 dword);
 void print_number(uint32 num);
 
 /* Copy 'bytesAmount' bytes of memory from 'source' to 'destination' */
-void mem_copy(uint8* source, uint8* destination, uint32 bytesAmount);
+void mem_copy(uint8* source, uint8* destination, uint32 bytes_amount);
 
 /* Compare two parts of memory */
-bool mem_compare(uint8* first, uint8* seconds, uint32 bytesAmount);
+bool mem_compare(uint8* first, uint8* seconds, uint32 bytes_amount);
 
 /* Fill memory by given byte */
 void mem_fill(uint8* ptr, uint8 byte, uint32 amount);

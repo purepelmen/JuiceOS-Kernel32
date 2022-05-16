@@ -10,12 +10,12 @@ const char* asciiTable = "\x00\x1B" "1234567890-=" "\x08\x09" "qwertyuiop[]"
 
 void Ps2::initialize()
 {
-    shiftPressed = false;
-    leftCtrlPressed = false;
-    capsLockEnabled = false;
+    shift_pressed = false;
+    left_ctrl_pressed = false;
+    caps_lock_enabled = false;
 }
 
-uint8 Ps2::getCurrentKey()
+uint8 Ps2::get_current_key()
 {
     uint8 scan = port_byte_in(0x64);
 
@@ -30,7 +30,7 @@ uint8 Ps2::getCurrentKey()
     return 0;
 }
 
-uint8 Ps2::getScancode(bool ignoreReleases)
+uint8 Ps2::get_scancode(bool ignoreReleases)
 {
     while(1)
     {
@@ -58,32 +58,32 @@ uint8 Ps2::getScancode(bool ignoreReleases)
     return result;
 }
 
-uint8 Ps2::readAscii()
+uint8 Ps2::read_ascii()
 {
     uint8 _char;
     
     while(1)
     {
-        uint8 scan = getScancode(false);
+        uint8 scan = get_scancode(false);
 
         if(scan == 0x2A || scan == 0x36)
         {
-            shiftPressed = 1;
+            shift_pressed = 1;
             continue;
         }
         else if(scan == 0xAA || scan == 0xB6)
         {
-            shiftPressed = 0;
+            shift_pressed = 0;
             continue;
         }
         else if (scan == 0x1D)
         {
-            leftCtrlPressed = 1;
+            left_ctrl_pressed = 1;
             continue;
         }
         else if(scan == 0x9D)
         {
-            leftCtrlPressed = 0;
+            left_ctrl_pressed = 0;
             continue;
         }
         else if(scan & (1 << 7))
@@ -93,7 +93,7 @@ uint8 Ps2::readAscii()
         }
         else if(scan == 0x3A)
         {
-            capsLockEnabled = !capsLockEnabled;
+            caps_lock_enabled = !caps_lock_enabled;
             continue;
         }
         else if(scan == 0xFA)
@@ -104,7 +104,7 @@ uint8 Ps2::readAscii()
 
         _char = asciiTable[scan];
 
-        if(capsLockEnabled == 0 && shiftPressed == 0)
+        if(caps_lock_enabled == 0 && shift_pressed == 0)
             break;
 
         if(_char >= 'a' && _char <= 'z')
@@ -148,7 +148,7 @@ uint8 Ps2::readAscii()
 
 void Ps2::operator>>(uint8& var)
 {
-    var = readAscii();
+    var = read_ascii();
 }
 
 // UP_ARROW = 48 (c8 - release)

@@ -1,8 +1,8 @@
 #include "string.hpp"
 
-string::string(const char* charSequence)
+string::string(const char* char_sequence)
 {
-    pointer = (char*) charSequence;
+    pointer = (char*) char_sequence;
 }
 
 uint32 string::length()
@@ -13,21 +13,21 @@ uint32 string::length()
     return i;
 }
 
-bool string::compareLength(string otherStr)
+bool string::compare_length(string other_str)
 {
-    return length() == otherStr.length();
+    return length() == other_str.length();
 }
 
-bool string::compare(string otherStr)
+bool string::compare(string other_str)
 {
-    if(compareLength(otherStr) == false) 
+    if(compare_length(other_str) == false) 
         return false;
 
     bool result = true;
     uint32 i = 0;
-    while(pointer[i] != 0x0 || otherStr.pointer[i] != 0x0)
+    while(pointer[i] != 0x0 || other_str.pointer[i] != 0x0)
     {
-        if(pointer[i] == otherStr.pointer[i])
+        if(pointer[i] == other_str.pointer[i])
         {
             i += 1;
             continue;
@@ -40,7 +40,7 @@ bool string::compare(string otherStr)
     return result;
 }
 
-void string::toUpper(string destination)
+void string::to_upper(string destination)
 {
     int i = 0;
     while(pointer[i] != 0x0)
@@ -54,7 +54,7 @@ void string::toUpper(string destination)
     }
 }
 
-void string::toLower(string destination)
+void string::to_lower(string destination)
 {
     int i = 0;
     while(pointer[i] != 0x0)

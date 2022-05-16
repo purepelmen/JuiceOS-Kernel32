@@ -10,7 +10,7 @@ void ScreenDriver::initialize()
     printColor = STANDART_SCREEN_COLOR;
 }
 
-void ScreenDriver::enableCursor(uint8 cursor_start, uint8 cursor_end)
+void ScreenDriver::enable_cursor(uint8 cursor_start, uint8 cursor_end)
 {
     port_byte_out(0x03D4, 0x0A);
     port_byte_out(0x03D5, (port_byte_in(0x03D5) & 0xC0) | cursor_start);
@@ -19,7 +19,7 @@ void ScreenDriver::enableCursor(uint8 cursor_start, uint8 cursor_end)
     port_byte_out(0x03D5, (port_byte_in(0x03D5) & 0xE0) | cursor_end);
 }
 
-void ScreenDriver::disableCursor()
+void ScreenDriver::disable_cursor()
 {
 	port_byte_out(0x3D4, 0x0A);
 	port_byte_out(0x3D5, 0x20);
@@ -39,20 +39,20 @@ void ScreenDriver::clear()
 
     cursorX = 0;
     cursorY = 0;
-    updateCursor();
+    update_cursor();
 }
 
-void ScreenDriver::printChar(uint8 _char)
+void ScreenDriver::print_char(uint8 print_char)
 {
     uint8* addressToPrint = (uint8*) VIDEO_MEMORY + (cursorX * 2 + cursorY * 160);
 
-    if(_char == 0xA)
+    if(print_char == 0xA)
     {
         // New line
         cursorY += 1;
         cursorX = 0;
     } 
-    else if (_char == 0x08)
+    else if (print_char == 0x08)
     {
         // Backspace
         if(cursorX != 0)
@@ -66,7 +66,7 @@ void ScreenDriver::printChar(uint8 _char)
     } 
     else
     {
-        addressToPrint[0] = _char;
+        addressToPrint[0] = print_char;
         addressToPrint[1] = printColor;
 
         cursorX += 1;
@@ -77,15 +77,15 @@ void ScreenDriver::printChar(uint8 _char)
         }
     }
 
-    updateCursor();
-    updateScroll();
+    update_cursor();
+    update_scroll();
 }
 
-void ScreenDriver::printChar_noupdates(uint8 printChar)
+void ScreenDriver::print_char_noupd(uint8 print_char)
 {
     uint8* adressToPrint = (uint8*) VIDEO_MEMORY + (cursorX * 2 + cursorY * 160);
 
-    adressToPrint[0] = printChar;
+    adressToPrint[0] = print_char;
     adressToPrint[1] = printColor;
 
     cursorX += 1;
@@ -96,19 +96,19 @@ void ScreenDriver::printChar_noupdates(uint8 printChar)
     }
 }
 
-void ScreenDriver::printString(string str)
+void ScreenDriver::print_string(string str)
 {
     for(int i = 0; str[i] != 0x0; i++)
-        printChar(str[i]);
+        print_char(str[i]);
 }
 
-void ScreenDriver::printString_noupdates(string str)
+void ScreenDriver::print_string_noupd(string str)
 {
     for(int i = 0; str[i] != 0x0; i++)
-        printChar_noupdates(str[i]);
+        print_char_noupd(str[i]);
 }
 
-void ScreenDriver::updateScroll()
+void ScreenDriver::update_scroll()
 {
     if(cursorY >= 25)
     {
@@ -130,7 +130,7 @@ void ScreenDriver::updateScroll()
     }
 }
 
-void ScreenDriver::updateCursor()
+void ScreenDriver::update_cursor()
 {
     uint16 cursorPosition = cursorY * 80 + cursorX;
 
@@ -143,10 +143,10 @@ void ScreenDriver::updateCursor()
 
 void ScreenDriver::operator<<(string str)
 {
-    printString(str);
+    print_string(str);
 }
 
 void ScreenDriver::operator<<(uint8 _char)
 {
-    printChar(_char);
+    print_char(_char);
 }

@@ -17,7 +17,7 @@ void init_kernel()
 
     screen.clear();
     init_heap();
-    screen.enableCursor(0xE, 0xF);
+    screen.enable_cursor(0xE, 0xF);
 
     kernel_print_log("Kernel initialization completed.\n");
 }
@@ -39,7 +39,7 @@ void open_console(void)
         screen.printColor = STANDART_SCREEN_COLOR;
 
         string command = read_string();
-        command.toLower(command);
+        command.to_lower(command);
         screen << 0xA;
 
         if(command.length() == 0)
@@ -83,7 +83,7 @@ void open_console(void)
         {
             screen << "Type any char.\n";
 
-            uint8 key = ps2.readAscii();
+            uint8 key = ps2.read_ascii();
             screen << "ASCII code of typed key is: 0x";
             print_hex_8bit(key);
             screen << "\nIt displays as: ";
@@ -116,11 +116,11 @@ void open_console(void)
 
         if(command == "scantest")
         {
-            ps2.getScancode(false);
+            ps2.get_scancode(false);
 
             while(true)
             {
-                uint8 scancode = ps2.getScancode(false);
+                uint8 scancode = ps2.get_scancode(false);
 
                 screen << "0x";
                 print_hex_8bit(scancode);
@@ -188,7 +188,7 @@ void open_menu(void)
         screen << "Debug";
 
         // Getting input
-        uint8 key = ps2.getScancode(true);
+        uint8 key = ps2.get_scancode(true);
         if(key == 0x48)
         {
             if(currentPosition == 0) currentPosition = ITEMS_AMOUNT;
@@ -258,8 +258,8 @@ void open_memdumper(void)
                 for(int ii = 0; ii < 16; ii++)
                 {
                     screen.printColor = 0x07;
-                    screen.printChar_noupdates(memPtr[i + ii]);
-                    screen.updateCursor();
+                    screen.print_char_noupd(memPtr[i + ii]);
+                    screen.update_cursor();
                     screen.printColor = STANDART_SCREEN_COLOR;
                     screen << "  ";
                 }
@@ -298,13 +298,13 @@ void open_memdumper(void)
             screen << "ON ";
         else
             screen << "OFF";
-        screen.printString_noupdates("                                     ");
+        screen.print_string_noupd("                                     ");
 
         screen.cursorX = 0;
         screen.cursorY = 0;
-        screen.updateCursor();
+        screen.update_cursor();
 
-        uint8 key = ps2.getScancode(true);
+        uint8 key = ps2.get_scancode(true);
         if(key == 0x01)
             break;
         if(key == 0x4D)
@@ -334,7 +334,7 @@ void open_syslogs(void)
 {
     screen.clear();
     screen << string(systemLogBuffer);
-    ps2.readAscii();
+    ps2.read_ascii();
 }
 
 void open_debugger(void)
@@ -502,7 +502,7 @@ void open_debugger(void)
 
     while(true)
     {
-        uint8 key = ps2.getCurrentKey();
+        uint8 key = ps2.get_current_key();
         if(key == 0x01) return;
     }
 }

@@ -15,17 +15,17 @@ public:
 
     void initialize();
 
-    void disableCursor();
-    void enableCursor(uint8 cursor_start, uint8 cursor_end);
+    void disable_cursor();
+    void enable_cursor(uint8 cursor_start, uint8 cursor_end);
 
     void clear();
-    void printChar(uint8 printChar);
-    void printChar_noupdates(uint8 printChar);
-    void printString(string str);
-    void printString_noupdates(string str);
+    void print_char(uint8 print_char);
+    void print_char_noupd(uint8 print_char);
+    void print_string(string str);
+    void print_string_noupd(string str);
 
-    void updateScroll();
-    void updateCursor();
+    void update_scroll();
+    void update_cursor();
 
     void operator<<(string str);
     void operator<<(uint8 _char);
