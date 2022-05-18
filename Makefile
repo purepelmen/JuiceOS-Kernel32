@@ -2,50 +2,36 @@ KERNEL_LINKER = bin/kernel.ld
 ISO_PATH  = bin/JuiceOS.iso
 
 OBJ_FILES = bin/build/objects
-BUILD_DIRECTORY = bin/build
 GRUB_FILES = bin/iso
 
-CPP_INCLUDES = src/include
+KERNEL_ELF = $(GRUB_FILES)/juiceos_k32.elf
+CPP_INCLUDES = include
 
-C_FILES = $(OBJ_FILES)/heap.o \
-		  $(OBJ_FILES)/kernel.o \
-		  $(OBJ_FILES)/stdlib.o \
-		  $(OBJ_FILES)/string.o
-
-C_DRIVERS_FILES = $(OBJ_FILES)/drivers/ps2.o \
-		  		  $(OBJ_FILES)/drivers/screen.o \
-		  		  $(OBJ_FILES)/drivers/ports.o
-
-ASM_FILES = $(OBJ_FILES)/kernel_launcher.o
-
-NEED_TO_COMPILE = $(ASM_FILES) $(C_FILES) $(C_DRIVERS_FILES)
+CPP_FILES = $(shell find src -type f -name '*.cpp')
+ASM_FILES = $(shell find src -type f -name '*.asm')
+NEED_TO_COMPILE = $(patsubst src/%,$(OBJ_FILES)/%.o,$(CPP_FILES) $(ASM_FILES))
 
 build: clean_and_init $(NEED_TO_COMPILE)
-	ld -m elf_i386 -T $(KERNEL_LINKER) -o $(GRUB_FILES)/juiceos_k32.elf $(NEED_TO_COMPILE)
+	ld -m elf_i386 -T $(KERNEL_LINKER) -o $(KERNEL_ELF) $(NEED_TO_COMPILE)
 	
 	@grub-mkrescue -V "JuiceOS" -o $(ISO_PATH) $(GRUB_FILES)
 	@echo "Build successfull!"
 
-$(OBJ_FILES)/%.o: src/%.cpp
-	g++ -I $(CPP_INCLUDES) -nostdlib -ffreestanding -m32 -c $< -o $@
-
-$(OBJ_FILES)/drivers/%.o: src/drivers/%.cpp
-	g++ -I $(CPP_INCLUDES) -nostdlib -ffreestanding -m32 -c $< -o $@
-
-bin/build/objects/%.o: src/asm/%.asm
-	nasm -f elf32 $< -o $@
-
 clean_and_init:
-	@mkdir -p $(OBJ_FILES)/
-	@mkdir -p $(OBJ_FILES)/drivers
-
-	@rm -f $(OBJ_FILES)/*.o
-	@rm -f $(OBJ_FILES)/drivers/*.o
+	@rm -f -r $(OBJ_FILES)
+	@mkdir -p $(OBJ_FILES)
 
 clean:
-	@rm -f $(BUILD_DIRECTORY)/*.elf
 	@rm -f $(ISO)/*.elf
 	@rm -f bin/*.iso
 
 run:
 	@qemu-system-x86_64 -cdrom $(ISO_PATH)
+
+$(OBJ_FILES)/%.cpp.o: src/%.cpp
+	@mkdir -p $(dir $@)
+	g++ -I $(CPP_INCLUDES) -nostdlib -ffreestanding -m32 -c $< -o $@
+
+$(OBJ_FILES)/%.asm.o: src/%.asm
+	@mkdir -p $(dir $@)
+	nasm -f elf32 $< -o $@

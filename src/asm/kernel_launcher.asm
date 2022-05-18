@@ -53,7 +53,7 @@ check_cpuid:
     add esp, 4
     jmp 0xffff0
 
-%include "src/asm/gdt.asm"
+%include "include/asm/gdt.asm"
 
 section .bss
 stack_bottom:
