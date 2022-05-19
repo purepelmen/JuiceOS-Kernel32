@@ -3,6 +3,7 @@
 
 #include "kernel.hpp"
 #include "heap.hpp"
+#include "gdt.hpp"
 
 // Buffer of the system log
 static char systemLogBuffer[2048];
@@ -12,12 +13,17 @@ Ps2 ps2;
 
 void init_kernel()
 {
+    kgdt::gdt_init();
+    kernel_print_log("GDT initialized.\n");
+
     screen.initialize();
     ps2.initialize();
+    kernel_print_log("Drivers initialized.\n");
 
-    screen.clear();
     init_heap();
+
     screen.enable_cursor(0xE, 0xF);
+    screen.clear();
 
     kernel_print_log("Kernel initialization completed.\n");
 }
