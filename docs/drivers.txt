@@ -1,12 +1,12 @@
 There is information about drivers written for this OS.
 
-SCREEN.H / SCREEN.C --- Screen driver ---------------------------------------------------
+SCREEN.HPP / SCREEN.CPP --- Screen driver ---------------------------------------------------
 I don't know... Can I call it "driver", but... I call it "driver".
 This driver works with the screen. It can print a string, clear the screen or disable/enable the cursor.
 For now this driver can't work with graphics, but in future maybe will be able to. 
 -----------------------------------------------------------------------------------------
 
-PS2.H / PS2.C --- PS/2 keyboard driver --------------------------------------------------
+PS2.HPP / PS2.CPP --- PS/2 keyboard driver --------------------------------------------------
 This is a PS/2 keyboard driver. It has functions for waiting for scancode and
 waiting for any key with returning its ASCII value. It can handle Shift, CapsLock and Ctrl.
 -----------------------------------------------------------------------------------------

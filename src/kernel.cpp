@@ -7,7 +7,7 @@
 #include "idt.hpp"
 
 // Buffer of the system log
-static char systemLogBuffer[2048];
+static char syslog_buffer[2048];
 
 ScreenDriver screen;
 Ps2 ps2;
@@ -336,14 +336,16 @@ void open_memdumper(void)
 
 void kernel_print_log(string str)
 {
-    if(string(systemLogBuffer).length() + str.length() > 2046) return;
-    string(systemLogBuffer).concat(str);
+    string buffer = syslog_buffer;
+    
+    if(buffer.length() + str.length() > sizeof(syslog_buffer) - 2) return;
+    buffer.concat(str);
 }
 
 void open_syslogs(void)
 {
     screen.clear();
-    screen << string(systemLogBuffer);
+    screen << string(syslog_buffer);
     ps2.read_ascii();
 }
 

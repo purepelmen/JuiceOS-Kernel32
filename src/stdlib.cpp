@@ -1,30 +1,22 @@
-/*
-    *
-    **
-    *** STDIO.C -- provides basic functions for getting the input, 
-    *** working with strings and memory.
-    **
-    *
-*/
-
 #include "drivers/screen.hpp"
 #include "drivers/ps2.hpp"
 
 #include "stdlib.hpp"
 #include "heap.hpp"
 
-uint8* inputBuffer = 0;
+uint8* input_buffer = 0;
+
 extern ScreenDriver screen;
 extern Ps2 ps2;
 
 string read_string()
 {
     // Allocating 60 bytes for text
-    if(inputBuffer == 0)
-        inputBuffer = malloc(60);
+    if(input_buffer == 0)
+        input_buffer = malloc(60);
 
     // Clearing allocated section
-    mem_fill(inputBuffer, 0x0, 60);
+    mem_fill(input_buffer, 0x0, 60);
     
     for(int i = 0; true; )
     {
@@ -39,18 +31,18 @@ string read_string()
 
             screen << key;
             i -= 1;
-            inputBuffer[i] = 0x0;
+            input_buffer[i] = 0x0;
             continue;
         }
         
         if(i >= 58) continue;
         
         screen << key;
-        inputBuffer[i] = key;
+        input_buffer[i] = key;
         i += 1;
     }
 
-    return string((const char*) inputBuffer);
+    return string((const char*) input_buffer);
 }
 
 void print_hex_4bit(uint8 char4bit)

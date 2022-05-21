@@ -21,7 +21,6 @@ start:
     cli
     mov esp, stack_top
     call verify_multiboot
-    call check_cpuid
 
     call kernel_main
     jmp $
@@ -31,24 +30,6 @@ verify_multiboot:
     jne .fail
     ret
 .fail:
-    add esp, 4
-    jmp 0xffff0
-
-check_cpuid:
-    pushfd
-	pop eax
-	mov ecx, eax
-	xor eax, 1 << 21
-	push eax
-	popfd
-	pushfd
-	pop eax
-	push ecx
-	popfd
-	cmp eax, ecx
-	je .no_cpuid
-	ret
-.no_cpuid:
     add esp, 4
     jmp 0xffff0
 

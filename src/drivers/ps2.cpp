@@ -1,8 +1,8 @@
 #include <drivers/ports.hpp>
 #include <drivers/ps2.hpp>
 
-const char* asciiTableNumsShifted = ")!@#$%^&*(";
-const char* asciiTable = "\x00\x1B" "1234567890-=" "\x08\x09" "qwertyuiop[]" 
+const char* ascii_table_nums_shifted = ")!@#$%^&*(";
+const char* ascii_table = "\x00\x1B" "1234567890-=" "\x08\x09" "qwertyuiop[]" 
                          "\x0A\x00" "asdfghjkl;'`" "\x00" "\\zxcvbnm,./" "\x00"
                          "*\x00" " " "\x00\x00\x00\x00\x00\x00\x00" "\x00\x00\x00\x00" 
                          "\x00\x00" "789" "-" "456" "+" "1230" 
@@ -102,7 +102,7 @@ uint8 Ps2::read_ascii()
             continue;
         }
 
-        _char = asciiTable[scan];
+        _char = ascii_table[scan];
 
         if(caps_lock_enabled == 0 && shift_pressed == 0)
             break;
@@ -116,7 +116,7 @@ uint8 Ps2::read_ascii()
         if(_char >= '0' && _char <= '9')
         {
             _char -= 0x30;
-            _char = asciiTableNumsShifted[_char];
+            _char = ascii_table_nums_shifted[_char];
             break;
         }
 

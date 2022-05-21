@@ -29,7 +29,7 @@ namespace kgdt
     {
         if(privilege_level > 3)
         {
-            RAISE_ERROR("Privilege level must be in range 0-2");
+            RAISE_ERROR("Privilege level must be in range 0-3");
         }
 
         gdt_descriptors[desc_number].limit_lower = limit & 0xFFFF;
