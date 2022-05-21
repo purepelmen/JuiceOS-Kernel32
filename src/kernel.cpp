@@ -4,6 +4,7 @@
 #include "kernel.hpp"
 #include "heap.hpp"
 #include "gdt.hpp"
+#include "idt.hpp"
 
 // Buffer of the system log
 static char systemLogBuffer[2048];
@@ -15,6 +16,9 @@ void init_kernel()
 {
     kgdt::gdt_init();
     kernel_print_log("GDT initialized.\n");
+
+    kidt::idt_init();
+    kernel_print_log("IDT initialized.\n");
 
     screen.initialize();
     ps2.initialize();

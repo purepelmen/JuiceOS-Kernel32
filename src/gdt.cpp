@@ -5,17 +5,17 @@ namespace kgdt
 {
     const int GDT_DESCRIPTORS_COUNT = 3;
 
-    gdt_desc_t gdt_descriptors[GDT_DESCRIPTORS_COUNT];
-    gdt_reg_t gdtr;
+    static gdt_desc_t gdt_descriptors[GDT_DESCRIPTORS_COUNT];
+    static gdt_reg_t gdtr;
 
     extern "C" void gdt_flush(uint32 pointer);
 
-    void gdt_set_gate(int desc_number, uint32 base, uint32 limit, bool is_executable, uint8 privilege_level);
-    void gdt_clear_gate(int desc_number);
+    static void gdt_set_gate(int desc_number, uint32 base, uint32 limit, bool is_executable, uint8 privilege_level);
+    static void gdt_clear_gate(int desc_number);
 
     void gdt_init()
     {
-        gdt_clear_gate(0);
+        // null segment already filled with 0
         gdt_set_gate(1, 0x0, 0xFFFFF, true, 0);
         gdt_set_gate(2, 0x0, 0xFFFFF, false, 0);
 
@@ -25,9 +25,9 @@ namespace kgdt
         gdt_flush((uint32) &gdtr);
     }
 
-    void gdt_set_gate(int desc_number, uint32 base, uint32 limit, bool is_executable, uint8 privilege_level)
+    static void gdt_set_gate(int desc_number, uint32 base, uint32 limit, bool is_executable, uint8 privilege_level)
     {
-        if(privilege_level > 2)
+        if(privilege_level > 3)
         {
             RAISE_ERROR("Privilege level must be in range 0-2");
         }
@@ -46,13 +46,5 @@ namespace kgdt
         uint8 other_flags = 0b1100;
         gdt_descriptors[desc_number].other_flags = other_flags;
         gdt_descriptors[desc_number].base_high = (base >> 24) & 0xFF;
-    }
-
-    void gdt_clear_gate(int desc_number)
-    {
-        uint32 pointer = (uint32) &gdt_descriptors;
-        pointer *= desc_number + 1;
-
-        mem_fill((uint8*) pointer, 0, sizeof(gdt_desc_t));
     }
 }

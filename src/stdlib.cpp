@@ -144,7 +144,7 @@ void raise_error(string message, const char *file, uint32 line)
     screen << ") at ";
     screen << file;
     screen << ":";
-    screen << line;
+    print_number(line);
     screen << "\n";
     
     for(;;);
