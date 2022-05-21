@@ -1,7 +1,7 @@
 # JuiceOS-Kernel32
+JuiceOS Kernel32 - is my 32-bit operating system (for now, just a small monolithic kernel).
 
 ## Requirements
-Type this to the console:
 ```console
 sudo apt install build-essential
 ```
@@ -14,18 +14,23 @@ sudo apt install grub2
 ```console
 sudo apt install xorriso
 ```
-Windows users should install **Qemu for Windows**. Linux users should install this:
+
+Windows users should install **Qemu for Windows**, and add Qemu to Windows environment variables.
+
+Linux users should install this:
 ```console
 sudo apt install qemu-system-x86
 ```
+
 ## Running in emulator
 Linux:
 ```console
 make run
 ```
-Windows:
 
+Windows:
 Change path to the ISO file in `run.bat` and run it
+
 ## Running on a real hardware
 For linux users:
 ```console
