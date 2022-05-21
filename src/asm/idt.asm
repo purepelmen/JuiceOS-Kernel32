@@ -36,14 +36,14 @@ isr_handler_%1:
 %endmacro
 
 %macro IRQ 1
-irq_handler_%1:
+isr_handler_%1:
     cli
     push byte 0
     push byte %1
     jmp irq_common_stub
 
     ; Fill IRQ handler to fit size with other handler types
-    times ISR_HANDLER_SIZE_CONST - ($-irq_handler_%1) db 0
+    times ISR_HANDLER_SIZE_CONST - ($-isr_handler_%1) db 0
 %endmacro
 
 [extern isr_c_handler]
@@ -138,19 +138,19 @@ isr_handlers_start:
     ISR_NOERRCODE 30
     ISR_NOERRCODE 31
 
-    IRQ           0     ; 32
-    IRQ           1     ; 33
-    IRQ           2     ; 34
-    IRQ           3     ; 35
-    IRQ           4     ; 36
-    IRQ           5     ; 37
-    IRQ           6     ; 38
-    IRQ           7     ; 39
-    IRQ           8     ; 40
-    IRQ           9     ; 41
-    IRQ           10    ; 42
-    IRQ           11    ; 43
-    IRQ           12    ; 44
-    IRQ           13    ; 45
-    IRQ           14    ; 46
-    IRQ           15    ; 47
+    IRQ           32     ; IRQ 0
+    IRQ           33     ; IRQ 1
+    IRQ           34     ; IRQ 2
+    IRQ           35     ; IRQ 3
+    IRQ           36     ; IRQ 4
+    IRQ           37     ; IRQ 5
+    IRQ           38     ; IRQ 6
+    IRQ           39     ; IRQ 7
+    IRQ           40     ; IRQ 8
+    IRQ           41     ; IRQ 9
+    IRQ           42     ; IRQ 10
+    IRQ           43     ; IRQ 11
+    IRQ           44     ; IRQ 12
+    IRQ           45     ; IRQ 13
+    IRQ           46     ; IRQ 14
+    IRQ           47     ; IRQ 15
