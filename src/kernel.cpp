@@ -10,8 +10,6 @@
 // Buffer of the system log
 static char syslog_buffer[2048];
 
-Ps2 ps2;
-
 void init_kernel()
 {
     kgdt::gdt_init();
@@ -19,9 +17,6 @@ void init_kernel()
 
     kidt::idt_init();
     kernel_print_log("IDT initialized.\n");
-
-    ps2.initialize();
-    kernel_print_log("Drivers initialized.\n");
 
     init_heap();
 
@@ -95,7 +90,7 @@ void open_console(void)
         {
             kscreen::print_string("Type any char.\n");
 
-            uint8 key = ps2.read_ascii();
+            uint8 key = kps2::read_ascii();
             kscreen::print_string("ASCII code of typed key is: 0x");
             print_hex_8bit(key);
             kscreen::print_string("\nIt displays as: ");
@@ -128,11 +123,11 @@ void open_console(void)
 
         if(command == "scantest")
         {
-            ps2.get_scancode(false);
+            kps2::get_scancode(false);
 
             while(true)
             {
-                uint8 scancode = ps2.get_scancode(false);
+                uint8 scancode = kps2::get_scancode(false);
 
                 kscreen::print_string("0x");
                 print_hex_8bit(scancode);
@@ -201,7 +196,7 @@ void open_menu(void)
         kscreen::print_string("Debug");
 
         // Getting input
-        uint8 key = ps2.get_scancode(true);
+        uint8 key = kps2::get_scancode(true);
         if(key == 0x48)
         {
             if(currentPosition == 0) currentPosition = ITEMS_AMOUNT;
@@ -317,7 +312,7 @@ void open_memdumper(void)
         kscreen::outargs.cursor_y = 0;
         kscreen::update_cursor();
 
-        uint8 key = ps2.get_scancode(true);
+        uint8 key = kps2::get_scancode(true);
         if(key == 0x01)
             break;
         if(key == 0x4D)
@@ -350,7 +345,7 @@ void open_syslogs(void)
     kscreen::clear();
     kscreen::print_string(string(syslog_buffer));
 
-    ps2.read_ascii();
+    kps2::read_ascii();
 }
 
 void open_debugger(void)
@@ -518,7 +513,7 @@ void open_debugger(void)
 
     while(true)
     {
-        uint8 key = ps2.get_current_key();
+        uint8 key = kps2::get_scancode(true);
         if(key == 0x01) return;
     }
 }

@@ -1,20 +1,18 @@
 #pragma once
 
-#include <stdlib.hpp>
+#include "stdlib.hpp"
 
-class Ps2
+namespace kps2
 {
-public:
-    void initialize();
+    struct in_arguments
+    {
+        bool capslock;
+        bool lshift;
+        bool lctrl;
+    };
 
-    uint8 get_current_key();
+    extern struct in_arguments inargs;
+
     uint8 get_scancode(bool ignoreReleases);
     uint8 read_ascii();
-
-    void operator>>(uint8& var);
-
-private:
-    bool shift_pressed;
-    bool left_ctrl_pressed;
-    bool caps_lock_enabled;
-};
+}

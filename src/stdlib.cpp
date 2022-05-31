@@ -6,8 +6,6 @@
 
 uint8* input_buffer = 0;
 
-extern Ps2 ps2;
-
 string read_string()
 {
     // Allocating 60 bytes for text
@@ -19,7 +17,7 @@ string read_string()
     
     for(int i = 0; true; )
     {
-        uint8 key = ps2.read_ascii();
+        uint8 key = kps2::read_ascii();
 
         if(key == 0x0) continue;
         if(key == 0xA) break;
