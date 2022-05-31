@@ -12,15 +12,16 @@ string read_string()
     if(input_buffer == 0)
         input_buffer = (uint8*) malloc(60);
 
-    // Clearing allocated section
-    mem_fill(input_buffer, 0x0, 60);
-    
     for(int i = 0; true; )
     {
         uint8 key = kps2::read_ascii();
-
         if(key == 0x0) continue;
-        if(key == 0xA) break;
+        
+        if(key == 0xA)
+        {
+            input_buffer[i] = 0x0;
+            break;
+        }
 
         if(key == 0x08)
         {
