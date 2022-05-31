@@ -13,7 +13,7 @@ string read_string()
 {
     // Allocating 60 bytes for text
     if(input_buffer == 0)
-        input_buffer = malloc(60);
+        input_buffer = (uint8*) malloc(60);
 
     // Clearing allocated section
     mem_fill(input_buffer, 0x0, 60);

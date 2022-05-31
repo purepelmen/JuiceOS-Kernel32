@@ -21,7 +21,7 @@ namespace kgdt
     {
         uint16 table_size;
         uint32 table_offset;
-    } __attribute((packed));
+    } __attribute__((packed));
 
     typedef struct gdt_register gdt_reg_t;
 

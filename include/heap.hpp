@@ -14,6 +14,9 @@ void init_heap(void);
 void reset_heap(void);
 
 /* Allocate a block of the memory */
-uint8* malloc(uint32 size);
+void* malloc(uint32 size);
+
+/* Allocate an 4k aligned block of memory */
+void* malloc_pg_aligned(uint32 size);
 
 #endif

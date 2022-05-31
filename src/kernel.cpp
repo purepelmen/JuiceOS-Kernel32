@@ -2,6 +2,7 @@
 #include "drivers/ps2.hpp"
 
 #include "kernel.hpp"
+#include "paging.hpp"
 #include "heap.hpp"
 #include "gdt.hpp"
 #include "idt.hpp"
@@ -25,6 +26,9 @@ void init_kernel()
     kernel_print_log("Drivers initialized.\n");
 
     init_heap();
+
+    kpaging::paging_init();
+    kernel_print_log("Paging initialized.\n");
 
     screen.enable_cursor(0xE, 0xF);
     screen.clear();

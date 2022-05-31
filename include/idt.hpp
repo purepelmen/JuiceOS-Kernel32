@@ -11,7 +11,7 @@ namespace kidt
         uint8 reserved_null;
         uint8 flags;
         uint16 offset_high;
-    } __attribute((packed));
+    } __attribute__((packed));
 
     typedef struct idt_descriptor idt_desc_t;
 
@@ -19,7 +19,7 @@ namespace kidt
     {
         uint16 table_size;
         uint32 table_offset;
-    } __attribute((packed));
+    } __attribute__((packed));
 
     typedef struct idt_register idt_reg_t;
 
