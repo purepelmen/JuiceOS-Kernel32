@@ -1,6 +1,7 @@
 #include "drivers/screen.hpp"
 #include "drivers/ports.hpp"
 #include "stdlib.hpp"
+#include "kernel.hpp"
 #include "isr.hpp"
 
 namespace kisr
@@ -12,6 +13,11 @@ namespace kisr
 
     void isr_register_handler(uint8 int_number, isr_handler_t handler)
     {
+        if(isr_handlers[int_number] != 0)
+        {
+            kernel_print_log("WARNING: An ISR handler was replaced.\n");
+        }
+
         isr_handlers[int_number] = handler;
     }
 
@@ -32,6 +38,17 @@ namespace kisr
         if(handler != 0)
         {
             handler(regs);
+            return;
+        }
+
+        if(regs.int_number < 32)
+        {
+            kscreen::clear();
+            kscreen::print_string("Interrupt: #");
+            print_number(regs.int_number);
+            kscreen::print_char('\n');
+
+            RAISE_ERROR("Unhandled exception, trap or fault");
         }
     } 
 
