@@ -1,7 +1,7 @@
 KERNEL_LINKER = bin/kernel.ld
 ISO_PATH  = bin/JuiceOS.iso
 
-OBJ_FILES = bin/build/objects
+OBJ_FILES = bin/build
 GRUB_FILES = bin/iso
 
 KERNEL_ELF = $(GRUB_FILES)/juiceos_k32.elf
@@ -21,8 +21,8 @@ clean_and_init:
 	@rm -f -r $(OBJ_FILES)
 	@mkdir -p $(OBJ_FILES)
 
-clean:
-	@rm -f $(ISO)/*.elf
+clean: clean_and_init
+	@rm -f $(KERNEL_ELF)
 	@rm -f bin/*.iso
 
 run:
