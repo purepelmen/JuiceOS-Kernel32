@@ -6,7 +6,6 @@
 
 uint8* input_buffer = 0;
 
-extern ScreenDriver screen;
 extern Ps2 ps2;
 
 string read_string()
@@ -29,7 +28,7 @@ string read_string()
         {
             if(i <= 0) continue;
 
-            screen << key;
+            kscreen::print_char(key);
             i -= 1;
             input_buffer[i] = 0x0;
             continue;
@@ -37,7 +36,7 @@ string read_string()
         
         if(i >= 58) continue;
         
-        screen << key;
+        kscreen::print_char(key);
         input_buffer[i] = key;
         i += 1;
     }
@@ -50,11 +49,13 @@ void print_hex_4bit(uint8 char4bit)
     char4bit += 0x30;
 
     if(char4bit <= 0x39)
-        screen << char4bit;
+    {
+        kscreen::print_char(char4bit);
+    }
     else
     {
         char4bit += 39;
-        screen << char4bit;
+        kscreen::print_char(char4bit);
     }
 }
 
@@ -80,7 +81,7 @@ void print_number(uint32 num)
 {
     if (num == 0)
     {
-        screen << '0';
+        kscreen::print_char('0');
         return;
     }
 
@@ -104,7 +105,7 @@ void print_number(uint32 num)
         c2[i--] = c[j++];
     }
 
-    screen << c2;
+    kscreen::print_string(c2);
 }
 
 void mem_copy(uint8* source, uint8* destination, uint32 bytes_amount)
@@ -131,13 +132,14 @@ void raise_error(string message, const char *file, uint32 line)
 {
     asm volatile("cli");
 
-    screen << "PANIC (";
-    screen << message;
-    screen << ") at ";
-    screen << file;
-    screen << ":";
+    kscreen::print_string("PANIC (");
+    kscreen::print_string(message);
+    kscreen::print_string(") at ");
+    kscreen::print_string(file);
+    kscreen::print_string(":");
     print_number(line);
-    screen << "\n";
+    
+    kscreen::print_char('\n');
     
     for(;;);
 }

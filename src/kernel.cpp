@@ -10,7 +10,6 @@
 // Buffer of the system log
 static char syslog_buffer[2048];
 
-ScreenDriver screen;
 Ps2 ps2;
 
 void init_kernel()
@@ -21,7 +20,6 @@ void init_kernel()
     kidt::idt_init();
     kernel_print_log("IDT initialized.\n");
 
-    screen.initialize();
     ps2.initialize();
     kernel_print_log("Drivers initialized.\n");
 
@@ -30,8 +28,8 @@ void init_kernel()
     kpaging::paging_init();
     kernel_print_log("Paging initialized.\n");
 
-    screen.enable_cursor(0xE, 0xF);
-    screen.clear();
+    kscreen::enable_cursor(0xE, 0xF);
+    kscreen::clear();
 
     kernel_print_log("Kernel initialization completed.\n");
 }
@@ -44,17 +42,17 @@ extern "C" void kernel_main()
 
 void open_console(void)
 {
-    screen.clear();
+    kscreen::clear();
 
     while(true)
     {
-        screen.printColor = STANDART_CONSOLE_PREFIX_COLOR;
-        screen << "PC:>>";
-        screen.printColor = STANDART_SCREEN_COLOR;
+        kscreen::outargs.print_color = 0x02;
+        kscreen::print_string("PC:>>");
+        kscreen::outargs.print_color = SCREEN_STDCOLOR;
 
         string command = read_string();
         command.to_lower(command);
-        screen << 0xA;
+        kscreen::print_char(0xA);
 
         if(command.length() == 0)
         {
@@ -64,7 +62,7 @@ void open_console(void)
 
         if(command == "hello")
         {
-            screen << "Helloooo :)\n\n";
+            kscreen::print_string("Helloooo :)\n\n");
             continue;
         }
 
@@ -72,19 +70,19 @@ void open_console(void)
         // TO FIX: This not working (all just hangs) 
         if(command == "reboot")
         {
-            screen << "This command doesn't work for now. It will be fixed soon.\n\n";
+            kscreen::print_string("This command doesn't work for now. It will be fixed soon.\n\n");
             continue;
         }
 
         if(command == "cls")
         {
-            screen.clear();
+            kscreen::clear();
             continue;
         }
 
         if(command == "system")
         {
-            screen << "JuiceOS Kernel32 v" KERNEL_VERSION "\n\n";
+            kscreen::print_string("JuiceOS Kernel32 v" KERNEL_VERSION "\n\n");
             continue;
         }
 
@@ -95,36 +93,36 @@ void open_console(void)
 
         if(command == "ascii")
         {
-            screen << "Type any char.\n";
+            kscreen::print_string("Type any char.\n");
 
             uint8 key = ps2.read_ascii();
-            screen << "ASCII code of typed key is: 0x";
+            kscreen::print_string("ASCII code of typed key is: 0x");
             print_hex_8bit(key);
-            screen << "\nIt displays as: ";
+            kscreen::print_string("\nIt displays as: ");
 
-            screen << key;
-            screen << "\n\n";
+            kscreen::print_char(key);
+            kscreen::print_string("\n\n");
             continue;
         }
 
         if(command == "memdump")
         {
             open_memdumper();
-            screen.clear();
+            kscreen::clear();
             continue;
         }
 
         if(command == "help")
         {
-            screen << "ASCII - Print hex representation of a typed char.\n";
-            screen << "CLS - Clear the console.\n";
-            screen << "EXIT - Quit from console to OS menu.\n";
-            screen << "HELP - Print this message.\n";
-            screen << "HELLO - Test command that say hello to you.\n";
-            screen << "MEMDUMP - Open Memory dumper.\n";
-            screen << "REBOOT - Reboot your PC.\n";
-            screen << "SCANTEST - Print scancode of every pressed key.\n";
-            screen << "SYSTEM - Print system information.\n\n";
+            kscreen::print_string("ASCII - Print hex representation of a typed char.\n");
+            kscreen::print_string("CLS - Clear the console.\n");
+            kscreen::print_string("EXIT - Quit from console to OS menu.\n");
+            kscreen::print_string("HELP - Print this message.\n");
+            kscreen::print_string("HELLO - Test command that say hello to you.\n");
+            kscreen::print_string("MEMDUMP - Open Memory dumper.\n");
+            kscreen::print_string("REBOOT - Reboot your PC.\n");
+            kscreen::print_string("SCANTEST - Print scancode of every pressed key.\n");
+            kscreen::print_string("SYSTEM - Print system information.\n\n");
             continue;
         }
 
@@ -136,70 +134,71 @@ void open_console(void)
             {
                 uint8 scancode = ps2.get_scancode(false);
 
-                screen << "0x";
+                kscreen::print_string("0x");
                 print_hex_8bit(scancode);
-                screen << "\n";
+
+                kscreen::print_char('\n');
                 if(scancode == 0x81) break;
             }
             
-            screen << '\n';
+            kscreen::print_char('\n');
             continue;
         }
 
         if(command == "\x1B")
             return;
         
-        screen << "Unknown command.\n\n";
+        kscreen::print_string("Unknown command.\n\n");
     }
 }
 
 void open_menu(void)
 {
-    screen.clear();
-    const uint8 NON_SELECTED_COLOR = STANDART_SCREEN_COLOR;
-    const uint8 SELECTED_COLOR = STANDART_INVERTED_SCREEN_COLOR;
+    kscreen::clear();
+    const uint8 NON_SELECTED_COLOR = SCREEN_STDCOLOR;
+    const uint8 SELECTED_COLOR = SCREEN_INVERTCOLOR;
     const uint8 ITEMS_AMOUNT = 3;         // Zero means - 1
 
     uint8 currentPosition = 0;
     while(true)
     {
-        screen.printColor = NON_SELECTED_COLOR;
+        kscreen::outargs.print_color = NON_SELECTED_COLOR;
 
-        screen.cursorX = 25;
-        screen.cursorY = 1;
-        screen << "Juice OS v" KERNEL_VERSION " Menu";
+        kscreen::outargs.cursor_x = 25;
+        kscreen::outargs.cursor_y = 1;
+        kscreen::print_string("Juice OS v" KERNEL_VERSION " Menu");
 
-        screen.cursorX = 6;
-        screen.cursorY = 3;
+        kscreen::outargs.cursor_x = 6;
+        kscreen::outargs.cursor_y = 3;
         if(currentPosition == 0)
-            screen.printColor = SELECTED_COLOR;
+            kscreen::outargs.print_color = SELECTED_COLOR;
         else 
-            screen.printColor = NON_SELECTED_COLOR;
-        screen << "Open console";
+            kscreen::outargs.print_color = NON_SELECTED_COLOR;
+        kscreen::print_string("Open console");
 
-        screen.cursorX = 6;
-        screen.cursorY = 4;
+        kscreen::outargs.cursor_x = 6;
+        kscreen::outargs.cursor_y = 4;
         if(currentPosition == 1)
-            screen.printColor = SELECTED_COLOR;
+            kscreen::outargs.print_color = SELECTED_COLOR;
         else 
-            screen.printColor = NON_SELECTED_COLOR;
-        screen << "Memory dumper";
+            kscreen::outargs.print_color = NON_SELECTED_COLOR;
+        kscreen::print_string("Memory dumper");
 
-        screen.cursorX = 6;
-        screen.cursorY = 5;
+        kscreen::outargs.cursor_x = 6;
+        kscreen::outargs.cursor_y = 5;
         if(currentPosition == 2)
-            screen.printColor = SELECTED_COLOR;
+            kscreen::outargs.print_color = SELECTED_COLOR;
         else 
-            screen.printColor = NON_SELECTED_COLOR;
-        screen << "System logs";
+            kscreen::outargs.print_color = NON_SELECTED_COLOR;
+        kscreen::print_string("System logs");
 
-        screen.cursorX = 6;
-        screen.cursorY = 6;
+        kscreen::outargs.cursor_x = 6;
+        kscreen::outargs.cursor_y = 6;
         if(currentPosition == 3)
-            screen.printColor = SELECTED_COLOR;
+            kscreen::outargs.print_color = SELECTED_COLOR;
         else 
-            screen.printColor = NON_SELECTED_COLOR;
-        screen << "Debug";
+            kscreen::outargs.print_color = NON_SELECTED_COLOR;
+        kscreen::print_string("Debug");
 
         // Getting input
         uint8 key = ps2.get_scancode(true);
@@ -216,26 +215,26 @@ void open_menu(void)
 
         if(key == 0x1C)
         {
-            screen.printColor = NON_SELECTED_COLOR;
+            kscreen::outargs.print_color = NON_SELECTED_COLOR;
             if(currentPosition == 0)
             {
                 open_console();
-                screen.clear();
+                kscreen::clear();
             }
             if(currentPosition == 1)
             {
                 open_memdumper();
-                screen.clear();
+                kscreen::clear();
             }
             if(currentPosition == 2)
             {
                 open_syslogs();
-                screen.clear();
+                kscreen::clear();
             }
             if(currentPosition == 3)
             {
                 open_debugger();
-                screen.clear();
+                kscreen::clear();
             }
         }
     }
@@ -245,78 +244,78 @@ void open_memdumper(void)
 {
     uint8* memPtr = (uint8*) 0x0;
     uint8 asciiFlag = false;
-    screen.clear();
+    kscreen::clear();
 
     while(true)
     {
-        screen.printColor = STANDART_INVERTED_SCREEN_COLOR;
-        screen << "                             Juice OS Memory Dumper                             ";
+        kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
+        kscreen::print_string("                             Juice OS Memory Dumper                             ");
 
-        screen.printColor = STANDART_SCREEN_COLOR;
-        screen.cursorX = 0;
-        screen.cursorY = 2;
+        kscreen::outargs.print_color = SCREEN_STDCOLOR;
+        kscreen::outargs.cursor_x = 0;
+        kscreen::outargs.cursor_y = 2;
 
-        screen << "    Offset: 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F";
+        kscreen::print_string("    Offset: 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
 
-        screen.cursorX = 0;
-        screen.cursorY = 4;
+        kscreen::outargs.cursor_x = 0;
+        kscreen::outargs.cursor_y = 4;
 
         for(int i = 0; i < 256; i++)
         {
             if(asciiFlag)
             {
-                screen << "0x";
+                kscreen::print_string("0x");
                 print_hex_32bit((uint32) memPtr + i);
-                screen << ": ";
+                kscreen::print_string(": ");
 
                 for(int ii = 0; ii < 16; ii++)
                 {
-                    screen.printColor = 0x07;
-                    screen.print_char_noupd(memPtr[i + ii]);
-                    screen.update_cursor();
-                    screen.printColor = STANDART_SCREEN_COLOR;
-                    screen << "  ";
+                    kscreen::outargs.print_color = 0x07;
+                    kscreen::print_char_noupd(memPtr[i + ii]);
+                    kscreen::update_cursor();
+                    kscreen::outargs.print_color = SCREEN_STDCOLOR;
+                    kscreen::print_string("  ");
                 }
 
                 i += 15;
-                screen << '\n';
+                kscreen::print_char('\n');
             } 
             else
             {
-                screen <<"0x";
+                kscreen::print_string("0x");
                 print_hex_32bit((uint32) memPtr + i);
-                screen << ": ";
+                kscreen::print_string(": ");
 
                 for(int ii = 0; ii < 16; ii++)
                 {
-                    screen.printColor = 0x07;
+                    kscreen::outargs.print_color = 0x07;
                     print_hex_8bit(memPtr[i + ii]);
-                    screen.printColor = STANDART_SCREEN_COLOR;
-                    screen << ' ';
+                    kscreen::outargs.print_color = SCREEN_STDCOLOR;
+                    kscreen::print_char(' ');
                 }
 
                 i += 15;
-                screen << '\n';
+                kscreen::print_char('\n');
             }
         }
 
-        screen.printColor = STANDART_INVERTED_SCREEN_COLOR;
-        screen.cursorX = 0;
-        screen.cursorY = 24;
-        screen << "Dump: 0x";
+        kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
+        kscreen::outargs.cursor_x = 0;
+        kscreen::outargs.cursor_y = 24;
+        kscreen::print_string("Dump: 0x");
         print_hex_32bit((uint32) memPtr);
-        screen << " - 0x";
+        kscreen::print_string(" - 0x");
         print_hex_32bit((uint32) memPtr + 255);
-        screen << " | ASCII Flag = ";
+        kscreen::print_string(" | ASCII Flag = ");
         if(asciiFlag)
-            screen << "ON ";
+            kscreen::print_string("ON ");
         else
-            screen << "OFF";
-        screen.print_string_noupd("                                     ");
+            kscreen::print_string("OFF");
+        kscreen::print_string_noupd("                                     ");
 
-        screen.cursorX = 0;
-        screen.cursorY = 0;
-        screen.update_cursor();
+        kscreen::outargs.cursor_x = 0;
+        kscreen::outargs.cursor_y = 0;
+        kscreen::update_cursor();
 
         uint8 key = ps2.get_scancode(true);
         if(key == 0x01)
@@ -348,172 +347,173 @@ void kernel_print_log(string str)
 
 void open_syslogs(void)
 {
-    screen.clear();
-    screen << string(syslog_buffer);
+    kscreen::clear();
+    kscreen::print_string(string(syslog_buffer));
+
     ps2.read_ascii();
 }
 
 void open_debugger(void)
 {
-    screen.clear();
+    kscreen::clear();
 
     uint32 res;
 
-    screen.cursorX = 0;
-    screen.cursorY = 0;
+    kscreen::outargs.cursor_x = 0;
+    kscreen::outargs.cursor_y = 0;
 
-    screen.printColor = STANDART_INVERTED_SCREEN_COLOR;
-    screen << "                                    Debugger                                    ";
-    screen.printColor = STANDART_SCREEN_COLOR;
+    kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
+    kscreen::print_string("                                    Debugger                                    ");
+    kscreen::outargs.print_color = SCREEN_STDCOLOR;
 
     // EBP ---------------------------------
-    screen.cursorX = 2;
-    screen.cursorY = 2;
-    screen << "EBP: 0x";
+    kscreen::outargs.cursor_x = 2;
+    kscreen::outargs.cursor_y = 2;
+    kscreen::print_string("EBP: 0x");
 
     __asm__("mov %%ebp, %%edx" : "=d" (res));
     print_hex_32bit(res);
 
     // ESP ---------------------------------
-    screen.cursorX = 22;
-    screen.cursorY = 2;
-    screen << "ESP: 0x";
+    kscreen::outargs.cursor_x = 22;
+    kscreen::outargs.cursor_y = 2;
+    kscreen::print_string("ESP: 0x");
 
     __asm__("mov %%esp, %%edx" : "=d" (res));
     print_hex_32bit(res);
 
     // CS ---------------------------------
-    screen.cursorX = 42;
-    screen.cursorY = 2;
-    screen << "CS: 0x";
+    kscreen::outargs.cursor_x = 42;
+    kscreen::outargs.cursor_y = 2;
+    kscreen::print_string("CS: 0x");
 
     __asm__("mov %%cs, %%edx" : "=d" (res));
     print_hex_32bit(res);
 
     // DS ---------------------------------
-    screen.cursorX = 62;
-    screen.cursorY = 2;
-    screen << "DS: 0x";
+    kscreen::outargs.cursor_x = 62;
+    kscreen::outargs.cursor_y = 2;
+    kscreen::print_string("DS: 0x");
 
     __asm__("mov %%ds, %%edx" : "=d" (res));
     print_hex_32bit(res);
 
     // ES ---------------------------------
-    screen.cursorX = 2;
-    screen.cursorY = 4;
-    screen << "ES: 0x";
+    kscreen::outargs.cursor_x = 2;
+    kscreen::outargs.cursor_y = 4;
+    kscreen::print_string("ES: 0x");
 
     __asm__("mov %%es, %%edx" : "=d" (res));
     print_hex_32bit(res);
 
     // GS ---------------------------------
-    screen.cursorX = 22;
-    screen.cursorY = 4;
-    screen << "GS: 0x";
+    kscreen::outargs.cursor_x = 22;
+    kscreen::outargs.cursor_y = 4;
+    kscreen::print_string("GS: 0x");
 
     __asm__("mov %%gs, %%edx" : "=d" (res));
     print_hex_32bit(res);
 
     // FS ---------------------------------
-    screen.cursorX = 42;
-    screen.cursorY = 4;
-    screen << "FS: 0x";
+    kscreen::outargs.cursor_x = 42;
+    kscreen::outargs.cursor_y = 4;
+    kscreen::print_string("FS: 0x");
 
     __asm__("mov %%fs, %%edx" : "=d" (res));
     print_hex_32bit(res);
 
     // SS ---------------------------------
-    screen.cursorX = 62;
-    screen.cursorY = 4;
-    screen << "SS: 0x";
+    kscreen::outargs.cursor_x = 62;
+    kscreen::outargs.cursor_y = 4;
+    kscreen::print_string("SS: 0x");
 
     __asm__("mov %%ss, %%edx" : "=d" (res));
     print_hex_32bit(res);
 
     // CR0 --------------------------------
-    screen.cursorX = 2;
-    screen.cursorY = 6;
-    screen << "CR0: 0x";
+    kscreen::outargs.cursor_x = 2;
+    kscreen::outargs.cursor_y = 6;
+    kscreen::print_string("CR0: 0x");
 
     __asm__("mov %%cr0, %%edx" : "=d" (res));
     print_hex_32bit(res);
 
     // CR2 --------------------------------
-    screen.cursorX = 22;
-    screen.cursorY = 6;
-    screen << "CR2: 0x";
+    kscreen::outargs.cursor_x = 22;
+    kscreen::outargs.cursor_y = 6;
+    kscreen::print_string("CR2: 0x");
 
     __asm__("mov %%cr2, %%edx" : "=d" (res));
     print_hex_32bit(res);
 
     // CR3 --------------------------------
-    screen.cursorX = 42;
-    screen.cursorY = 6;
-    screen << "CR3: 0x";
+    kscreen::outargs.cursor_x = 42;
+    kscreen::outargs.cursor_y = 6;
+    kscreen::print_string("CR3: 0x");
 
     __asm__("mov %%cr3, %%edx" : "=d" (res));
     print_hex_32bit(res);
 
     // CR4 --------------------------------
-    screen.cursorX = 62;
-    screen.cursorY = 6;
-    screen << "CR4: 0x";
+    kscreen::outargs.cursor_x = 62;
+    kscreen::outargs.cursor_y = 6;
+    kscreen::print_string("CR4: 0x");
 
     __asm__("mov %%cr4, %%edx" : "=d" (res));
     print_hex_32bit(res);
 
-    screen.cursorX = 2;
-    screen.cursorY = 8;
-    screen << "----------------------------------------------------------------------------";
+    kscreen::outargs.cursor_x = 2;
+    kscreen::outargs.cursor_y = 8;
+    kscreen::print_string("----------------------------------------------------------------------------");
 
     // System memory ----------------------
-    screen.cursorX = 2;
-    screen.cursorY = 10;
-    screen << "Memory allocated for the system: ";
+    kscreen::outargs.cursor_x = 2;
+    kscreen::outargs.cursor_y = 10;
+    kscreen::print_string("Memory allocated for the system: ");
 
     uint32 systemMemory = head_start_value - 0x100000;
     if(systemMemory / 1048576 > 0)
     {
         print_number(systemMemory / 1048576);
-        screen << " MB.";
+        kscreen::print_string(" MB.");
     } 
     else if(systemMemory / 1024 > 0)
     {
         print_number(systemMemory / 1024);
-        screen << " KB.";
+        kscreen::print_string(" KB.");
     }
     else
     {
         print_number(systemMemory);
-        screen << " B.";
+        kscreen::print_string(" B.");
     }
 
     // Heap -------------------------------
-    screen.cursorX = 2;
-    screen.cursorY = 12;
-    screen << "Heap allocated: ";
+    kscreen::outargs.cursor_x = 2;
+    kscreen::outargs.cursor_y = 12;
+    kscreen::print_string("Heap allocated: ");
 
     uint32 allocatedHeap = current_heap_value - head_start_value;
     if(allocatedHeap / 1048576 > 0) 
     {
         print_number(allocatedHeap / 1048576);
-        screen << " MB.";
+        kscreen::print_string(" MB.");
     }
     else if(allocatedHeap / 1024 > 0)
     {
         print_number(allocatedHeap / 1024);
-        screen << " KB.";
+        kscreen::print_string(" KB.");
     }
     else
     {
         print_number(allocatedHeap);
-        screen << " B.";
+        kscreen::print_string(" B.");
     }
 
     // Heap memory location ---------------
-    screen.cursorX = 2;
-    screen.cursorY = 14;
-    screen << "Heap located at: 0x";
+    kscreen::outargs.cursor_x = 2;
+    kscreen::outargs.cursor_y = 14;
+    kscreen::print_string("Heap located at: 0x");
     print_hex_32bit(head_start_value);
 
     while(true)

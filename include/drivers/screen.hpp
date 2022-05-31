@@ -2,34 +2,35 @@
 
 #include "../stdlib.hpp"
 
-#define STANDART_SCREEN_COLOR           0x07
-#define STANDART_INVERTED_SCREEN_COLOR  0x70
-#define STANDART_CONSOLE_PREFIX_COLOR   0x02
+#define SCREEN_STDCOLOR     0x07
+#define SCREEN_INVERTCOLOR  0x70
 
-class ScreenDriver
+namespace kscreen
 {
-public:
-    uint8 printColor;
-    int cursorX;
-    int cursorY;
+    struct out_arguments
+    {
+        uint8* VIDEO_MEMORY;
+        uint8 print_color;
 
-    void initialize();
+        int cursor_x;
+        int cursor_y;
 
-    void disable_cursor();
-    void enable_cursor(uint8 cursor_start, uint8 cursor_end);
+        void set_cursor_pos(int x, int y);
+    };
+
+    extern struct out_arguments outargs;
 
     void clear();
-    void print_char(uint8 print_char);
-    void print_char_noupd(uint8 print_char);
-    void print_string(string str);
-    void print_string_noupd(string str);
 
     void update_scroll();
     void update_cursor();
 
-    void operator<<(string str);
-    void operator<<(uint8 _char);
+    void enable_cursor(uint8 cursor_start, uint8 cursor_end);
+    void disable_cursor();
 
-private:
-    uint8* VIDEO_MEMORY; 
-};
+    void print_char(uint8 print_char);
+    void print_char_noupd(uint8 print_char);
+
+    void print_string(string str);
+    void print_string_noupd(string str);
+}

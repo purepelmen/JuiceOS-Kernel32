@@ -4,8 +4,6 @@
 #include "heap.hpp"
 #include "isr.hpp"
 
-extern ScreenDriver screen;
-
 namespace kpaging
 {
     dir_entry_t* directory;
@@ -45,7 +43,7 @@ namespace kpaging
 
     static void page_fault_handler(kisr::isr_regs_t regs)
     {
-        screen.clear();
+        kscreen::clear();
         RAISE_ERROR("Page fault!");
     }
 }
