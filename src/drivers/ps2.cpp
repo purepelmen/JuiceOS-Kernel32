@@ -14,7 +14,7 @@ namespace kps2
                             "\x00\x00" "789" "-" "456" "+" "1230" 
                             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 
-    static void keyboard_handler(kisr::isr_regs_t regs);
+    static void keyboard_handler(kisr::regs_t regs);
     static uint8 scancode_to_ascii(uint8 scancode);
 
     uint8 in_arguments::get_char()
@@ -69,7 +69,7 @@ namespace kps2
         }
     }
 
-    static void keyboard_handler(kisr::isr_regs_t regs)
+    static void keyboard_handler(kisr::regs_t regs)
     {
         uint8 result = port_byte_in(0x60);
 

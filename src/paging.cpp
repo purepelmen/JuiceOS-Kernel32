@@ -11,7 +11,7 @@ namespace kpaging
     extern "C" void paging_enable(uint32 dir_pointer);
 
     static void set_dir_entry(int index, uint8 writable, uint8 four_mb_page, uint32 address);
-    static void page_fault_handler(kisr::isr_regs_t regs);
+    static void page_fault_handler(kisr::regs_t regs);
 
     void paging_init()
     {
@@ -41,7 +41,7 @@ namespace kpaging
         directory[index].address = address;
     }
 
-    static void page_fault_handler(kisr::isr_regs_t regs)
+    static void page_fault_handler(kisr::regs_t regs)
     {
         kscreen::clear();
         RAISE_ERROR("Page fault!");
