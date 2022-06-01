@@ -2,6 +2,8 @@
 
 #include "stdint.h"
 
+#define IRQ_BASE 32
+
 namespace kisr
 {
     struct isr_registers
@@ -15,5 +17,5 @@ namespace kisr
     typedef struct isr_registers isr_regs_t;
     typedef void (*isr_handler_t)(isr_regs_t);
 
-    void isr_register_handler(uint8 int_number, isr_handler_t handler);
+    void register_handler(uint8 int_number, isr_handler_t handler);
 }

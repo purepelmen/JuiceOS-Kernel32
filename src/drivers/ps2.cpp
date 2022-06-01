@@ -1,5 +1,7 @@
-#include <drivers/ports.hpp>
-#include <drivers/ps2.hpp>
+#include "drivers/ports.hpp"
+#include "drivers/ps2.hpp"
+#include "drivers/screen.hpp"
+#include "isr.hpp"
 
 namespace kps2
 {
@@ -12,118 +14,153 @@ namespace kps2
                             "\x00\x00" "789" "-" "456" "+" "1230" 
                             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 
+    static void keyboard_handler(kisr::isr_regs_t regs);
+    static uint8 scancode_to_ascii(uint8 scancode);
+
+    uint8 in_arguments::get_char()
+    {
+        full_buffer = false;
+        return key_char;
+    }
+
+    uint8 in_arguments::get_scancode()
+    {
+        full_buffer = false;
+        return key_scancode;
+    }
+
+    void init()
+    {
+        kisr::register_handler(IRQ_BASE + 1, keyboard_handler);
+    }
+
     uint8 get_scancode(bool ignoreReleases)
     {
         while(true)
         {
-            uint8 scan = port_byte_in(0x64);
-            if(!(scan & 1))
+            asm volatile("hlt");
+
+            if(inargs.full_buffer == false)
+                continue;
+
+            uint8 scancode = inargs.get_scancode();
+            if(ignoreReleases && (scancode & (1 << 7)))
             {
-                asm volatile("hlt");
                 continue;
             }
 
-            if(ignoreReleases && (scan & (1 << 7)))
-            {
-                continue;
-            } 
-            else
-            {
-                break;
-            }
+            return scancode;
         }
-
-        uint8 result = port_byte_in(0x60);
-        return result;
     }
     
     uint8 read_ascii()
     {
-        uint8 _char;
-        
         while(true)
         {
-            uint8 scan = get_scancode(false);
+            asm volatile("hlt");
 
-            if(scan == 0x2A || scan == 0x36)
-            {
-                inargs.lshift = 1;
+            if(inargs.full_buffer == false)
                 continue;
-            }
-            else if(scan == 0xAA || scan == 0xB6)
-            {
-                inargs.lshift = 0;
-                continue;
-            }
-            else if (scan == 0x1D)
-            {
-                inargs.lctrl = 1;
-                continue;
-            }
-            else if(scan == 0x9D)
-            {
-                inargs.lctrl = 0;
-                continue;
-            }
-            else if(scan & (1 << 7))
-            {
-                // Key release
-                continue;
-            }
-            else if(scan == 0x3A)
-            {
-                inargs.capslock = !inargs.capslock;
-                continue;
-            }
-            else if(scan == 0xFA)
-            {
-                // On command sent
-                continue;
-            }
 
-            _char = ascii_table[scan];
+            if(inargs.key_pressed == false)
+                continue;
 
-            if(inargs.capslock == 0 && inargs.lshift == 0)
-                break;
+            return inargs.get_char();
+        }
+    }
 
-            if(_char >= 'a' && _char <= 'z')
-            {
-                _char -= 0x20;
-                break;
-            }
+    static void keyboard_handler(kisr::isr_regs_t regs)
+    {
+        uint8 result = port_byte_in(0x60);
 
-            if(_char >= '0' && _char <= '9')
-            {
-                _char -= 0x30;
-                _char = numbers_shifted[_char];
-                break;
-            }
+        inargs.key_pressed = !(result & (1 << 7));
+        inargs.full_buffer = true;
 
-            if(_char == '=') 
-                _char = '+';
-            if(_char == '/') 
-                _char = '?';
-            if(_char == '-') 
-                _char = '_';
-            if(_char == '`') 
-                _char = '~';
-            if(_char == '[') 
-                _char = '{';
-            if(_char == ']') 
-                _char = '}';
-            if(_char == ';') 
-                _char = ':';
-            if(_char == '\'') 
-                _char = '"';
-            if(_char == ',') 
-                _char = '<';
-            if(_char == '.') 
-                _char = '>';
+        inargs.key_scancode = result;
 
-            break;
+        if(result == 0x2A || result == 0x36)
+        {
+            inargs.lshift = true;
+            return;
+        }
+        else if(result == 0xAA || result == 0xB6)
+        {
+            inargs.lshift = false;
+            return;
+        }
+        else if (result == 0x1D)
+        {
+            inargs.lctrl = true;
+            return;
+        }
+        else if(result == 0x9D)
+        {
+            inargs.lctrl = false;
+            return;
+        }
+        else if(result == 0x3A)
+        {
+            inargs.capslock = !inargs.capslock;
+            return;
         }
 
-        return _char;
+        inargs.key_char = scancode_to_ascii(result);
+    }
+
+    static uint8 scancode_to_ascii(uint8 scancode)
+    {
+        if(scancode & (1 << 7))
+        {
+            // Key release
+            return 0;
+        }
+        else if(scancode == 0xFA)
+        {
+            // On command sent
+            return 0;
+        }
+
+        uint8 ascii = ascii_table[scancode];
+
+        if(inargs.capslock == 0 && inargs.lshift == 0)
+            return ascii;
+
+        if(ascii >= 'a' && ascii <= 'z')
+        {
+            ascii -= 0x20;
+            return ascii;
+        }
+
+        if(ascii >= '0' && ascii <= '9')
+        {
+            ascii -= 0x30;
+            ascii = numbers_shifted[ascii];
+
+            return ascii;
+        }
+
+        if(ascii == '=') 
+            ascii = '+';
+        if(ascii == '/') 
+            ascii = '?';
+        if(ascii == '-') 
+            ascii = '_';
+        if(ascii == '`') 
+            ascii = '~';
+        if(ascii == '[') 
+            ascii = '{';
+        if(ascii == ']') 
+            ascii = '}';
+        if(ascii == ';') 
+            ascii = ':';
+        if(ascii == '\'') 
+            ascii = '"';
+        if(ascii == ',') 
+            ascii = '<';
+        if(ascii == '.') 
+            ascii = '>';
+
+        return ascii;
     }
 }
 

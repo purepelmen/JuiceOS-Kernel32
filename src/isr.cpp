@@ -11,7 +11,7 @@ namespace kisr
     static void pic_send_eoi(bool send_to_slave);
     static void isr_handle(isr_regs_t regs);
 
-    void isr_register_handler(uint8 int_number, isr_handler_t handler)
+    void register_handler(uint8 int_number, isr_handler_t handler)
     {
         if(isr_handlers[int_number] != 0)
         {

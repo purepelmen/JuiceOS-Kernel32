@@ -23,6 +23,9 @@ void init_kernel()
     kpaging::paging_init();
     kernel_print_log("Paging initialized.\n");
 
+    kps2::init();
+    kernel_print_log("Keyboard driver initialized.\n");
+
     kscreen::enable_cursor(0xE, 0xF);
     kscreen::clear();
 
