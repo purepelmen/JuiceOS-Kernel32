@@ -5,12 +5,6 @@
 #include "stdlib.hpp"
 #include "string.hpp"
 
-/* Initalizes the kernel */
-void init_kernel(void);
-
-/* Kernel entry point */
-extern "C" void kernel_main();
-
 /* Open console */
 void open_console(void);
 

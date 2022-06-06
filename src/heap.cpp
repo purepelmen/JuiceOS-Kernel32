@@ -12,8 +12,6 @@ void init_heap(void)
 {
     current_heap_value = (uint32) &end;
     head_start_value = current_heap_value;
-
-    kernel_print_log("Heap was initialized.\n");
 }
 
 void reset_heap(void)

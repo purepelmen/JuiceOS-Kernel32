@@ -107,6 +107,45 @@ void print_number(uint32 num)
     kscreen::print_string(c2);
 }
 
+void printf(string str, ...)
+{
+    uint32 args_addr = (uint32) &str + sizeof(str);
+    uint32* args_ptr = (uint32*) args_addr;
+
+    for(int i = 0; i < str.length(); i++)
+    {
+        if(str[i] == '%')
+        {
+            i++;
+
+            if(str[i] == 'd')
+            {
+                print_number(*(args_ptr));
+                args_ptr += 1;
+            }
+            else if(str[i] == 'x')
+            {
+                print_hex_32bit(*(args_ptr));
+                args_ptr += 1;
+            }
+            else if(str[i] == 'c')
+            {
+                kscreen::print_char(*(args_ptr));
+                args_ptr += 1;
+            }
+            else if(str[i] == 's')
+            {
+                kscreen::print_string((const char*) *(args_ptr));
+                args_ptr += 1;
+            }
+
+            continue;
+        }
+
+        kscreen::print_char(str[i]);
+    }
+}
+
 void mem_copy(uint8* source, uint8* destination, uint32 bytes_amount)
 {
     for(int i = 0; i < bytes_amount; i++)

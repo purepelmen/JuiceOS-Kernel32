@@ -1,5 +1,7 @@
 #include "drivers/screen.hpp"
+#include "drivers/timer.hpp"
 #include "drivers/ps2.hpp"
+#include "drivers/pci.hpp"
 
 #include "kernel.hpp"
 #include "paging.hpp"
@@ -10,8 +12,19 @@
 // Buffer of the system log
 static char syslog_buffer[2048];
 
-void init_kernel()
+static void init_kernel();
+
+extern "C" void kernel_main()
 {
+    init_kernel();
+    open_menu();
+}
+
+static void init_kernel()
+{
+    kscreen::clear();
+    kscreen::enable_cursor(0xE, 0xF);
+
     kgdt::gdt_init();
     kernel_print_log("GDT initialized.\n");
 
@@ -19,6 +32,10 @@ void init_kernel()
     kernel_print_log("IDT initialized.\n");
 
     init_heap();
+    kernel_print_log("Heap was initialized.\n");
+
+    ktimer::init();
+    kernel_print_log("Timer was initialized.\n");
 
     kpaging::paging_init();
     kernel_print_log("Paging initialized.\n");
@@ -26,16 +43,10 @@ void init_kernel()
     kps2::init();
     kernel_print_log("Keyboard driver initialized.\n");
 
-    kscreen::enable_cursor(0xE, 0xF);
-    kscreen::clear();
+    kpci::init();
+    kernel_print_log("PCI devices found.\n");
 
     kernel_print_log("Kernel initialization completed.\n");
-}
-
-extern "C" void kernel_main()
-{
-    init_kernel();
-    open_menu();
 }
 
 void open_console(void)
@@ -120,7 +131,8 @@ void open_console(void)
             kscreen::print_string("MEMDUMP - Open Memory dumper.\n");
             kscreen::print_string("REBOOT - Reboot your PC.\n");
             kscreen::print_string("SCANTEST - Print scancode of every pressed key.\n");
-            kscreen::print_string("SYSTEM - Print system information.\n\n");
+            kscreen::print_string("SYSTEM - Print system information.\n");
+            kscreen::print_string("PCI - Print all PCI devices.\n\n");
             continue;
         }
 
@@ -139,6 +151,19 @@ void open_console(void)
                 if(scancode == 0x81) break;
             }
             
+            kscreen::print_char('\n');
+            continue;
+        }
+
+        if(command == "pci")
+        {
+            for(int i = 0; i < 100 && kpci::devices[i].address != 0; i++)
+            {
+                kpci::pci_device* device = &kpci::devices[i];
+                printf("PCI Device (Bus/Slot/Fun: %d,%d,%d) = Class/Subclass: %d,%d\n", 
+                    device->bus, device->slot, device->function, device->classid, device->subclass);
+            }
+
             kscreen::print_char('\n');
             continue;
         }

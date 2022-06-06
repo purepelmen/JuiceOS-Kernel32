@@ -1,5 +1,4 @@
 #include "gdt.hpp"
-#include "stdlib.hpp"
 
 namespace kgdt
 {
