@@ -6,6 +6,8 @@ class string
 {
 public:
     string(const char* char_sequence);
+    string();
+    
     uint32 length();
 
     bool compare(string other_str);

@@ -1,5 +1,6 @@
 #include "drivers/screen.hpp"
 #include "drivers/timer.hpp"
+#include "drivers/ahci.hpp"
 #include "drivers/ps2.hpp"
 #include "drivers/pci.hpp"
 
@@ -45,6 +46,9 @@ static void init_kernel()
 
     kpci::init();
     kernel_print_log("PCI devices found.\n");
+
+    kahci::init();
+    kernel_print_log("AHCI driver initialized.\n");
 
     kernel_print_log("Kernel initialization completed.\n");
 }
@@ -132,7 +136,10 @@ void open_console(void)
             kscreen::print_string("REBOOT - Reboot your PC.\n");
             kscreen::print_string("SCANTEST - Print scancode of every pressed key.\n");
             kscreen::print_string("SYSTEM - Print system information.\n");
-            kscreen::print_string("PCI - Print all PCI devices.\n\n");
+            kscreen::print_string("PCI - Print all PCI devices.\n");
+            kscreen::print_string("AHCIVER - Print AHCI specification version.\n");
+            kscreen::print_string("AHCIDEVS - Print all AHCI ports and connected devices.\n");
+            kscreen::print_string("AHCIRD - Read first sector from AHCI port #0.\n\n");
             continue;
         }
 
@@ -162,6 +169,57 @@ void open_console(void)
                 kpci::pci_device* device = &kpci::devices[i];
                 printf("PCI Device (Bus/Slot/Fun: %d,%d,%d) = Class/Subclass: %d,%d\n", 
                     device->bus, device->slot, device->function, device->classid, device->subclass);
+            }
+
+            kscreen::print_char('\n');
+            continue;
+        }
+
+        if(command == "ahciver")
+        {
+            printf("[AHCI] Version of the specification: %s\n", kahci::get_version());
+            kscreen::print_char('\n');
+            continue;
+        }
+
+        if(command == "ahcidevs")
+        {
+            uint32 imp_ports = kahci::hba_memory->pi;
+            string dev_names[] = { "Device not present", "SATAPI", "SEMB", "Port multiplier", "SATA" };
+
+            for(int i = 0; i < 32; i++)
+            {
+                if(imp_ports & 1)
+                {
+                    kahci::port_devtype dev_status = kahci::get_port_devtype(&kahci::hba_memory->ports[i]);
+                    printf("[AHCI] Port %d device type: %s\n", i, dev_names[dev_status]);
+                }
+
+                imp_ports >>= 1;
+            }
+
+            kscreen::print_char('\n');
+            continue;
+        }
+
+        if(command == "ahcird")
+        {
+            uint8 buff[1024];
+            bool result = kahci::read(0, 0, 0, 1, (uint16*) &buff);
+
+            if(result)
+            {
+                for(int i = 0; i < 256; i++)
+                {
+                    print_hex_8bit(buff[i]);
+                    kscreen::print_char(' ');
+                }
+
+                kscreen::print_char('\n');
+            }
+            else
+            {
+                printf("Failed to read data\n");
             }
 
             kscreen::print_char('\n');

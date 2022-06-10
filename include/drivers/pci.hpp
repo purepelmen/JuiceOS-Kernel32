@@ -24,4 +24,5 @@ public:
     extern pci_device* devices;
 
     void init();
+    pci_device* find_device(uint8 classid, uint8 subclass);
 }

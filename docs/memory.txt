@@ -13,8 +13,11 @@ Data           | All 32-bit address space
 2. Paging
 =========================================================
 
+Memory layout for kernel (default):
+
 Range                | Size     | Rights             | Description
 --------------------------------------------------------------------------------------
 0x0 - 0x3FFFFF       | 4 Mb     | Kernel-space, RW   | First 4 Mb for JuiceOS kernel
-0x400000-0xFFFFFFFF  | 4092 Mb  | -                  | Unmapped
+0x400000-0xFFFFFFFF  | 4092 Mb  | -                  | Unmapped*
 
+* - There may be mapped memory for AHCI HBA structures

@@ -11,4 +11,13 @@ This is a PS/2 keyboard driver. It has functions for waiting for scancode and
 waiting for any key with returning its ASCII value. It can handle Shift, CapsLock and Ctrl.
 -----------------------------------------------------------------------------------------
 
+PCI.HPP / PCI.CPP --- PCI driver ------------------------------------------------------------
+This driver provides functions to find PCI devices and communicate with them.
+-----------------------------------------------------------------------------------------
+
+AHCI.HPP / AHCI.CPP - AHCI driver -----------------------------------------------------------
+This is an AHCI controller driver. It has functions for working with SATA/ATAPI devices.
+Now it can only read data from drives.
+---------------------------------------------------------------------------------------------
+
 P.S. My English is now very well, so... sorry for any errors, that you can see in this text.

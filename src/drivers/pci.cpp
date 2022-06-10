@@ -40,8 +40,9 @@ namespace kpci
     void init()
     {
         devices = (pci_device*) malloc(sizeof(pci_device) * 100);
-        int device_index = 0;
+        mem_fill((uint8*) devices, 0, sizeof(pci_device) * 100);
 
+        int device_index = 0;
         for(int bus = 0; bus < 256; bus++)
         {
             for(int slot = 0; slot < 32; slot++)
@@ -70,6 +71,19 @@ namespace kpci
                 }
             }
         }
+    }
+
+    pci_device* find_device(uint8 classid, uint8 subclass)
+    {
+        for(int i = 0; i < 100 && devices[i].address != 0; i++)
+        {
+            if(devices[i].classid == classid && devices[i].subclass == subclass)
+            {
+                return &devices[i];
+            }
+        }
+
+        return nullptr;
     }
 
     static void print_dev_info(pci_device& device)

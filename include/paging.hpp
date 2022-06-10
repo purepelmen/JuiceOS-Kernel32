@@ -22,4 +22,5 @@ namespace kpaging
     typedef struct directory_entry dir_entry_t;
 
     void paging_init();
+    void map_address(uint32 address);
 }

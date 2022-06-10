@@ -24,6 +24,14 @@ namespace kpaging
         paging_enable((uint32) directory);
     }
 
+    void map_address(uint32 address)
+    {
+        address &= 0xFFFFF000;
+        address /= 0x400000;
+
+        set_dir_entry(address, true, true, address);
+    }
+
     static void set_dir_entry(int index, uint8 writable, uint8 four_mb_page, uint32 address)
     {
         if(four_mb_page)

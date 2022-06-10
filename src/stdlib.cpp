@@ -112,7 +112,7 @@ void printf(string str, ...)
     uint32 args_addr = (uint32) &str + sizeof(str);
     uint32* args_ptr = (uint32*) args_addr;
 
-    for(int i = 0; i < str.length(); i++)
+    for(int i = 0; str[i] != 0x0; i++)
     {
         if(str[i] == '%')
         {

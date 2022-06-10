@@ -5,6 +5,11 @@ string::string(const char* char_sequence)
     pointer = (char*) char_sequence;
 }
 
+string::string()
+{
+    pointer = (char*) "";
+}
+
 uint32 string::length()
 {
     int i;
