@@ -1,5 +1,6 @@
 #include "drivers/ahci.hpp"
 #include "drivers/pci.hpp"
+#include "drivers/ps2.hpp"
 #include "paging.hpp"
 #include "kernel.hpp"
 #include "heap.hpp"
@@ -24,7 +25,6 @@ namespace kahci
     static int find_free_cmd_slot(hba_port* port);
 
     static void start_cmd_engine(hba_port* port);
-    static void reset_port(hba_port* port);
 
     void init()
     {
@@ -39,20 +39,20 @@ namespace kahci
         hba_memory = (hba_mem*) hba_addr;
         kpaging::map_address(hba_addr);
 
-        // Reset HBA controller and wait until it resets
+        // Register AHCI handler
+        kisr::register_handler(IRQ_BASE + 10, ahci_int_handler);
+
+        // Enable AHCI-only, reset HBA controller and wait until it resets
+        hba_memory->ghc |= 1 << 31;
         hba_memory->ghc |= 1;
         while(hba_memory->ghc & 1)
         {
             asm volatile("hlt");
         }
 
-        // Enable AHCI-only mode and interrupts for controller
+        // Enable AHCI-only mode again
         hba_memory->ghc |= 1 << 31;
-        hba_memory->ghc |= 2;
-
-        // Register AHCI handler
-        kisr::register_handler(IRQ_BASE + 10, ahci_int_handler);
-
+        
         uint32 imp_ports = kahci::hba_memory->pi;
         for(int i = 0; i < 32; i++)
         {
@@ -61,15 +61,21 @@ namespace kahci
                 hba_port* port = &hba_memory->ports[i];
                 printf("[AHCI] Prepairing implemented port #%d\n", i);
 
-                reset_port(port);
-
-                // Enable interrupts and start cmd engine
-                port->ie = 0xFFFFFFFF;
+                // Clear error bits and start cmd engine
+                port->serr = 0xFFFFFFFF;
                 start_cmd_engine(port);
+
+                // Clear int bits and enable ints for port
+                port->is = 0xFFFFFFFF;
+                port->ie = 0xFFFFFFFF;
             }
 
             imp_ports >>= 1;
         }
+
+        // Clear int bits and enable ints for the entire controller
+        hba_memory->is = 0xFFFFFFFF;
+        hba_memory->ghc |= 2;
     }
 
     string get_version()
@@ -255,12 +261,13 @@ namespace kahci
             {
                 hba_port* port = &hba_memory->ports[i];
                 uint32 int_status = port->is;
+				uint32 s_err = port->serr;
 
                 printf("[AHCI] Interrupt status (0x%x) from port #%d\n", int_status, i);
                 handle_int_port(i, int_status);
 
+				port->serr = s_err;
                 port->is = int_status;
-                port->serr = port->serr;
             }
             
             ports_to_enum >>= 1;
@@ -316,51 +323,31 @@ namespace kahci
 
     static void start_cmd_engine(hba_port* port)
     {
-        // If cmd engine already runned
+        // Is cmd engine already runned?
         if(port->cmd & 1)
             return;
+        
+        // Is device not present on port?
+        if(port->ssts.det != 3)
+            return;
+        
+        // Enable FRE
+        port->cmd |= 1 << 4;
+        
+        // Wait until interface isn't busy and data transfer isn't requested
+        uint8 busy_or_drq = 0b10001000;
+        while(port->tfd & busy_or_drq)
+        {
+            asm volatile("hlt");
+        }
 
         // Wait until cmd engine isn't running
         while(port->cmd & (1 << 15))
-            asm volatile("hlt");
-
-        // Enable first FRE and then command engine
-        port->cmd |= 1 << 4;
-        port->cmd |= 1;
-    }
-
-    static void reset_port(hba_port* port)
-    {
-        // Device not present? We can't continue
-        if(port->ssts.det == 0)
-            return;
-
-        // Is command engine enabled?
-        if(port->cmd & 1)
         {
-            // Disable it
-            port->cmd = ~1;
-
-            // Wait until engine is stopped (if hung - we may continue)
-            int i = 0;
-            while(port->cmd & (1 << 15) && i < 10)
-            {
-                asm volatile("hlt");
-                i++;
-            }
+            asm volatile("hlt");
         }
 
-        // Invoke a COMRESET
-        port->sctl.det = 1;
-        asm volatile("hlt");
-        asm volatile("hlt");
-        port->sctl.det = 0;
-
-        // Waiting for communication re-establishing
-        while(port->ssts.det != 3)
-            asm volatile("hlt");
-
-        // Bits may were set as part of the port reset, so clear it
-        port->serr = 0xFFFFFFFF;
+        // Finally enable command engine
+        port->cmd |= 1;
     }
 }

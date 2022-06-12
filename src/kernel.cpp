@@ -138,7 +138,7 @@ void open_console(void)
             kscreen::print_string("SYSTEM - Print system information.\n");
             kscreen::print_string("PCI - Print all PCI devices.\n");
             kscreen::print_string("AHCIVER - Print AHCI specification version.\n");
-            kscreen::print_string("AHCIDEVS - Print all AHCI ports and connected devices.\n");
+            kscreen::print_string("AHCIDEV - Print all AHCI ports and connected devices.\n");
             kscreen::print_string("AHCIRD - Read first sector from AHCI port #0.\n\n");
             continue;
         }
@@ -182,7 +182,7 @@ void open_console(void)
             continue;
         }
 
-        if(command == "ahcidevs")
+        if(command == "ahcidev")
         {
             uint32 imp_ports = kahci::hba_memory->pi;
             string dev_names[] = { "Device not present", "SATAPI", "SEMB", "Port multiplier", "SATA" };
