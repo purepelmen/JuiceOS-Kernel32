@@ -1,6 +1,6 @@
 #include "drivers/screen.hpp"
-#include "drivers/timer.hpp"
 #include "drivers/ahci.hpp"
+#include "drivers/pit.hpp"
 #include "drivers/ps2.hpp"
 #include "drivers/pci.hpp"
 
@@ -10,7 +10,6 @@
 #include "gdt.hpp"
 #include "idt.hpp"
 
-// Buffer of the system log
 static char syslog_buffer[2048];
 
 static void init_kernel();
@@ -26,30 +25,18 @@ static void init_kernel()
     kscreen::clear();
     kscreen::enable_cursor(0xE, 0xF);
 
-    kgdt::gdt_init();
-    kernel_print_log("GDT initialized.\n");
-
-    kidt::idt_init();
-    kernel_print_log("IDT initialized.\n");
-
     init_heap();
-    kernel_print_log("Heap was initialized.\n");
+
+    kgdt::gdt_init();
+    kidt::idt_init();
+    kpaging::paging_init();
 
     ktimer::init();
-    kernel_print_log("Timer was initialized.\n");
-
-    kpaging::paging_init();
-    kernel_print_log("Paging initialized.\n");
-
     kps2::init();
-    kernel_print_log("Keyboard driver initialized.\n");
-
+    
     kpci::init();
-    kernel_print_log("PCI devices found.\n");
-
     kahci::init();
-    kernel_print_log("AHCI driver initialized.\n");
-
+    
     kernel_print_log("Kernel initialization completed.\n");
 }
 
@@ -184,18 +171,25 @@ void open_console(void)
 
         if(command == "ahcidev")
         {
-            uint32 imp_ports = kahci::hba_memory->pi;
-            string dev_names[] = { "Device not present", "SATAPI", "SEMB", "Port multiplier", "SATA" };
-
-            for(int i = 0; i < 32; i++)
+            if(kahci::hba_memory != nullptr)
             {
-                if(imp_ports & 1)
-                {
-                    kahci::port_devtype dev_status = kahci::get_port_devtype(&kahci::hba_memory->ports[i]);
-                    printf("[AHCI] Port %d device type: %s\n", i, dev_names[dev_status]);
-                }
+                uint32 imp_ports = kahci::hba_memory->pi;
+                string dev_names[] = { "Device not present", "SATAPI", "SEMB", "Port multiplier", "SATA" };
 
-                imp_ports >>= 1;
+                for(int i = 0; i < 32; i++)
+                {
+                    if(imp_ports & 1)
+                    {
+                        kahci::port_devtype dev_status = kahci::get_port_devtype(&kahci::hba_memory->ports[i]);
+                        printf("[AHCI] Port %d device type: %s\n", i, dev_names[dev_status]);
+                    }
+
+                    imp_ports >>= 1;
+                }
+            }
+            else
+            {
+                kscreen::print_string("AHCI driver wasn't initialized\n");
             }
 
             kscreen::print_char('\n');

@@ -1,5 +1,6 @@
 #include "drivers/screen.hpp"
 #include "paging.hpp"
+#include "kernel.hpp"
 #include "stdlib.hpp"
 #include "heap.hpp"
 #include "isr.hpp"
@@ -19,9 +20,10 @@ namespace kpaging
         mem_fill((uint8*) directory, 0, sizeof(dir_entry_t) * 1024);
 
         set_dir_entry(0, true, true, 0x0);
-
         kisr::register_handler(14, page_fault_handler);
+
         paging_enable((uint32) directory);
+        kernel_print_log("Paging initialized.\n");
     }
 
     void map_address(uint32 address)

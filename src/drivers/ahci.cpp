@@ -76,6 +76,8 @@ namespace kahci
         // Clear int bits and enable ints for the entire controller
         hba_memory->is = 0xFFFFFFFF;
         hba_memory->ghc |= 2;
+
+        kernel_print_log("AHCI driver init completed.\n");
     }
 
     string get_version()

@@ -1,6 +1,7 @@
 #include "drivers/screen.hpp"
 #include "drivers/ports.hpp"
 #include "drivers/pci.hpp"
+#include "kernel.hpp"
 #include "heap.hpp"
 
 namespace kpci
@@ -71,6 +72,8 @@ namespace kpci
                 }
             }
         }
+
+        kernel_print_log("PCI driver init completed.\n");
     }
 
     pci_device* find_device(uint8 classid, uint8 subclass)

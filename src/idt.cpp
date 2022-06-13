@@ -1,5 +1,6 @@
 #include "drivers/ports.hpp"
 #include "stdlib.hpp"
+#include "kernel.hpp"
 #include "idt.hpp"
 
 namespace kidt
@@ -31,6 +32,7 @@ namespace kidt
         idtr.table_offset = (uint32) &idt_descriptors;
 
         idt_flush((uint32) &idtr);
+        kernel_print_log("IDT initialized.\n");
     }
 
     static void idt_set_gate(int desc_number, uint32 handler_offset, uint16 segment_selector, uint8 flags)

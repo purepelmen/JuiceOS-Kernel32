@@ -1,6 +1,7 @@
+#include "drivers/screen.hpp"
 #include "drivers/ports.hpp"
 #include "drivers/ps2.hpp"
-#include "drivers/screen.hpp"
+#include "kernel.hpp"
 #include "isr.hpp"
 
 namespace kps2
@@ -32,6 +33,7 @@ namespace kps2
     void init()
     {
         kisr::register_handler(IRQ_BASE + 1, keyboard_handler);
+        kernel_print_log("Keyboard driver init completed.\n");
     }
 
     uint8 get_scancode(bool ignoreReleases)
