@@ -1,8 +1,11 @@
+#include "filesystems/fat16.hpp"
+
 #include "drivers/screen.hpp"
 #include "drivers/ahci.hpp"
 #include "drivers/pit.hpp"
 #include "drivers/ps2.hpp"
 #include "drivers/pci.hpp"
+#include "drivers/ide.hpp"
 
 #include "kernel.hpp"
 #include "paging.hpp"
@@ -11,6 +14,7 @@
 #include "idt.hpp"
 
 static char syslog_buffer[2048];
+kfat::FAT16* fat_pt2;
 
 static void init_kernel();
 
@@ -36,6 +40,7 @@ static void init_kernel()
     
     kpci::init();
     kahci::init();
+    kide::init();
     
     kernel_print_log("Kernel initialization completed.\n");
 }
@@ -217,6 +222,25 @@ void open_console(void)
             }
 
             kscreen::print_char('\n');
+            continue;
+        }
+
+        if(command == "fatinit")
+        {
+            fat_pt2 = (kfat::FAT16*) malloc(sizeof(kfat::FAT16));
+            *fat_pt2 = kfat::FAT16(0);
+            fat_pt2->init(1);
+
+            printf("FAT inited on partition #2\n\n");
+            continue;
+        }
+
+        if(command == "fatdir")
+        {
+            printf("K32 Partition files\n\n");
+            fat_pt2->dir();
+
+            printf("\n");
             continue;
         }
 

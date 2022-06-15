@@ -166,6 +166,18 @@ void mem_fill(uint8* ptr, uint8 byte, uint32 amount)
         ptr[i] = byte;
 }
 
+void utf16_to_ascii(uint8* buffer, uint16* utf16_str)
+{
+    int i = 0;
+    while(utf16_str[i] != 0x0)
+    {
+        buffer[i] = utf16_str[i] & 0xFF;
+        i++;
+    }
+
+    buffer[i] = 0x0;
+}
+
 void raise_error(string message, const char *file, uint32 line)
 {
     asm volatile("cli");

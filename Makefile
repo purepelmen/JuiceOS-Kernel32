@@ -3,7 +3,9 @@ ISO_PATH  = bin/JuiceOS.iso
 
 OBJ_FILES = bin/build
 GRUB_FILES = bin/iso
+FS_DIR = bin/fs
 
+PART_FILE = $(FS_DIR)/partition.img
 KERNEL_ELF = $(GRUB_FILES)/juiceos_k32.elf
 CPP_INCLUDES = include
 
@@ -14,7 +16,7 @@ NEED_TO_COMPILE = $(patsubst src/%,$(OBJ_FILES)/%.o,$(CPP_FILES) $(ASM_FILES))
 build: clean_and_init $(NEED_TO_COMPILE)
 	ld -m elf_i386 -T $(KERNEL_LINKER) -o $(KERNEL_ELF) $(NEED_TO_COMPILE)
 	
-	@grub-mkrescue -V "JuiceOS" -o $(ISO_PATH) $(GRUB_FILES)
+	@grub-mkrescue -V "JuiceOS" -o $(ISO_PATH) $(GRUB_FILES) -append_partition 2 0x00 $(PART_FILE)
 	@echo "Build successfull!"
 
 clean_and_init:

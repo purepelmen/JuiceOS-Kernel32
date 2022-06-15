@@ -110,8 +110,6 @@ namespace kahci
         if(hba_memory == nullptr) return false;
         hba_port* port = &hba_memory->ports[port_num];
 
-        printf("PxCMD = %x\n", port->cmd);
-
         // Limited because we have only 8 entries in hba_cmd_table
         if(count > 1024 * 64)
             return false;
@@ -265,7 +263,7 @@ namespace kahci
                 uint32 int_status = port->is;
 				uint32 s_err = port->serr;
 
-                printf("[AHCI] Interrupt status (0x%x) from port #%d\n", int_status, i);
+                // printf("[AHCI] Interrupt status (0x%x) from port #%d\n", int_status, i);
                 handle_int_port(i, int_status);
 
 				port->serr = s_err;
