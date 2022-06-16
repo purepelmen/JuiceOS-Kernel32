@@ -78,7 +78,7 @@ namespace kfat
         FAT16(uint8 dev_port);
         bool init(uint8 partition);
 
-        void dir();
+        void dir(uint16 cluster);
 
     private:
         uint8 sec_per_cluster;
@@ -92,12 +92,12 @@ namespace kfat
         uint32 total_sects;
 
         uint32 fat_lba;
-        uint32 root_dir;
+        uint32 root_dir_lba;
         uint32 data_lba;
 
         uint8 dev_port;
-        uint16* lfn_buffer;
-        uint8* buffer;
+        uint16* lfn_buffer = 0;
+        uint8* buffer = 0;
 
         uint8 calc_checksum(const uint8* shortname);
         uint8* read(uint32 lba);

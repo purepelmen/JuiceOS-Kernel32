@@ -227,18 +227,21 @@ void open_console(void)
 
         if(command == "fatinit")
         {
+            printf("Initializing FAT on partition #2\n");
             fat_pt2 = (kfat::FAT16*) malloc(sizeof(kfat::FAT16));
+            mem_fill((uint8*) fat_pt2, 0, sizeof(kfat::FAT16));
+
             *fat_pt2 = kfat::FAT16(0);
             fat_pt2->init(1);
 
-            printf("FAT inited on partition #2\n\n");
+            printf("\n");
             continue;
         }
 
         if(command == "fatdir")
         {
             printf("K32 Partition files\n\n");
-            fat_pt2->dir();
+            fat_pt2->dir(0);
 
             printf("\n");
             continue;
