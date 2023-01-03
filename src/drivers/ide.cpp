@@ -20,8 +20,6 @@ namespace kide
             kernel_print_log("[IDE] WARNING: Controller wasn't found in PCI device list\n");
             return;
         }
-
-        read_string();
     }
 
     static void ata_soft_reset(uint8 bus)

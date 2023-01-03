@@ -11,6 +11,8 @@ public:
 
         void write(uint16 offset, uint32 value);
         uint32 read(uint16 offset);
+
+        bool is_present();
         
         uint8 bus;
         uint8 slot;

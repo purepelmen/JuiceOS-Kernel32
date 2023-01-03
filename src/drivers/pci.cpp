@@ -38,6 +38,14 @@ namespace kpci
         return port_dword_in(0xCFC);
     }
 
+    bool pci_device::is_present()
+    {
+        uint32 identifiers = read(0x0);
+        uint16 vendor_id = identifiers & 0xFFFF;
+
+        return vendor_id != 0xFFFF && classid != 0xFF;
+    }
+
     void init()
     {
         devices = (pci_device*) malloc(sizeof(pci_device) * 100);
@@ -51,14 +59,7 @@ namespace kpci
                 for(int function = 0; function < 8; function++)
                 {
                     pci_device device(bus, slot, function);
-
-                    uint32 identifiers = device.read(0x0);
-                    uint16 vendorid = identifiers & 0xFFFF;
-
-                    if(vendorid == 0xFFFF || device.classid == 0xFF)
-                    {
-                        continue;
-                    }
+                    if(device.is_present() == false) continue;
 
                     if(device_index > 99)
                     {

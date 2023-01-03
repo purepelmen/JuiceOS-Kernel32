@@ -24,7 +24,7 @@ namespace kahci
     static void ahci_int_handler(kisr::regs_t regs);
     static int find_free_cmd_slot(hba_port* port);
 
-    static void start_cmd_engine(hba_port* port);
+    static void initialize_port(hba_port* port);
 
     void init()
     {
@@ -53,28 +53,25 @@ namespace kahci
         // Enable AHCI-only mode again
         hba_memory->ghc |= 1 << 31;
         
+        // Determine which ports is implemented
         uint32 imp_ports = kahci::hba_memory->pi;
         for(int i = 0; i < 32; i++)
         {
+            // Port is implemented?
             if(imp_ports & 1)
             {
                 hba_port* port = &hba_memory->ports[i];
+
                 printf("[AHCI] Prepairing implemented port #%d\n", i);
-
-                // Clear error bits and start cmd engine
-                port->serr = 0xFFFFFFFF;
-                start_cmd_engine(port);
-
-                // Clear int bits and enable ints for port
-                port->is = 0xFFFFFFFF;
-                port->ie = 0xFFFFFFFF;
+                initialize_port(port);
             }
 
             imp_ports >>= 1;
         }
 
-        // Clear int bits and enable ints for the entire controller
+        // Clear global interrupt bits
         hba_memory->is = 0xFFFFFFFF;
+        // Enabling all types of interrupts for the entire controller
         hba_memory->ghc |= 2;
 
         kernel_print_log("AHCI driver init completed.\n");
@@ -321,27 +318,28 @@ namespace kahci
         port->cmd |= 1;
     }
 
-    static void start_cmd_engine(hba_port* port)
+    static void initialize_port(hba_port* port)
     {
-        // Is cmd engine already runned?
-        if(port->cmd & 1)
-            return;
-        
-        // Is device not present on port?
-        if(port->ssts.det != 3)
-            return;
-        
-        // Enable FRE
+        // Command processing already enabled?
+        if(port->cmd & 1) return;
+
+        // No device present on the port?
+        if(port->ssts.det != 3) return;
+
+        // Clear error bits
+        port->serr = 0xFFFFFFFF;
+        // Enable FRE, so we can receive FISes
         port->cmd |= 1 << 4;
         
-        // Wait until interface isn't busy and data transfer isn't requested
-        uint8 busy_or_drq = 0b10001000;
-        while(port->tfd & busy_or_drq)
+        // Wait for BSY and DRQ will be cleared
+        // Trying to set ST bit when interface is busy = can cause problems
+        uint8 busy_or_drq_mask = 0b10001000;
+        while(port->tfd & busy_or_drq_mask)
         {
             asm volatile("hlt");
         }
 
-        // Wait until cmd engine isn't running
+        // Wait until command engine isn't running
         while(port->cmd & (1 << 15))
         {
             asm volatile("hlt");
@@ -349,5 +347,10 @@ namespace kahci
 
         // Finally enable command engine
         port->cmd |= 1;
+
+        // Clear interrupt bits, or invalid interrupt calls may be executed
+        port->is = 0xFFFFFFFF;
+        // Enabling all interrupts, we handle everything
+        port->ie = 0xFFFFFFFF;
     }
 }

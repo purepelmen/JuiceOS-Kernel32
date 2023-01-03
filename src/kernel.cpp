@@ -43,6 +43,7 @@ static void init_kernel()
     kide::init();
     
     kernel_print_log("Kernel initialization completed.\n");
+    read_string();
 }
 
 void open_console(void)
