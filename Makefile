@@ -1,39 +1,28 @@
-KERNEL_LINKER = bin/kernel.ld
-ISO_PATH  = bin/JuiceOS.iso
+ARTIFACTS = build/artifacts
+K32CORE_ARTIFACTS = $(ARTIFACTS)/k32-core/
+BUILT_ISO  = $(ARTIFACTS)/JuiceOS.iso
 
-OBJ_FILES = bin/build
-GRUB_FILES = bin/iso
-FS_DIR = bin/fs
+K32CORE_LINKERSCRIPT = build/kernel.ld
+ISOBUILD_DIR = build/iso
+K32CORE_LINKED_EXECUTABLE = $(ISOBUILD_DIR)/juiceos_k32.elf
 
-PART_FILE = $(FS_DIR)/partition.img
-KERNEL_ELF = $(GRUB_FILES)/juiceos_k32.elf
-CPP_INCLUDES = include
+FS_DIR = build/fs
+MAIN_PARTITION_FILE = $(FS_DIR)/partition.img
 
-CPP_FILES = $(shell find src -type f -name '*.cpp')
-ASM_FILES = $(shell find src -type f -name '*.asm')
-NEED_TO_COMPILE = $(patsubst src/%,$(OBJ_FILES)/%.o,$(CPP_FILES) $(ASM_FILES))
-
-build: clean_and_init $(NEED_TO_COMPILE)
-	ld -m elf_i386 -T $(KERNEL_LINKER) -o $(KERNEL_ELF) $(NEED_TO_COMPILE)
+build_all:
+	@echo "Configuring Kernel32-Core CMake project and building..."
+	@cmake -S core -B $(K32CORE_ARTIFACTS) -G Ninja
+	@ninja -C $(K32CORE_ARTIFACTS)
 	
-	@grub-mkrescue -V "JuiceOS" -o $(ISO_PATH) $(GRUB_FILES) -append_partition 2 0x00 $(PART_FILE)
-	@echo "Build successfull!"
+	@echo "Linking the output K32CORE executable..."
+	@ld -m elf_i386 -T $(K32CORE_LINKERSCRIPT) -o $(K32CORE_LINKED_EXECUTABLE) $(K32CORE_ARTIFACTS)/libK32_Core.a 
 
-clean_and_init:
-	@rm -f -r $(OBJ_FILES)
-	@mkdir -p $(OBJ_FILES)
+	@grub-mkrescue -V "JuiceOS" -o $(BUILT_ISO) $(ISOBUILD_DIR) -append_partition 2 0x00 $(MAIN_PARTITION_FILE)
+	@echo S"Build successfull!"
 
-clean: clean_and_init
-	@rm -f $(KERNEL_ELF)
-	@rm -f bin/*.iso
+clean:
+	@rm -rf $(ARTIFACTS)
+	@rm -f $(K32CORE_LINKED_EXECUTABLE)
 
 run:
-	@qemu-system-x86_64 -cdrom $(ISO_PATH)
-
-$(OBJ_FILES)/%.cpp.o: src/%.cpp
-	@mkdir -p $(dir $@)
-	g++ -I $(CPP_INCLUDES) -nostdlib -ffreestanding -m32 -c $< -o $@
-
-$(OBJ_FILES)/%.asm.o: src/%.asm
-	@mkdir -p $(dir $@)
-	nasm -f elf32 $< -o $@
+	@qemu-system-x86_64 -cdrom $(BUILT_ISO)

@@ -1,2 +1,5 @@
-*.o
+.vs
 .vscode
+
+# All build output artifacts.
+build/artifacts/
