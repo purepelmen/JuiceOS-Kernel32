@@ -1,22 +1,21 @@
-! Development was stopped indefinitely. Not all parts of this kernel can work as expected even on emulators. !
+**! Development was stopped indefinitely. Not all parts of this kernel can work as expected even on emulators. !**
 
 # JuiceOS-Kernel32
 JuiceOS Kernel32 - is my 32-bit operating system (for now, just a small monolithic kernel).
 
 ## Requirements
+This project is supposed to be built on Linux only. You may use WSL as well.
+
 ```console
-sudo apt install build-essential
+sudo apt install build-essential cmake ninja-build nasm
 ```
 ```console
-sudo apt install nasm
-```
-```console
-sudo apt install grub2
-```
-```console
-sudo apt install xorriso
+sudo apt install grub2 xorriso
 ```
 
+
+## Running in an emulator
+### Requirements
 Windows users should install **Qemu for Windows**, and add Qemu to Windows environment variables.
 
 Linux users should install this:
@@ -24,17 +23,17 @@ Linux users should install this:
 sudo apt install qemu-system-x86
 ```
 
-## Running in emulator
+### Testing
 Linux:
 ```console
 make run
 ```
 
 Windows:
-Change path to the ISO file in `run.bat` and run it
+Make the path in `run.bat` be correct for your computer, so it'll point to the built ISO file. Then run it.
 
 ## Running on a real hardware
-For linux users:
+For Linux users:
 ```console
 sudo dd -if bin/JuiceOS.iso -of /dev/sdb
 ```
