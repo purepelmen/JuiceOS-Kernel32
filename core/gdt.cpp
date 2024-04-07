@@ -11,7 +11,6 @@ namespace kgdt
     extern "C" void gdt_flush(uint32 pointer);
 
     static void gdt_set_gate(int desc_number, uint32 base, uint32 limit, bool is_executable, uint8 privilege_level);
-    static void gdt_clear_gate(int desc_number);
 
     void gdt_init()
     {

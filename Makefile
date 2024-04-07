@@ -18,7 +18,7 @@ build_all:
 	@ld -m elf_i386 -T $(K32CORE_LINKERSCRIPT) -o $(K32CORE_LINKED_EXECUTABLE) $(K32CORE_ARTIFACTS)/libK32_Core.a 
 
 	@grub-mkrescue -V "JuiceOS" -o $(BUILT_ISO) $(ISOBUILD_DIR) -append_partition 2 0x00 $(MAIN_PARTITION_FILE)
-	@echo S"Build successfull!"
+	@echo "Build successfull!"
 
 clean:
 	@rm -rf $(ARTIFACTS)
