@@ -8,7 +8,7 @@ namespace kgdt
     static gdt_desc_t gdt_descriptors[GDT_DESCRIPTORS_COUNT];
     static gdt_reg_t gdtr;
 
-    extern "C" void gdt_flush(uint32 pointer);
+    extern "C" void gdt_flush(gdt_reg_t* pointer);
 
     static void gdt_set_gate(int desc_number, uint32 base, uint32 limit, bool is_executable, uint8 privilege_level);
 
@@ -21,7 +21,7 @@ namespace kgdt
         gdtr.table_size = sizeof(gdt_desc_t) * GDT_DESCRIPTORS_COUNT - 1;
         gdtr.table_offset = (uint32) &gdt_descriptors;
 
-        gdt_flush((uint32) &gdtr);
+        gdt_flush(&gdtr);
         kernel_print_log("GDT initialized.\n");
     }
 

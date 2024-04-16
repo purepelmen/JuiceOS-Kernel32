@@ -7,9 +7,9 @@
 
 namespace kpaging
 {
-    dir_entry_t* directory;
+    static dir_entry_t* directory;
 
-    extern "C" void paging_enable(uint32 dir_pointer);
+    extern "C" void paging_enable(dir_entry_t* dir_pointer);
 
     static void set_dir_entry(int index, uint8 writable, uint8 four_mb_page, uint32 address);
     static void page_fault_handler(kisr::regs_t regs);
@@ -22,7 +22,7 @@ namespace kpaging
         set_dir_entry(0, true, true, 0x0);
         kisr::register_handler(14, page_fault_handler);
 
-        paging_enable((uint32) directory);
+        paging_enable(directory);
         kernel_print_log("Paging initialized.\n");
     }
 

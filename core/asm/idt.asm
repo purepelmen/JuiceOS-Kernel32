@@ -1,5 +1,5 @@
 ; =====================================
-; idt_flush: sets pointer to GDTR
+; idt_flush: sets pointer to IDTR
 ; =====================================
 [global idt_flush]
 idt_flush:

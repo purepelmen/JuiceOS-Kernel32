@@ -10,7 +10,7 @@ namespace kidt
     static idt_desc_t idt_descriptors[256];
     static idt_reg_t idtr;
 
-    extern "C" void idt_flush(uint32 pointer);
+    extern "C" void idt_flush(idt_reg_t* pointer);
 
     extern "C" uint32 isr_handlers_offset;
     extern "C" uint8 isr_handler_size;
@@ -29,9 +29,9 @@ namespace kidt
         }
 
         idtr.table_size = sizeof(idt_desc_t) * IDT_DESCRIPTORS_COUNT - 1;
-        idtr.table_offset = (uint32) &idt_descriptors;
+        idtr.table_offset = idt_descriptors;
 
-        idt_flush((uint32) &idtr);
+        idt_flush(&idtr);
         kernel_print_log("IDT initialized.\n");
     }
 

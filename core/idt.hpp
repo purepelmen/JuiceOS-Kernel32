@@ -18,7 +18,7 @@ namespace kidt
     struct idt_register
     {
         uint16 table_size;
-        uint32 table_offset;
+        idt_desc_t* table_offset;
     } __attribute__((packed));
 
     typedef struct idt_register idt_reg_t;
