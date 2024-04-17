@@ -1,8 +1,8 @@
 #include "console.h"
 #include "heap.h"
 
-#include "drivers/ps2.hpp"
-#include "drivers/screen.hpp"
+#include "drivers/ps2.h"
+#include "drivers/screen.h"
 
 static char* input_buffer = nullptr;
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "stdlib.hpp"
+#include "stdlib.h"
 
 /* Pre-declaration of the placement new. Without this, the placement new won't work. */
 inline void* operator new(size_t size, void* p) noexcept { return p; }

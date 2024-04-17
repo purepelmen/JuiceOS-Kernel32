@@ -1,8 +1,8 @@
-#include "fat16.hpp"
-#include "mbr.hpp"
+#include "fat16.h"
+#include "mbr.h"
 
-#include "../drivers/screen.hpp"
-#include "../drivers/ahci.hpp"
+#include <drivers/screen.h>
+#include <drivers/ahci.h>
 
 #include <heap.h>
 #include <console.h>

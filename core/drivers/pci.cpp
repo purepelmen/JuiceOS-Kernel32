@@ -1,8 +1,8 @@
-#include "screen.hpp"
-#include "ports.hpp"
-#include "pci.hpp"
+#include "screen.h"
+#include "ports.h"
+#include "pci.h"
 
-#include <kernel.hpp>
+#include <kernel.h>
 #include <heap.h>
 #include <console.h>
 
@@ -53,7 +53,8 @@ namespace kpci
         const int MAX_DEVICES = 100;
 
         devices = kheap::create_new_array<pci_device>(MAX_DEVICES);
-        mem_fill((uint8*) devices, 0, sizeof(pci_device) * MAX_DEVICES);
+        // TODO: Probably it's not needed anymore. Delete it later.
+        // mem_fill((uint8*) devices, 0, sizeof(pci_device) * MAX_DEVICES);
 
         int device_index = 0;
         for(int bus = 0; bus < 256; bus++)

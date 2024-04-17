@@ -1,17 +1,17 @@
-#include "filesystems/fat16.hpp"
+#include "filesystems/fat16.h"
 
-#include "drivers/screen.hpp"
-#include "drivers/ahci.hpp"
-#include "drivers/pit.hpp"
-#include "drivers/ps2.hpp"
-#include "drivers/pci.hpp"
-#include "drivers/ide.hpp"
+#include "drivers/screen.h"
+#include "drivers/ahci.h"
+#include "drivers/pit.h"
+#include "drivers/ps2.h"
+#include "drivers/pci.h"
+#include "drivers/ide.h"
 
-#include "kernel.hpp"
-#include "paging.hpp"
+#include "kernel.h"
+#include "paging.h"
 #include "heap.h"
-#include "gdt.hpp"
-#include "idt.hpp"
+#include "gdt.h"
+#include "idt.h"
 
 #include "console.h"
 

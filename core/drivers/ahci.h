@@ -1,5 +1,5 @@
 #pragma once
-#include "pci.hpp"
+#include "pci.h"
 
 namespace kahci
 {

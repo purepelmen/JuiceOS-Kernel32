@@ -1,7 +1,7 @@
-#include "ports.hpp"
-#include "pit.hpp"
-#include "../kernel.hpp"
-#include "../isr.hpp"
+#include "ports.h"
+#include "pit.h"
+#include "../kernel.h"
+#include "../isr.h"
 
 namespace ktimer
 {

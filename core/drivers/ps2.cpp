@@ -1,8 +1,8 @@
-#include "screen.hpp"
-#include "ports.hpp"
-#include "ps2.hpp"
-#include "../kernel.hpp"
-#include "../isr.hpp"
+#include "screen.h"
+#include "ports.h"
+#include "ps2.h"
+#include "../kernel.h"
+#include "../isr.h"
 
 namespace kps2
 {

@@ -1,7 +1,6 @@
-#include "drivers/screen.hpp"
-#include "stdlib.hpp"
-#include "kernel.hpp"
-#include "string.hpp"
+#include "stdlib.h"
+#include "string.h"
+#include "kernel.h"
 #include "heap.h"
 
 static uint8* heap_start_value;

@@ -1,5 +1,5 @@
 #pragma once
-#include "../stdlib.hpp"
+#include "../stdlib.h"
 
 namespace kpci
 {
@@ -14,13 +14,13 @@ public:
 
         bool is_present();
         
-        uint8 bus;
-        uint8 slot;
-        uint8 function;
+        uint8 bus = 0;
+        uint8 slot = 0;
+        uint8 function = 0;
 
-        uint32 address;
-        uint8 classid;
-        uint8 subclass; 
+        uint32 address = 0;
+        uint8 classid = 0;
+        uint8 subclass = 0; 
     };
 
     extern pci_device* devices;

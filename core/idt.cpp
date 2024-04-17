@@ -1,7 +1,7 @@
-#include "drivers/ports.hpp"
-#include "stdlib.hpp"
-#include "kernel.hpp"
-#include "idt.hpp"
+#include "drivers/ports.h"
+#include "stdlib.h"
+#include "kernel.h"
+#include "idt.h"
 
 namespace kidt
 {

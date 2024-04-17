@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../stdlib.hpp"
+#include "../stdlib.h"
 
 #define SCREEN_STDCOLOR     0x07
 #define SCREEN_INVERTCOLOR  0x70

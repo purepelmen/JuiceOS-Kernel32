@@ -1,7 +1,4 @@
-#include "stdlib.hpp"
-
-#include "drivers/screen.hpp"
-#include "drivers/ps2.hpp"
+#include "stdlib.h"
 
 #include "console.h"
 #include "heap.h"

@@ -1,5 +1,5 @@
 #pragma once
-#include "../stdlib.hpp"
+#include "../stdlib.h"
 
 namespace kparts
 {

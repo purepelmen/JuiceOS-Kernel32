@@ -2,8 +2,7 @@
 
 #define KERNEL_VERSION "1.0.3"
 
-#include "stdlib.hpp"
-#include "string.hpp"
+#include "stdlib.h"
 
 /* Open console */
 void open_console(void);

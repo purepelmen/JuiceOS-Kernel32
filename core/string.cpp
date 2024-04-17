@@ -1,4 +1,4 @@
-#include "string.hpp"
+#include "string.h"
 
 string::string(const char* char_sequence)
 {

@@ -1,5 +1,5 @@
-#include "screen.hpp"
-#include "ports.hpp"
+#include "ports.h"
+#include "screen.h"
 
 namespace kscreen
 {

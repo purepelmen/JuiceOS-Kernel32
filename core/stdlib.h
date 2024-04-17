@@ -1,7 +1,7 @@
 #pragma once
 
 #include "stdint.h"
-#include "string.hpp"
+#include "string.h"
 
 #define RAISE_ERROR(message) raise_error(message, __FILE__, __LINE__);
 

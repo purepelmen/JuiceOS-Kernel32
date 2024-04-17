@@ -1,9 +1,10 @@
-#include "drivers/screen.hpp"
-#include "paging.hpp"
-#include "kernel.hpp"
-#include "stdlib.hpp"
+#include "paging.h"
+
+#include "drivers/screen.h"
+#include "stdlib.h"
+#include "kernel.h"
 #include "heap.h"
-#include "isr.hpp"
+#include "isr.h"
 
 namespace kpaging
 {

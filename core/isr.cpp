@@ -1,9 +1,9 @@
-#include "drivers/screen.hpp"
-#include "drivers/ports.hpp"
-#include "kernel.hpp"
-#include "isr.hpp"
+#include "drivers/screen.h"
+#include "drivers/ports.h"
+#include "kernel.h"
+#include "isr.h"
 
-#include "stdlib.hpp"
+#include "stdlib.h"
 #include "console.h"
 
 namespace kisr

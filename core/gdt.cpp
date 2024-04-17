@@ -1,5 +1,5 @@
-#include "kernel.hpp"
-#include "gdt.hpp"
+#include "kernel.h"
+#include "gdt.h"
 
 namespace kgdt
 {

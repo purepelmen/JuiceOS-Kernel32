@@ -1,8 +1,8 @@
-#include "ports.hpp"
-#include "pci.hpp"
-#include "ide.hpp"
+#include "ports.h"
+#include "pci.h"
+#include "ide.h"
 
-#include "../kernel.hpp"
+#include "../kernel.h"
 
 #define CTRL_BASE_OFFSET 0x206
 

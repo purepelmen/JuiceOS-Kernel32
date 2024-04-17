@@ -1,5 +1,5 @@
 #pragma once
-#include "string.hpp"
+#include "string.h"
 
 /*
     Provides an abstraction over keyboard/screen drivers.
