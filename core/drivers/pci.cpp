@@ -1,8 +1,10 @@
 #include "screen.hpp"
 #include "ports.hpp"
 #include "pci.hpp"
-#include "../kernel.hpp"
-#include "../heap.hpp"
+
+#include <kernel.hpp>
+#include <heap.h>
+#include <console.h>
 
 namespace kpci
 {
@@ -48,8 +50,10 @@ namespace kpci
 
     void init()
     {
-        devices = (pci_device*) malloc(sizeof(pci_device) * 100);
-        mem_fill((uint8*) devices, 0, sizeof(pci_device) * 100);
+        const int MAX_DEVICES = 100;
+
+        devices = kheap::create_new_array<pci_device>(MAX_DEVICES);
+        mem_fill((uint8*) devices, 0, sizeof(pci_device) * MAX_DEVICES);
 
         int device_index = 0;
         for(int bus = 0; bus < 256; bus++)
@@ -61,9 +65,9 @@ namespace kpci
                     pci_device device(bus, slot, function);
                     if(device.is_present() == false) continue;
 
-                    if(device_index > 99)
+                    if(device_index > (MAX_DEVICES - 1))
                     {
-                        RAISE_ERROR("PCI found more than 100 devices (need array expansion)");
+                        RAISE_ERROR("PCI found more devices than allowed (need array expansion)");
                     }
 
                     devices[device_index] = device;
@@ -92,17 +96,20 @@ namespace kpci
 
     static void print_dev_info(pci_device& device)
     {
-        kscreen::print_string("[PCI] Saving valid device (BSF=");
-        print_number(device.bus);
-        kscreen::print_string(",");
-        print_number(device.slot);
-        kscreen::print_string(",");
-        print_number(device.function);
+        kconsole::printf("[PCI] Saving valid device (BSF=%d,%d,%d) with cl/subcl = %d,%d\n", device.bus, device.slot, device.function, 
+            device.classid, device.subclass);
         
-        kscreen::print_string(") with cl/subcl = ");
-        print_number(device.classid);
-        kscreen::print_string(",");
-        print_number(device.subclass);
-        kscreen::print_string("\n");
+        // kscreen::print_string("[PCI] Saving valid device (BSF=");
+        // kconsole::print_decimal(device.bus);
+        // kscreen::print_string(",");
+        // kconsole::print_decimal(device.slot);
+        // kscreen::print_string(",");
+        // kconsole::print_decimal(device.function);
+        
+        // kscreen::print_string(") with cl/subcl = ");
+        // kconsole::print_decimal(device.classid);
+        // kscreen::print_string(",");
+        // kconsole::print_decimal(device.subclass);
+        // kscreen::print_string("\n");
     }
 }

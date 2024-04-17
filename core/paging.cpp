@@ -2,7 +2,7 @@
 #include "paging.hpp"
 #include "kernel.hpp"
 #include "stdlib.hpp"
-#include "heap.hpp"
+#include "heap.h"
 #include "isr.hpp"
 
 namespace kpaging
@@ -16,7 +16,7 @@ namespace kpaging
 
     void paging_init()
     {
-        directory = (dir_entry_t*) malloc_pg_aligned(sizeof(dir_entry_t) * 1024);
+        directory = (dir_entry_t*) kheap::alloc_pg_aligned(sizeof(dir_entry_t) * 1024);
         mem_fill((uint8*) directory, 0, sizeof(dir_entry_t) * 1024);
 
         set_dir_entry(0, true, true, 0x0);

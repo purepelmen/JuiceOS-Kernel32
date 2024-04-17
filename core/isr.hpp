@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stdint.hpp"
+#include "stdint.h"
 
 #define IRQ_BASE 32
 

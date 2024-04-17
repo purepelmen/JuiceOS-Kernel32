@@ -9,9 +9,11 @@
 
 #include "kernel.hpp"
 #include "paging.hpp"
-#include "heap.hpp"
+#include "heap.h"
 #include "gdt.hpp"
 #include "idt.hpp"
+
+#include "console.h"
 
 static char syslog_buffer[2048];
 kfat::FAT16* fat_pt2;
@@ -29,7 +31,7 @@ static void init_kernel()
     kscreen::clear();
     kscreen::enable_cursor(0xE, 0xF);
 
-    init_heap();
+    kheap::init();
 
     kgdt::gdt_init();
     kidt::idt_init();
@@ -43,7 +45,7 @@ static void init_kernel()
     kide::init();
     
     kernel_print_log("Kernel initialization completed.\n");
-    read_string();
+    kconsole::read_string();
 }
 
 void open_console(void)
@@ -56,7 +58,7 @@ void open_console(void)
         kscreen::print_string("PC:>>");
         kscreen::outargs.print_color = SCREEN_STDCOLOR;
 
-        string command = read_string();
+        string command = kconsole::read_string();
         command.to_lower(command);
         kscreen::print_char(0xA);
 
@@ -103,7 +105,7 @@ void open_console(void)
 
             uint8 key = kps2::read_ascii();
             kscreen::print_string("ASCII code of typed key is: 0x");
-            print_hex_8bit(key);
+            kconsole::print_hex8(key);
             kscreen::print_string("\nIt displays as: ");
 
             kscreen::print_char(key);
@@ -145,7 +147,7 @@ void open_console(void)
                 uint8 scancode = kps2::get_scancode(false);
 
                 kscreen::print_string("0x");
-                print_hex_8bit(scancode);
+                kconsole::print_hex8(scancode);
 
                 kscreen::print_char('\n');
                 if(scancode == 0x81) break;
@@ -160,7 +162,7 @@ void open_console(void)
             for(int i = 0; i < 100 && kpci::devices[i].address != 0; i++)
             {
                 kpci::pci_device* device = &kpci::devices[i];
-                printf("PCI Device (Bus/Slot/Fun: %d,%d,%d) = Class/Subclass: %d,%d\n", 
+                kconsole::printf("PCI Device (Bus/Slot/Fun: %d,%d,%d) = Class/Subclass: %d,%d\n", 
                     device->bus, device->slot, device->function, device->classid, device->subclass);
             }
 
@@ -170,7 +172,7 @@ void open_console(void)
 
         if(command == "ahciver")
         {
-            printf("[AHCI] Version of the specification: %s\n", kahci::get_version());
+            kconsole::printf("[AHCI] Version of the specification: %s\n", kahci::get_version());
             kscreen::print_char('\n');
             continue;
         }
@@ -187,7 +189,7 @@ void open_console(void)
                     if(imp_ports & 1)
                     {
                         kahci::port_devtype dev_status = kahci::get_port_devtype(&kahci::hba_memory->ports[i]);
-                        printf("[AHCI] Port %d device type: %s\n", i, dev_names[dev_status]);
+                        kconsole::printf("[AHCI] Port %d device type: %s\n", i, dev_names[dev_status]);
                     }
 
                     imp_ports >>= 1;
@@ -211,7 +213,7 @@ void open_console(void)
             {
                 for(int i = 0; i < 256; i++)
                 {
-                    print_hex_8bit(buff[i]);
+                    kconsole::print_hex8(buff[i]);
                     kscreen::print_char(' ');
                 }
 
@@ -219,7 +221,7 @@ void open_console(void)
             }
             else
             {
-                printf("Failed to read data\n");
+                kconsole::printf("Failed to read data\n");
             }
 
             kscreen::print_char('\n');
@@ -228,23 +230,25 @@ void open_console(void)
 
         if(command == "fatinit")
         {
-            printf("Initializing FAT on partition #2\n");
-            fat_pt2 = (kfat::FAT16*) malloc(sizeof(kfat::FAT16));
-            mem_fill((uint8*) fat_pt2, 0, sizeof(kfat::FAT16));
+            kconsole::printf("Initializing FAT on partition #2\n");
+            fat_pt2 = kheap::create_new<kfat::FAT16>(0);
 
-            *fat_pt2 = kfat::FAT16(0);
+            // fat_pt2 = kheap::alloc_casted<kfat::FAT16>(sizeof(kfat::FAT16));
+            // mem_fill((uint8*) fat_pt2, 0, sizeof(kfat::FAT16));
+
+            // *fat_pt2 = kfat::FAT1k6(0);
             fat_pt2->init(1);
 
-            printf("\n");
+            kconsole::printf("\n");
             continue;
         }
 
         if(command == "fatdir")
         {
-            printf("K32 Partition files\n\n");
+            kconsole::printf("K32 Partition files\n\n");
             fat_pt2->dir(0);
 
-            printf("\n");
+            kconsole::printf("\n");
             continue;
         }
 
@@ -368,7 +372,7 @@ void open_memdumper(void)
             if(asciiFlag)
             {
                 kscreen::print_string("0x");
-                print_hex_32bit((uint32) memPtr + i);
+                kconsole::print_hex32((uint32) memPtr + i);
                 kscreen::print_string(": ");
 
                 for(int ii = 0; ii < 16; ii++)
@@ -386,13 +390,13 @@ void open_memdumper(void)
             else
             {
                 kscreen::print_string("0x");
-                print_hex_32bit((uint32) memPtr + i);
+                kconsole::print_hex32((uint32) memPtr + i);
                 kscreen::print_string(": ");
 
                 for(int ii = 0; ii < 16; ii++)
                 {
                     kscreen::outargs.print_color = 0x07;
-                    print_hex_8bit(memPtr[i + ii]);
+                    kconsole::print_hex8(memPtr[i + ii]);
                     kscreen::outargs.print_color = SCREEN_STDCOLOR;
                     kscreen::print_char(' ');
                 }
@@ -406,9 +410,9 @@ void open_memdumper(void)
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 24;
         kscreen::print_string("Dump: 0x");
-        print_hex_32bit((uint32) memPtr);
+        kconsole::print_hex32((uint32) memPtr);
         kscreen::print_string(" - 0x");
-        print_hex_32bit((uint32) memPtr + 255);
+        kconsole::print_hex32((uint32) memPtr + 255);
         kscreen::print_string(" | ASCII Flag = ");
         if(asciiFlag)
             kscreen::print_string("ON ");
@@ -475,7 +479,7 @@ void open_debugger(void)
     kscreen::print_string("EBP: 0x");
 
     __asm__("mov %%ebp, %%edx" : "=d" (res));
-    print_hex_32bit(res);
+    kconsole::print_hex32(res);
 
     // ESP ---------------------------------
     kscreen::outargs.cursor_x = 22;
@@ -483,7 +487,7 @@ void open_debugger(void)
     kscreen::print_string("ESP: 0x");
 
     __asm__("mov %%esp, %%edx" : "=d" (res));
-    print_hex_32bit(res);
+    kconsole::print_hex32(res);
 
     // CS ---------------------------------
     kscreen::outargs.cursor_x = 42;
@@ -491,7 +495,7 @@ void open_debugger(void)
     kscreen::print_string("CS: 0x");
 
     __asm__("mov %%cs, %%edx" : "=d" (res));
-    print_hex_32bit(res);
+    kconsole::print_hex32(res);
 
     // DS ---------------------------------
     kscreen::outargs.cursor_x = 62;
@@ -499,7 +503,7 @@ void open_debugger(void)
     kscreen::print_string("DS: 0x");
 
     __asm__("mov %%ds, %%edx" : "=d" (res));
-    print_hex_32bit(res);
+    kconsole::print_hex32(res);
 
     // ES ---------------------------------
     kscreen::outargs.cursor_x = 2;
@@ -507,7 +511,7 @@ void open_debugger(void)
     kscreen::print_string("ES: 0x");
 
     __asm__("mov %%es, %%edx" : "=d" (res));
-    print_hex_32bit(res);
+    kconsole::print_hex32(res);
 
     // GS ---------------------------------
     kscreen::outargs.cursor_x = 22;
@@ -515,7 +519,7 @@ void open_debugger(void)
     kscreen::print_string("GS: 0x");
 
     __asm__("mov %%gs, %%edx" : "=d" (res));
-    print_hex_32bit(res);
+    kconsole::print_hex32(res);
 
     // FS ---------------------------------
     kscreen::outargs.cursor_x = 42;
@@ -523,7 +527,7 @@ void open_debugger(void)
     kscreen::print_string("FS: 0x");
 
     __asm__("mov %%fs, %%edx" : "=d" (res));
-    print_hex_32bit(res);
+    kconsole::print_hex32(res);
 
     // SS ---------------------------------
     kscreen::outargs.cursor_x = 62;
@@ -531,7 +535,7 @@ void open_debugger(void)
     kscreen::print_string("SS: 0x");
 
     __asm__("mov %%ss, %%edx" : "=d" (res));
-    print_hex_32bit(res);
+    kconsole::print_hex32(res);
 
     // CR0 --------------------------------
     kscreen::outargs.cursor_x = 2;
@@ -539,7 +543,7 @@ void open_debugger(void)
     kscreen::print_string("CR0: 0x");
 
     __asm__("mov %%cr0, %%edx" : "=d" (res));
-    print_hex_32bit(res);
+    kconsole::print_hex32(res);
 
     // CR2 --------------------------------
     kscreen::outargs.cursor_x = 22;
@@ -547,7 +551,7 @@ void open_debugger(void)
     kscreen::print_string("CR2: 0x");
 
     __asm__("mov %%cr2, %%edx" : "=d" (res));
-    print_hex_32bit(res);
+    kconsole::print_hex32(res);
 
     // CR3 --------------------------------
     kscreen::outargs.cursor_x = 42;
@@ -555,7 +559,7 @@ void open_debugger(void)
     kscreen::print_string("CR3: 0x");
 
     __asm__("mov %%cr3, %%edx" : "=d" (res));
-    print_hex_32bit(res);
+    kconsole::print_hex32(res);
 
     // CR4 --------------------------------
     kscreen::outargs.cursor_x = 62;
@@ -563,7 +567,7 @@ void open_debugger(void)
     kscreen::print_string("CR4: 0x");
 
     __asm__("mov %%cr4, %%edx" : "=d" (res));
-    print_hex_32bit(res);
+    kconsole::print_hex32(res);
 
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 8;
@@ -574,20 +578,20 @@ void open_debugger(void)
     kscreen::outargs.cursor_y = 10;
     kscreen::print_string("Memory allocated for the system: ");
 
-    uint32 systemMemory = head_start_value - 0x100000;
+    uint32 systemMemory = kheap::get_system_mem_size();
     if(systemMemory / 1048576 > 0)
     {
-        print_number(systemMemory / 1048576);
+        kconsole::print_decimal(systemMemory / 1048576);
         kscreen::print_string(" MB.");
     } 
     else if(systemMemory / 1024 > 0)
     {
-        print_number(systemMemory / 1024);
+        kconsole::print_decimal(systemMemory / 1024);
         kscreen::print_string(" KB.");
     }
     else
     {
-        print_number(systemMemory);
+        kconsole::print_decimal(systemMemory);
         kscreen::print_string(" B.");
     }
 
@@ -596,20 +600,20 @@ void open_debugger(void)
     kscreen::outargs.cursor_y = 12;
     kscreen::print_string("Heap allocated: ");
 
-    uint32 allocatedHeap = current_heap_value - head_start_value;
+    uint32 allocatedHeap = kheap::get_allocated_size();
     if(allocatedHeap / 1048576 > 0) 
     {
-        print_number(allocatedHeap / 1048576);
+        kconsole::print_decimal(allocatedHeap / 1048576);
         kscreen::print_string(" MB.");
     }
     else if(allocatedHeap / 1024 > 0)
     {
-        print_number(allocatedHeap / 1024);
+        kconsole::print_decimal(allocatedHeap / 1024);
         kscreen::print_string(" KB.");
     }
     else
     {
-        print_number(allocatedHeap);
+        kconsole::print_decimal(allocatedHeap);
         kscreen::print_string(" B.");
     }
 
@@ -617,7 +621,7 @@ void open_debugger(void)
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 14;
     kscreen::print_string("Heap located at: 0x");
-    print_hex_32bit(head_start_value);
+    kconsole::print_hex32((uint32) kheap::get_location_ptr());
 
     while(true)
     {

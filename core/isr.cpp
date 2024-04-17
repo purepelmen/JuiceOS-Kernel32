@@ -1,8 +1,10 @@
 #include "drivers/screen.hpp"
 #include "drivers/ports.hpp"
-#include "stdlib.hpp"
 #include "kernel.hpp"
 #include "isr.hpp"
+
+#include "stdlib.hpp"
+#include "console.h"
 
 namespace kisr
 {
@@ -44,7 +46,7 @@ namespace kisr
         if(regs.int_number < 32)
         {
             kscreen::clear();
-            printf("Interrupt: #%d\n", regs.int_number);
+            kconsole::printf("Interrupt: #%d\n", regs.int_number);
 
             RAISE_ERROR("Unhandled exception, trap or fault");
         }

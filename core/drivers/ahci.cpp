@@ -1,10 +1,13 @@
 #include "ahci.hpp"
 #include "pci.hpp"
 #include "ps2.hpp"
-#include "../paging.hpp"
-#include "../kernel.hpp"
-#include "../heap.hpp"
-#include "../isr.hpp"
+
+#include <paging.hpp>
+#include <kernel.hpp>
+#include <heap.h>
+#include <isr.hpp>
+
+#include <console.h>
 
 #define AHCI_VS_0_95  0x00000905
 #define AHCI_VS_1_0   0x00010000
@@ -62,7 +65,7 @@ namespace kahci
             {
                 hba_port* port = &hba_memory->ports[i];
 
-                printf("[AHCI] Prepairing implemented port #%d\n", i);
+                kconsole::printf("[AHCI] Prepairing implemented port #%d\n", i);
                 initialize_port(port);
             }
 
@@ -178,7 +181,7 @@ namespace kahci
 
         if(spin == 1000000)
         {
-            printf("[AHCI] Port is hung\n");
+            kconsole::printf("[AHCI] Port is hung\n");
             return false;
         }
 
@@ -204,7 +207,7 @@ namespace kahci
                 return true;
 
             // If any error
-            printf("[AHCI] Read error\n");
+            kconsole::printf("[AHCI] Read error\n");
             return false;
         }
     }
@@ -220,7 +223,7 @@ namespace kahci
             slots >>= 1;
         }
 
-        printf("[AHCI] Free command slot not found\n");
+        kconsole::printf("[AHCI] Free command slot not found\n");
         return -1;
     }
 
@@ -260,7 +263,7 @@ namespace kahci
                 uint32 int_status = port->is;
 				uint32 s_err = port->serr;
 
-                // printf("[AHCI] Interrupt status (0x%x) from port #%d\n", int_status, i);
+                // kconsole::printf("[AHCI] Interrupt status (0x%x) from port #%d\n", int_status, i);
                 handle_int_port(i, int_status);
 
 				port->serr = s_err;
@@ -291,7 +294,7 @@ namespace kahci
 
         // Continue only if fatal error occured
         if((int_status & INT_STATUS_FATAL_ERR_MASK) == false) return;
-        printf("[AHCI] Fatal error occured (IS = %x)\n", int_status);
+        kconsole::printf("[AHCI] Fatal error occured (IS = %x)\n", int_status);
 
         // Disable command list processing and wait until it's disabled
         port->cmd &= ~1;

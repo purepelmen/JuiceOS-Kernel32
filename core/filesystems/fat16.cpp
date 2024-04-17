@@ -3,7 +3,9 @@
 
 #include "../drivers/screen.hpp"
 #include "../drivers/ahci.hpp"
-#include "../heap.hpp"
+
+#include <heap.h>
+#include <console.h>
 
 using namespace kparts;
 
@@ -19,25 +21,25 @@ namespace kfat
         mbr* mbr_s = (mbr*) read(0x0);
         if(mbr_s->boot_sig != 0xAA55)
         {
-            printf("[FAT16] Invalid boot signature\n");
+            kconsole::printf("[FAT16] Invalid boot signature\n");
             return false;
         }
 
         mbr_partition* sel_part = &mbr_s->partitions[partition];
         uint32 part_size = (sel_part->lba_size - sel_part->start_lba) * 512 / 1024;
-        printf("[FAT16] Partition #%d: Size = %dKb\n", partition, part_size);
+        kconsole::printf("[FAT16] Partition #%d: Size = %dKb\n", partition, part_size);
 
         partition_start = sel_part->start_lba;
         fat16_bpb* bpb = (fat16_bpb*) read(partition_start);
         if(bpb->signature != 0x28 && bpb->signature != 0x29)
         {
-            printf("[FAT16] Invalid FAT16 signature\n");
+            kconsole::printf("[FAT16] Invalid FAT16 signature\n");
             return false;
         }
 
         if(bpb->bytes_per_sector != 512)
         {
-            printf("[FAT16] Allowed 512 bytes per sector FSes only\n");
+            kconsole::printf("[FAT16] Allowed 512 bytes per sector FSes only\n");
             return false;
         }
 
@@ -63,11 +65,11 @@ namespace kfat
 
         if(total_clusters < 4085)
         {
-            printf("[FAT16] FAT12 FSes not supported\n");
+            kconsole::printf("[FAT16] FAT12 FSes not supported\n");
             return false;
         }
 
-        printf("[FAT16] Init success\n");
+        kconsole::printf("[FAT16] Init success\n");
         return true;
     }
 
@@ -77,12 +79,12 @@ namespace kfat
         uint8 lfn_checksum = 0;
         if(lfn_buffer == nullptr)
         {
-            lfn_buffer = (uint16*) malloc(512);
+            lfn_buffer = (uint16*) kheap::alloc(512);
         }
         mem_fill((uint8*) lfn_buffer, 0, 512);
 
-        printf("T     FILESIZE      FILENAME\n");
-        printf("-----------------------------------------\n");
+        kconsole::printf("T     FILESIZE      FILENAME\n");
+        kconsole::printf("-----------------------------------------\n");
 
         // Parse all clusters
         while(true)
@@ -160,7 +162,7 @@ namespace kfat
                     {
                         if(lfn_checksum != calc_checksum((uint8*) &entry->dos_filename))
                         {
-                            printf("[FAT16] Invalid checksum\n");
+                            kconsole::printf("[FAT16] Invalid checksum\n");
                             entry++;
                             continue;
                         }
@@ -188,9 +190,9 @@ namespace kfat
 
                     string type_str = entry->attributes & FATTR_SUBDIRECTORY ? "D" : "F";
 
-                    printf("[%s]   %dB %d", type_str, entry->file_size, entry->first_cluster);
+                    kconsole::printf("[%s]   %dB %d", type_str, entry->file_size, entry->first_cluster);
                     kscreen::outargs.cursor_x = 20;
-                    printf("%s\n", fn_buff);
+                    kconsole::printf("%s\n", fn_buff);
                     
                     entry++;
                 }
@@ -229,7 +231,7 @@ namespace kfat
         // Allocate buffer for one sector
         if(buffer == nullptr)
         {
-            buffer = (uint8*) malloc(513);
+            buffer = (uint8*) kheap::alloc(513);
             if((uint32) buffer & 1)
                 buffer++;
         }

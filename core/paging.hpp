@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stdint.hpp"
+#include "stdint.h"
 
 namespace kpaging
 {
