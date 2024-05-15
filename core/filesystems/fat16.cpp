@@ -7,7 +7,7 @@
 #include <heap.h>
 #include <console.h>
 
-using namespace kparts;
+using namespace kpart;
 
 namespace kfat
 {

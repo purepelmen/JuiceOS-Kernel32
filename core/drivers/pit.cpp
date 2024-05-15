@@ -14,9 +14,9 @@ namespace ktimer
         // We need 1 KHz (1000 ticks per second, 1 tick = 1 ms)
         uint32 divisor = 1193182 / 1000;
 
-        port_byte_out(0x43, 0x36);
-        port_byte_out(0x40, divisor & 0xFF);
-        port_byte_out(0x40, (divisor >> 8) & 0xFF);
+        port_write8(0x43, 0x36);
+        port_write8(0x40, divisor & 0xFF);
+        port_write8(0x40, (divisor >> 8) & 0xFF);
 
         kisr::register_handler(IRQ_BASE, timer_handler);
         kernel_print_log("Timer was initialized.\n");

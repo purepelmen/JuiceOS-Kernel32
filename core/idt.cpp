@@ -46,19 +46,19 @@ namespace kidt
 
     static void pic_set_irq_offsets(uint8 master_offset, uint8 slave_offset)
     {
-        port_byte_out(0x20, 0x11);
-        port_byte_out(0xA0, 0x11);
+        port_write8(0x20, 0x11);
+        port_write8(0xA0, 0x11);
 
-        port_byte_out(0x21, master_offset);
-        port_byte_out(0xA1, slave_offset);
+        port_write8(0x21, master_offset);
+        port_write8(0xA1, slave_offset);
 
-        port_byte_out(0x21, 0x04);
-        port_byte_out(0xA1, 0x02);
+        port_write8(0x21, 0x04);
+        port_write8(0xA1, 0x02);
 
-        port_byte_out(0x21, 0x01);
-        port_byte_out(0xA1, 0x01);
+        port_write8(0x21, 0x01);
+        port_write8(0xA1, 0x01);
 
-        port_byte_out(0x21, 0x0);
-        port_byte_out(0xA1, 0x0);
+        port_write8(0x21, 0x0);
+        port_write8(0xA1, 0x0);
     }
 }

@@ -56,9 +56,9 @@ namespace kisr
     {
         if(send_to_slave)
         {
-            port_byte_out(0xA0, 0x20);
+            port_write8(0xA0, 0x20);
         }
         
-        port_byte_out(0x20, 0x20);
+        port_write8(0x20, 0x20);
     }
 }

@@ -9,8 +9,8 @@ public:
         pci_device(uint8 bus, uint8 slot, uint8 function);
         pci_device();
 
-        void write(uint16 offset, uint32 value);
-        uint32 read(uint16 offset);
+        void write(uint8 offset, uint32 value);
+        uint32 read(uint8 offset);
 
         bool is_present();
         

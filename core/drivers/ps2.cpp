@@ -73,7 +73,7 @@ namespace kps2
 
     static void keyboard_handler(kisr::regs_t regs)
     {
-        uint8 result = port_byte_in(0x60);
+        uint8 result = port_read8(0x60);
 
         inargs.key_pressed = !(result & (1 << 7));
         inargs.full_buffer = true;

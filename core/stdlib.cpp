@@ -1,5 +1,6 @@
 #include "stdlib.h"
 
+#include "drivers/screen.h"
 #include "console.h"
 #include "heap.h"
 
@@ -39,15 +40,9 @@ void raise_error(string message, const char *file, uint32 line)
 {
     asm volatile("cli");
 
+    kscreen::outargs.print_color = 0x47;
     kconsole::printf("PANIC (%s) at %s:%d\n", message, file, line);
-    // kscreen::print_string("PANIC (");
-    // kscreen::print_string(message);
-    // kscreen::print_string(") at ");
-    // kscreen::print_string(file);
-    // kscreen::print_string(":");
-    // kconsole::print_decimal(line);
-    
-    // kscreen::print_char('\n');
-    
-    for(;;);
+
+    asm volatile("hlt");
+    while (true);
 }

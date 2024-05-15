@@ -54,26 +54,26 @@ namespace kscreen
     {
         uint16 cursorPosition = outargs.cursor_y * 80 + outargs.cursor_x;
 
-        port_byte_out(0x03D4, 0x0F);
-        port_byte_out(0x03D5, cursorPosition);
+        port_write8(0x03D4, 0x0F);
+        port_write8(0x03D5, cursorPosition);
 
-        port_byte_out(0x03D4, 0x0E);
-        port_byte_out(0x03D5, cursorPosition >> 8);
+        port_write8(0x03D4, 0x0E);
+        port_write8(0x03D5, cursorPosition >> 8);
     }
 
     void enable_cursor(uint8 cursor_start, uint8 cursor_end)
     {
-        port_byte_out(0x03D4, 0x0A);
-        port_byte_out(0x03D5, (port_byte_in(0x03D5) & 0xC0) | cursor_start);
+        port_write8(0x03D4, 0x0A);
+        port_write8(0x03D5, (port_read8(0x03D5) & 0xC0) | cursor_start);
 
-        port_byte_out(0x03D4, 0x0B);
-        port_byte_out(0x03D5, (port_byte_in(0x03D5) & 0xE0) | cursor_end);
+        port_write8(0x03D4, 0x0B);
+        port_write8(0x03D5, (port_read8(0x03D5) & 0xE0) | cursor_end);
     }
 
     void disable_cursor()
     {
-        port_byte_out(0x3D4, 0x0A);
-        port_byte_out(0x3D5, 0x20);
+        port_write8(0x3D4, 0x0A);
+        port_write8(0x3D5, 0x20);
     }
 
     void print_char(uint8 print_char)

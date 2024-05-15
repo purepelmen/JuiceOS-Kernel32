@@ -1,7 +1,7 @@
 #pragma once
 #include "../stdlib.h"
 
-namespace kparts
+namespace kpart
 {
     struct mbr_partition
     {
@@ -27,4 +27,25 @@ namespace kparts
         mbr_partition partitions[4];
         uint16 boot_sig;
     } __attribute__((packed));
+
+    class MbrPartitionObject
+    {
+    private:
+        mbr_partition* pointer;
+        uint8 index;
+    
+    public:
+        MbrPartitionObject(void* pointer, uint8 index);
+    };
+
+    class MbrObject
+    {
+    private:
+        mbr* pointer;
+
+    public:
+        MbrObject(void* pointer);
+
+        MbrPartitionObject GetPartition(uint8 index);
+    };
 }
