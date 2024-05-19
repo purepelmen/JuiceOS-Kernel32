@@ -4,5 +4,5 @@
 namespace ktimer
 {
     void init();
-    void wait(int ticks);
+    void wait(int ms);
 }

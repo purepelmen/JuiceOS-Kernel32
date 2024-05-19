@@ -31,6 +31,7 @@ namespace kide
     };
 
     static const char* ata_devtype_as_string(AtaDevType devType);
+    // Selects the specified drive on the specified bus and waits for it to switch.
     static void ata_select_drive(uint16 busBase, bool isSlave);
 
     // Resets both the Master and Slave drive on the bus.
@@ -99,8 +100,12 @@ namespace kide
         // NOTE: Does this may reset something important we needn't change?
         port_write8(BUS_CTRL_DEVCONTROL(busBase), 1 << 2);
 
-        // Micro delay before setting back to 0.
-        port_read8(BUS_CTRL_DEVCONTROL(busBase));
+        // Delay must be at least 5 microseconds (the code may execute a little longer).
+        for (int i = 0; i < 256; i++)
+        {
+            port_read8(BUS_CTRL_DEVCONTROL(busBase));
+        } 
+
         port_write8(BUS_CTRL_DEVCONTROL(busBase), 0);
     }
 

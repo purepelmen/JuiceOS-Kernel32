@@ -5,7 +5,7 @@
 
 namespace ktimer
 {
-    int remains_ms = 0;
+    volatile int remains_ms = 0;
 
     static void timer_handler(kisr::regs_t regs);
 
@@ -26,13 +26,13 @@ namespace ktimer
     {
         remains_ms = ms;
 
-        while(remains_ms != 0)
+        while(remains_ms > 0)
         {
             asm volatile("hlt");
         }
     }
 
-    static void timer_handler(kisr::regs_t regs)
+    void timer_handler(kisr::regs_t regs)
     {
         if(remains_ms == 0) return;
         remains_ms--;
