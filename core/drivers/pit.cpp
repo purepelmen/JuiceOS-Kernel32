@@ -3,38 +3,43 @@
 #include "../kernel.h"
 #include "../isr.h"
 
+#define PIT_FREQ_HZ 1193182
+
 namespace ktimer
 {
-    volatile int remains_ms = 0;
+    // We get 1 kHZ, or 1 ms per tick.
+    const int DIVISOR = PIT_FREQ_HZ / 1000;
+    const float DEFAULT_FREQ = (float)PIT_FREQ_HZ / DIVISOR;
+    const float MS_PER_TICK = 1000.0 / DEFAULT_FREQ;
 
-    static void timer_handler(kisr::regs_t regs);
+    static volatile uint32 remainingTicks = 0;
 
+    static void timer_handler(const kisr::regs_t& regs);
+    
     void init()
     {
-        // We need 1 KHz (1000 ticks per second, 1 tick = 1 ms)
-        uint32 divisor = 1193182 / 1000;
-
         port_write8(0x43, 0x36);
-        port_write8(0x40, divisor & 0xFF);
-        port_write8(0x40, (divisor >> 8) & 0xFF);
+        port_write8(0x40, DIVISOR & 0xFF);
+        port_write8(0x40, (DIVISOR >> 8) & 0xFF);
 
         kisr::register_handler(IRQ_BASE, timer_handler);
         kernel_print_log("Timer was initialized.\n");
     }
 
-    void wait(int ms)
+    void wait(uint32 ms)
     {
-        remains_ms = ms;
-
-        while(remains_ms > 0)
+        remainingTicks = ms;
+        while(remainingTicks > 0)
         {
             asm volatile("hlt");
         }
     }
 
-    void timer_handler(kisr::regs_t regs)
+    void timer_handler(const kisr::regs_t& regs)
     {
-        if(remains_ms == 0) return;
-        remains_ms--;
+        if(remainingTicks != 0)
+        {
+            remainingTicks--;
+        }
     }
 }

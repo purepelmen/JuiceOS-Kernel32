@@ -15,7 +15,7 @@ namespace kisr
     };
 
     typedef struct registers regs_t;
-    typedef void (*isr_handler_t)(regs_t);
+    typedef void (*isr_handler_t)(const regs_t&);
 
     void register_handler(uint8 int_number, isr_handler_t handler);
 }

@@ -24,7 +24,7 @@ namespace kahci
     const uint32 INT_STATUS_FATAL_ERR_MASK = 0x78000000;
 
     static void handle_int_port(int port_num, uint32 int_status);
-    static void ahci_int_handler(kisr::regs_t regs);
+    static void ahci_int_handler(const kisr::regs_t& regs);
     static int find_free_cmd_slot(hba_port* port);
 
     static void initialize_port(hba_port* port);
@@ -212,7 +212,7 @@ namespace kahci
         }
     }
 
-    static int find_free_cmd_slot(hba_port* port)
+    int find_free_cmd_slot(hba_port* port)
     {
         uint32 slots = port->sact | port->ci;
         for(int i = 0; i < 32; i++)
@@ -248,7 +248,7 @@ namespace kahci
         }
     }
 
-    static void ahci_int_handler(kisr::regs_t regs)
+    void ahci_int_handler(const kisr::regs_t& regs)
     {
         // Get ports that caused the interrupt
         uint32 int_ports = hba_memory->is;
@@ -277,7 +277,7 @@ namespace kahci
         hba_memory->is = int_ports;
     }
 
-    static void handle_int_port(int port_num, uint32 int_status)
+    void handle_int_port(int port_num, uint32 int_status)
     {
         hba_port* port = &hba_memory->ports[port_num];
         port_cmd_awaiter* awaiter = &awaiting_ports[port_num];
@@ -321,7 +321,7 @@ namespace kahci
         port->cmd |= 1;
     }
 
-    static void initialize_port(hba_port* port)
+    void initialize_port(hba_port* port)
     {
         // Command processing already enabled?
         if(port->cmd & 1) return;
