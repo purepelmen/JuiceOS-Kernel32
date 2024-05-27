@@ -5,9 +5,6 @@
 inline void* operator new(size_t size, void* p) noexcept { return p; }
 inline void* operator new[](size_t size, void* p) noexcept { return p; }
 
-/* Sometimes new[] requires this. */
-inline void __cxa_throw_bad_array_new_length() {}
-
 namespace kheap
 {
     /* Initialize the heap system. */
@@ -28,12 +25,14 @@ namespace kheap
 
     void* get_location_ptr();
 
+    // Allocate a block of memory and cast the pointer to the type.
     template<typename T>
     inline T* alloc_casted(uint32 size)
     {
         return (T*) alloc(size);
     }
 
+    // A working alternative to the new operator that uses the kernel heap allocator.
     template<typename T, typename... Args>
     T* create_new(Args&& ...args)
     {
@@ -41,6 +40,7 @@ namespace kheap
         return new (allocPtr) T(args...);
     }
 
+    // A working alternative to the new[] operator that uses the kernel heap allocator.
     template<typename T>
     T* create_new_array(size_t count)
     {

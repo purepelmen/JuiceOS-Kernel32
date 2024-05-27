@@ -3,13 +3,19 @@
 #include "kernel.h"
 #include "heap.h"
 
-static uint8* heap_start_value;
-static uint8* current_heap_value;
-
 extern uint32 end;
+
+/* The heap.h new[] template function uses it, because sometimes new[] requires the definition of this. */
+extern "C" void __cxa_throw_bad_array_new_length()
+{
+    RAISE_ERROR("__cxa_throw_bad_array_new_length happened")
+}
 
 namespace kheap
 {
+    static uint8* heap_start_value;
+    static uint8* current_heap_value;
+
     void init()
     {
         current_heap_value = (uint8*) &end;
