@@ -1,7 +1,7 @@
 **! Development was stopped indefinitely. Not all parts of this kernel can work as expected even on emulators. !**
 
 # JuiceOS-Kernel32
-JuiceOS Kernel32 - is my 32-bit operating system (for now, just a small monolithic kernel).
+JuiceOS Kernel32 - my x86 hobby OS kernel.
 
 ## Requirements
 This project is supposed to be built on Linux only. You may use WSL as well.
