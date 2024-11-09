@@ -1,0 +1,28 @@
+{
+    "base": {
+        "props": {
+            "-m": "256M",
+            "-display": "sdl",
+            "-vga": "std",
+            "-name": "JuiceOS",
+
+            "-hda": "build/artifacts/JuiceOS.iso"
+        }
+    },
+    "variants": {
+        "default": {
+            "props": {
+                "-machine": "q35" 
+            }
+        },
+        "ide": {
+            "props": {
+                "-machine": "pc" 
+            }
+        }
+    },
+
+    "wslPathPreprocess": [
+        "-hda"
+    ]
+}

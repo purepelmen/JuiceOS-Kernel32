@@ -4,3 +4,7 @@
 # All build output artifacts.
 build/artifacts/
 build/iso/juiceos_k32.elf
+
+# Automatically generated scripts
+*.gen.bat
+*.gen.sh

@@ -3,7 +3,7 @@
 # JuiceOS-Kernel32
 JuiceOS Kernel32 - my x86 hobby OS kernel.
 
-## Requirements
+## Build Requirements
 This project is supposed to be built on Linux only. You may use WSL as well.
 
 ```console
@@ -12,7 +12,6 @@ sudo apt install build-essential cmake ninja-build nasm
 ```console
 sudo apt install grub2 xorriso
 ```
-
 
 ## Running in an emulator
 ### Requirements
@@ -23,14 +22,34 @@ Linux users should install this:
 sudo apt install qemu-system-x86
 ```
 
-### Testing
-Linux:
+Some presets for running Qemu are defined in `runscript-gen.json`, and you can use `runscript-gen.py` to generate them for both Linux and WSL. For this you'll need Python 3. Install it on Windows (not in WSL) if you're using WSL. 
+
+If you're using Linux without WSL, just install Python 3:
 ```console
-make run
+sudo apt install python3
 ```
 
-Windows:
-Make the path in `run.bat` be correct for your computer, so it'll point to the built ISO file. Then run it.
+### Testing
+
+#### Generate run scripts
+For normal Linux (not WSL) either run this:
+```console
+make gen-runs
+```
+or directly run the script:
+```console
+python3 runscript-gen.py
+```
+
+When using WSL, run the `runscript-gen.py` script in the Windows environment.
+
+Then follow the instructions, and the run scripts will be generated. Re-run the script if you make changes to the JSON config.
+
+#### Run the emulator
+Use any of the generated run scripts. When using WSL you can just double-click a .bat script in the explorer. On Linux run a .sh script. They all are already marked executable.
+
+If you don't know which run script to better use, run the default/normal variant. 
+
 
 ## Running on a real hardware
 For Linux users:

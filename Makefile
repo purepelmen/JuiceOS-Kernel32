@@ -27,5 +27,12 @@ clean:
 	@rm -rf $(ARTIFACTS)
 	@rm -f $(K32CORE_LINKED_EXECUTABLE)
 
+clean-generated:
+	@rm -f *.gen.sh
+	@rm -f *.gen.bat
+
+gen-runs:
+	@python3 runscript-gen.py
+
 run:
 	@qemu-system-x86_64 -cdrom $(BUILT_ISO)
