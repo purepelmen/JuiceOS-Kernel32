@@ -12,10 +12,14 @@
 #define PRIMARY_CONTRL_IDE PRIMARY_CMD_IDE + CONTROL_PORT_OFFSET
 #define SECONDARY_CONTRL_IDE SECONDARY_CMD_IDE + CONTROL_PORT_OFFSET
 
+#define BUS_CMD_DATA(base) base + 0
+#define BUS_CMD_SECTOR_COUNT(base) base + 2
+#define BUS_CMD_SECTOR_NUMBER(base) base + 3
 #define BUS_CMD_CYLINDER_LOW(base) base + 4
 #define BUS_CMD_CYLINDER_HIGH(base) base + 5
 #define BUS_CMD_DRIVEHEAD(base) base + 6
 #define BUS_CMD_STATUS(base) base + 7
+#define BUS_CMD_COMMAND(base) base + 7
 
 #define BUS_CTRL_DEVCONTROL(base) base + CONTROL_PORT_OFFSET + 0
 
@@ -30,13 +34,15 @@ namespace kide
         SATAPI
     };
 
+    static bool ata_identify(uint16 busBase, bool isSlave);
+
     static const char* ata_devtype_as_string(AtaDevType devType);
     // Selects the specified drive on the specified bus and waits for it to switch.
     static void ata_select_drive(uint16 busBase, bool isSlave);
 
     // Resets both the Master and Slave drive on the bus.
     static void ata_softreset(uint16 busBase);
-    static AtaDevType ata_get_dev_type(uint16 busBase, bool isSlave);
+    static AtaDevType ata_read_dev_type(uint16 busBase, bool isSlave);
 
     void init()
     {
@@ -54,19 +60,83 @@ namespace kide
         }
         else
         {
-            kconsole::printf("The primary master: %s.\n", ata_devtype_as_string(ata_get_dev_type(PRIMARY_CMD_IDE, false)));
-            kconsole::printf("The primary slave: %s.\n", ata_devtype_as_string(ata_get_dev_type(PRIMARY_CMD_IDE, true)));
+            ata_identify(PRIMARY_CMD_IDE, false);
+            ata_identify(PRIMARY_CMD_IDE, true);
         }
 
+        // Check the secondary bus for floating.
         if (port_read8(BUS_CMD_STATUS(SECONDARY_CMD_IDE)) == 0xFF)
         {
             kernel_print_log("[IDE] Info: The secondary bus has no drives.\n");
         }
         else
         {
-            kconsole::printf("The secondary master: %s.\n", ata_devtype_as_string(ata_get_dev_type(SECONDARY_CMD_IDE, false)));
-            kconsole::printf("The secondary slave: %s.\n", ata_devtype_as_string(ata_get_dev_type(SECONDARY_CMD_IDE, true)));
+            ata_identify(SECONDARY_CMD_IDE, false);
+            ata_identify(SECONDARY_CMD_IDE, true);
         }
+    }
+
+    bool ata_identify(uint16 busBase, bool isSlave) 
+    {
+        ata_select_drive(busBase, isSlave);
+
+        port_write8(BUS_CMD_SECTOR_COUNT(busBase), 0);
+        port_write8(BUS_CMD_SECTOR_NUMBER(busBase), 0);
+        port_write8(BUS_CMD_CYLINDER_LOW(busBase), 0);
+        port_write8(BUS_CMD_CYLINDER_HIGH(busBase), 0);
+
+        // Finally send the IDENTIFY command.
+        port_write8(BUS_CMD_COMMAND(busBase), 0xEC);
+
+        if (port_read8(BUS_CMD_STATUS(busBase)) == 0)
+        {
+            kconsole::printf("[IDE] ATA Device (BUS=%x SLAVE=%d): drive is not connected.\n", busBase, isSlave);
+            return false;
+        }
+
+        // Wait until BSY is cleared.
+        while (port_read8(BUS_CMD_STATUS(busBase)) & 1 << 7);
+
+        AtaDevType devType = ata_read_dev_type(busBase, isSlave);
+        kconsole::printf("[IDE] ATA Device (BUS=%x SLAVE=%d) is detected as %s.\n", busBase, isSlave, ata_devtype_as_string(devType));
+        
+        if (devType != AtaDevType::PATA && devType != AtaDevType::SATA)
+        {
+            kconsole::printf("Skipping non ATA or SATA device. Packet devices aren't supported yet.\n");
+            return false;
+        }
+
+        // Wait until DRQ is set meaning it has PIO data to transfer.
+        while ((port_read8(BUS_CMD_STATUS(busBase)) & 1 << 3) == 0)
+        {
+            if (port_read8(BUS_CMD_STATUS(busBase)) & 0x01)
+            {
+                kconsole::printf("IDENTIFY failed: ERR flag set during waiting for DRQ to be set.\n");
+                return false;
+            }
+        }
+
+        uint16 identifyData[256];
+        for (int i = 0; i < 256; i++)
+        {
+            identifyData[i] = port_read16(BUS_CMD_DATA(busBase));
+        }
+        kconsole::printf("IDENTIFY completed.\n");
+
+        // Extract model string (word 27–46, 40 bytes).
+        char model[41];
+        for (int i = 0; i < 40; i += 2)
+        {
+            model[i] = (char)(identifyData[27 + i/2] >> 8);
+            model[i + 1] = (char)(identifyData[27 + i/2] & 0xFF);
+        }
+        model[40] = 0;
+
+        int totalAddressableSectors = *((int*)&identifyData[60]);
+        
+        kconsole::printf("IDENTIFY Model: %s\n", model);
+        kconsole::printf("IDENTIFY: LBA48 supported=%d, Total addressable space=%dKB\n", (identifyData[83] & 1 << 10) != 0, totalAddressableSectors / 2);
+        return true;
     }
 
     const char* ata_devtype_as_string(AtaDevType devType)
@@ -109,11 +179,8 @@ namespace kide
         port_write8(BUS_CTRL_DEVCONTROL(busBase), 0);
     }
 
-    AtaDevType ata_get_dev_type(uint16 busBase, bool isSlave)
+    AtaDevType ata_read_dev_type(uint16 busBase, bool isSlave)
     {
-        ata_softreset(busBase);
-        ata_select_drive(busBase, isSlave);
-
         uint8 cl = port_read8(BUS_CMD_CYLINDER_LOW(busBase));
 	    uint8 ch = port_read8(BUS_CMD_CYLINDER_HIGH(busBase));
 
