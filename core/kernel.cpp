@@ -228,6 +228,44 @@ void open_console(void)
             continue;
         }
 
+        if (command == "idedev")
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                kide::AtaDevice device = kide::devices[i];
+                if (device.type == kide::AtaDevType::UNKNOWN)
+                    continue;
+
+                kconsole::printf("[IDE] Device %d: %s ('%s')\n", i, device.name, device.model);
+                kconsole::printf("      Addressable space: %dKB (%d sectors).\n", device.totalAddressableSectors / 2, device.totalAddressableSectors);
+            }
+
+            kscreen::print_char('\n');
+            continue;
+        }
+
+        if (command == "iderd")
+        {
+            uint8 buff[512];
+            if (kide::ata_read_sector(0x1F0, 0, 0, 1, (uint16*)buff))
+            {
+                for(int i = 0; i < 256; i++)
+                {
+                    kconsole::print_hex8(buff[i]);
+                    kscreen::print_char(' ');
+                }
+
+                kscreen::print_char('\n');
+            }
+            else
+            {
+                kconsole::printf("Failed to read test data from an ATA device.\n");
+            }
+
+            kscreen::print_char('\n');
+            continue;
+        }
+
         if(command == "fatinit")
         {
             kconsole::printf("Initializing FAT on partition #2\n");

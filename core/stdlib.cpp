@@ -4,10 +4,10 @@
 #include "console.h"
 #include "heap.h"
 
-void mem_copy(uint8* source, uint8* destination, uint32 bytes_amount)
+void mem_copy(void* source, void* destination, uint32 bytes_amount)
 {
     for(int i = 0; i < bytes_amount; i++)
-        destination[i] = source[i];
+        ((uint8*)destination)[i] = ((uint8*)source)[i];
 }
 
 bool mem_compare(uint8* first, uint8* seconds, uint32 bytes_amount)
@@ -18,10 +18,10 @@ bool mem_compare(uint8* first, uint8* seconds, uint32 bytes_amount)
     return true;
 }
 
-void mem_fill(uint8* ptr, uint8 byte, uint32 amount)
+void mem_fill(void* ptr, uint8 byte, uint32 amount)
 {
     for(int i = 0; i < amount; i++)
-        ptr[i] = byte;
+        ((uint8*)ptr)[i] = byte;
 }
 
 void utf16_to_ascii(uint8* buffer, uint16* utf16_str)
@@ -34,6 +34,18 @@ void utf16_to_ascii(uint8* buffer, uint16* utf16_str)
     }
 
     buffer[i] = 0x0;
+}
+
+void strcpy(const char *source, char *dest)
+{
+    int i = 0;
+    while(source[i] != 0x0)
+    {
+        dest[i] = source[i];
+        i++;
+    }
+
+    dest[i] = 0x0;
 }
 
 void raise_error(string message, const char *file, uint32 line)
