@@ -25,8 +25,13 @@ namespace kide
         uint32 totalAddressableSectors;
     };
 
-    extern AtaDevice devices[4];
+    const int MAX_DEVICES = 4;
+
+    extern AtaDevice devices[MAX_DEVICES];
+    extern int deviceCount;
 
     void init();
     bool ata_read_sector(uint16 busBase, bool isSlave, uint32 startLba, uint8 sectorCount, uint16* buffer);
+
+    const char* ata_devtype_as_string(AtaDevType devType);
 }

@@ -134,7 +134,11 @@ void open_console(void)
             kscreen::print_string("PCI - Print all PCI devices.\n");
             kscreen::print_string("AHCIVER - Print AHCI specification version.\n");
             kscreen::print_string("AHCIDEV - Print all AHCI ports and connected devices.\n");
-            kscreen::print_string("AHCIRD - Read first sector from AHCI port #0.\n\n");
+            kscreen::print_string("AHCIRD - Read first sector from AHCI port #0.\n");
+            kscreen::print_string("IDEDEV - Print all ATA devices from IDE driver.\n");
+            kscreen::print_string("IDERD - Read first sector from the first IDE device.\n");
+
+            kscreen::print_char('\n');
             continue;
         }
 
@@ -236,7 +240,7 @@ void open_console(void)
                 if (device.type == kide::AtaDevType::UNKNOWN)
                     continue;
 
-                kconsole::printf("[IDE] Device %d: %s ('%s')\n", i, device.name, device.model);
+                kconsole::printf("[IDE] Device %d: %s ('%s'); %s\n", i, device.name, device.model, kide::ata_devtype_as_string(device.type));
                 kconsole::printf("      Addressable space: %dKB (%d sectors).\n", device.totalAddressableSectors / 2, device.totalAddressableSectors);
             }
 
@@ -246,8 +250,10 @@ void open_console(void)
 
         if (command == "iderd")
         {
+            kide::AtaDevice* device = &kide::devices[0];
+
             uint8 buff[512];
-            if (kide::ata_read_sector(0x1F0, 0, 0, 1, (uint16*)buff))
+            if (kide::ata_read_sector(device->bus, device->isSlave, 0, 1, (uint16*)buff))
             {
                 for(int i = 0; i < 256; i++)
                 {

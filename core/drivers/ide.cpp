@@ -26,16 +26,20 @@
 namespace kide
 {
     AtaDevice devices[4];
+    int deviceCount = 0;
 
-    static bool ata_identify(uint16 busBase, bool isSlave, AtaDevice* outDevice);
+    static void ata_register_device(const char* name, uint16 busBase, bool isSlave);
 
-    static const char* ata_devtype_as_string(AtaDevType devType);
+    static bool ata_identify(AtaDevice* outDevice);
+    static void ata_analyze_identify(AtaDevice* device, uint16* identifyData);
+    static bool ata_pio_read_poll(uint16 busBase, uint16* buffer, uint8 sectorCount = 1);
+
     // Selects the specified drive on the specified bus and waits for it to switch. Optionally sets the head number or the highest last 4 bits of LBA.
     static void ata_select_drive(uint16 busBase, bool isSlave, uint8 headOrLBA24_27_bits = 0);
 
     // Resets both the Master and Slave drive on the bus.
     static void ata_softreset(uint16 busBase);
-    static AtaDevType ata_read_dev_type(uint16 busBase, bool isSlave);
+    static AtaDevType ata_read_dev_type(uint16 busBase);
 
     void init()
     {
@@ -46,8 +50,6 @@ namespace kide
             return;
         }
 
-        mem_fill(devices, 0, sizeof(devices));
-
         // Check for floating buses. The status is 0xFF if no there are no drives (not definite though).
         if (port_read8(BUS_CMD_STATUS(PRIMARY_CMD_IDE)) == 0xFF)
         {
@@ -55,11 +57,8 @@ namespace kide
         }
         else
         {
-            strcpy("PRIMARY MASTER", devices[0].name);
-            strcpy("PRIMARY SLAVE", devices[1].name);
-
-            ata_identify(PRIMARY_CMD_IDE, false, &devices[0]);
-            ata_identify(PRIMARY_CMD_IDE, true, &devices[1]);
+            ata_register_device("PRIMARY MASTER", PRIMARY_CMD_IDE, false);
+            ata_register_device("PRIMARY SLAVE", PRIMARY_CMD_IDE, true);
         }
 
         // Check the secondary bus for floating.
@@ -69,20 +68,37 @@ namespace kide
         }
         else
         {
-            strcpy("SECONDARY MASTER", devices[2].name);
-            strcpy("SECONDARY SLAVE", devices[3].name);
-
-            ata_identify(SECONDARY_CMD_IDE, false, &devices[2]);
-            ata_identify(SECONDARY_CMD_IDE, true, &devices[3]);
+            ata_register_device("SECONDARY MASTER", SECONDARY_CMD_IDE, false);
+            ata_register_device("SECONDARY SLAVE", SECONDARY_CMD_IDE, true);
         }
     }
 
-    bool ata_identify(uint16 busBase, bool isSlave, AtaDevice* outDevice) 
+    void ata_register_device(const char* name, uint16 busBase, bool isSlave)
     {
-        AtaDevice device = *outDevice;
-        device.bus = busBase;
-        device.isSlave = isSlave;
+        if (deviceCount >= MAX_DEVICES)
+        {
+            kernel_print_log("[IDE] Error: ata_register_device failed to register another device. The maximum is reached.\n");
+            return;
+        }
 
+        AtaDevice newDevice;
+        mem_fill(&newDevice, 0, sizeof(AtaDevice));
+
+        newDevice.bus = busBase;
+        newDevice.isSlave = isSlave;
+        strcpy(name, newDevice.name);
+        
+        bool isIdentified = ata_identify(&newDevice);
+        if (isIdentified)
+        {
+            devices[deviceCount] = newDevice;
+            deviceCount++;
+        }
+    }
+
+    bool ata_identify(AtaDevice* device) 
+    {
+        uint32 busBase = device->bus; bool isSlave = device->isSlave;
         ata_select_drive(busBase, isSlave);
 
         port_write8(BUS_CMD_SECTOR_COUNT(busBase), 0);
@@ -102,32 +118,34 @@ namespace kide
         // Wait until BSY is cleared.
         while (port_read8(BUS_CMD_STATUS(busBase)) & 1 << 7);
 
-        device.type = ata_read_dev_type(busBase, isSlave);
-        kconsole::printf("[IDE] ATA Device (BUS=%x SLAVE=%d) is detected as %s.\n", busBase, isSlave, ata_devtype_as_string(device.type));
+        device->type = ata_read_dev_type(busBase);
+        kconsole::printf("[IDE] ATA Device (BUS=%x SLAVE=%d) is detected as %s.\n", busBase, isSlave, ata_devtype_as_string(device->type));
         
-        if (device.type != AtaDevType::PATA && device.type != AtaDevType::SATA)
+        if (device->type != AtaDevType::PATA && device->type != AtaDevType::SATA)
         {
             kconsole::printf("Skipping non ATA or SATA device. Packet devices aren't supported yet.\n");
             return false;
         }
 
-        // Wait until DRQ is set meaning it has PIO data to transfer.
-        while ((port_read8(BUS_CMD_STATUS(busBase)) & 1 << 3) == 0)
-        {
-            if (port_read8(BUS_CMD_STATUS(busBase)) & 0x01)
-            {
-                kconsole::printf("IDENTIFY failed: ERR flag set during waiting for DRQ to be set.\n");
-                return false;
-            }
-        }
-
         uint16 identifyData[256];
-        for (int i = 0; i < 256; i++)
+        bool readSuccess = ata_pio_read_poll(busBase, identifyData, 1);
+
+        if (!readSuccess)
         {
-            identifyData[i] = port_read16(BUS_CMD_DATA(busBase));
+            kconsole::printf("IDENTIFY failed: pio read operation has not completed with success.\n");
+            return false;
         }
         kconsole::printf("IDENTIFY completed.\n");
+        
+        ata_analyze_identify(device, identifyData);
+        kconsole::printf("IDENTIFY Model: %s\n", device->model);
+        kconsole::printf("IDENTIFY: LBA48 supported=%d, Total addressable space=%dKB\n", (identifyData[83] & 1 << 10) != 0, device->totalAddressableSectors / 2);
 
+        return true;
+    }
+
+    void ata_analyze_identify(AtaDevice* device, uint16* identifyData)
+    {
         // Extract model string (word 27–46, 40 bytes).
         char model[41];
         for (int i = 0; i < 40; i += 2)
@@ -144,15 +162,9 @@ namespace kide
             model[i] = 0x0;
             i--;
         }
+        mem_copy(model, device->model, 41);
 
-        device.totalAddressableSectors = *((int*)&identifyData[60]);
-        mem_copy(model, device.model, 41);
-        
-        kconsole::printf("IDENTIFY Model: %s\n", model);
-        kconsole::printf("IDENTIFY: LBA48 supported=%d, Total addressable space=%dKB\n", (identifyData[83] & 1 << 10) != 0, device.totalAddressableSectors / 2);
-
-        *outDevice = device;
-        return true;
+        device->totalAddressableSectors = *((int*)&identifyData[60]);
     }
 
     bool ata_read_sector(uint16 busBase, bool isSlave, uint32 startLba, uint8 sectorCount, uint16* buffer) 
@@ -169,18 +181,23 @@ namespace kide
 
         // Issue READ SECTORS command.
         port_write8(BUS_CMD_COMMAND(busBase), 0x20);
+        
+        return ata_pio_read_poll(busBase, buffer, sectorCount);
+    }
 
+    bool ata_pio_read_poll(uint16 busBase, uint16* buffer, uint8 sectorCount)
+    {
         for (int sectorIdx = 0; sectorIdx < sectorCount; sectorIdx++)
         {
             uint8 status;
 
-            // Wait until DRQ is set, additionally checking if an error occured.
+            // Wait until DRQ is set meaning it has PIO data to transfer. Additionally checking if an error occured.
             do 
             {
                 status = port_read8(BUS_CMD_STATUS(busBase));
                 if (status & 1)
                 {
-                    kconsole::printf("[IDE] Read failure when trying to read sector number %d.\n", sectorIdx);
+                    kconsole::printf("[IDE] ERR flag set during reading sector number %d.\n", sectorIdx);
                     return false;
                 }
             } 
@@ -242,7 +259,7 @@ namespace kide
         port_write8(BUS_CTRL_DEVCONTROL(busBase), 0);
     }
 
-    AtaDevType ata_read_dev_type(uint16 busBase, bool isSlave)
+    AtaDevType ata_read_dev_type(uint16 busBase)
     {
         uint8 cl = port_read8(BUS_CMD_CYLINDER_LOW(busBase));
 	    uint8 ch = port_read8(BUS_CMD_CYLINDER_HIGH(busBase));
