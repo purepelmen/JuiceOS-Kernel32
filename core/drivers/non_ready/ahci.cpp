@@ -1,11 +1,11 @@
 #include "ahci.h"
-#include "pci.h"
-#include "ps2.h"
+#include "../ps2.h"
 
 #include <paging.h>
 #include <kernel.h>
 #include <heap.h>
 #include <isr.h>
+#include <drivers/pci.h>
 
 #include <console.h>
 

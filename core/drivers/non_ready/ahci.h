@@ -1,5 +1,6 @@
 #pragma once
-#include "pci.h"
+#include "../../string.h"
+#include <stdint.h>
 
 namespace kahci
 {

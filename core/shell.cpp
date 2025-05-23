@@ -4,7 +4,7 @@
 #include "kernel.h"
 
 #include "drivers/screen.h"
-#include "drivers/ahci.h"
+// #include "drivers/ahci.h"
 #include "drivers/pit.h"
 #include "drivers/ps2.h"
 #include "drivers/pci.h"
@@ -102,9 +102,9 @@ void kshell::open_console(void)
             kscreen::print_string("SCANTEST - Print scancode of every pressed key.\n");
             kscreen::print_string("SYSTEM - Print system information.\n");
             kscreen::print_string("PCI - Print all PCI devices.\n");
-            kscreen::print_string("AHCIVER - Print AHCI specification version.\n");
-            kscreen::print_string("AHCIDEV - Print all AHCI ports and connected devices.\n");
-            kscreen::print_string("AHCIRD - Read first sector from AHCI port #0.\n");
+            // kscreen::print_string("AHCIVER - Print AHCI specification version.\n");
+            // kscreen::print_string("AHCIDEV - Print all AHCI ports and connected devices.\n");
+            // kscreen::print_string("AHCIRD - Read first sector from AHCI port #0.\n");
             kscreen::print_string("IDEDEV - Print all ATA devices from IDE driver.\n");
             kscreen::print_string("IDERD - Read first sector from the first IDE device.\n");
 
@@ -144,63 +144,63 @@ void kshell::open_console(void)
             continue;
         }
 
-        if(command == "ahciver")
-        {
-            kconsole::printf("[AHCI] Version of the specification: %s\n", kahci::get_version());
-            kscreen::print_char('\n');
-            continue;
-        }
+        // if(command == "ahciver")
+        // {
+        //     kconsole::printf("[AHCI] Version of the specification: %s\n", kahci::get_version());
+        //     kscreen::print_char('\n');
+        //     continue;
+        // }
 
-        if(command == "ahcidev")
-        {
-            if(kahci::hba_memory != nullptr)
-            {
-                uint32 imp_ports = kahci::hba_memory->pi;
-                string dev_names[] = { "Device not present", "SATAPI", "SEMB", "Port multiplier", "SATA" };
+        // if(command == "ahcidev")
+        // {
+        //     if(kahci::hba_memory != nullptr)
+        //     {
+        //         uint32 imp_ports = kahci::hba_memory->pi;
+        //         string dev_names[] = { "Device not present", "SATAPI", "SEMB", "Port multiplier", "SATA" };
 
-                for(int i = 0; i < 32; i++)
-                {
-                    if(imp_ports & 1)
-                    {
-                        kahci::port_devtype dev_status = kahci::get_port_devtype(&kahci::hba_memory->ports[i]);
-                        kconsole::printf("[AHCI] Port %d device type: %s\n", i, dev_names[dev_status]);
-                    }
+        //         for(int i = 0; i < 32; i++)
+        //         {
+        //             if(imp_ports & 1)
+        //             {
+        //                 kahci::port_devtype dev_status = kahci::get_port_devtype(&kahci::hba_memory->ports[i]);
+        //                 kconsole::printf("[AHCI] Port %d device type: %s\n", i, dev_names[dev_status]);
+        //             }
 
-                    imp_ports >>= 1;
-                }
-            }
-            else
-            {
-                kscreen::print_string("AHCI driver wasn't initialized\n");
-            }
+        //             imp_ports >>= 1;
+        //         }
+        //     }
+        //     else
+        //     {
+        //         kscreen::print_string("AHCI driver wasn't initialized\n");
+        //     }
 
-            kscreen::print_char('\n');
-            continue;
-        }
+        //     kscreen::print_char('\n');
+        //     continue;
+        // }
 
-        if(command == "ahcird")
-        {
-            uint8 buff[1024];
-            bool result = kahci::read(0, 0, 0, 1, (uint16*) &buff);
+        // if(command == "ahcird")
+        // {
+        //     uint8 buff[1024];
+        //     bool result = kahci::read(0, 0, 0, 1, (uint16*) &buff);
 
-            if(result)
-            {
-                for(int i = 0; i < 256; i++)
-                {
-                    kconsole::print_hex8(buff[i]);
-                    kscreen::print_char(' ');
-                }
+        //     if(result)
+        //     {
+        //         for(int i = 0; i < 256; i++)
+        //         {
+        //             kconsole::print_hex8(buff[i]);
+        //             kscreen::print_char(' ');
+        //         }
 
-                kscreen::print_char('\n');
-            }
-            else
-            {
-                kconsole::printf("Failed to read data\n");
-            }
+        //         kscreen::print_char('\n');
+        //     }
+        //     else
+        //     {
+        //         kconsole::printf("Failed to read data\n");
+        //     }
 
-            kscreen::print_char('\n');
-            continue;
-        }
+        //     kscreen::print_char('\n');
+        //     continue;
+        // }
 
         if (command == "idedev")
         {
@@ -246,11 +246,6 @@ void kshell::open_console(void)
         {
             kconsole::printf("Initializing FAT on partition #2\n");
             fat_pt2 = kheap::create_new<kfat::FAT16>(0);
-
-            // fat_pt2 = kheap::alloc_casted<kfat::FAT16>(sizeof(kfat::FAT16));
-            // mem_fill((uint8*) fat_pt2, 0, sizeof(kfat::FAT16));
-
-            // *fat_pt2 = kfat::FAT1k6(0);
             fat_pt2->init(1);
 
             kconsole::printf("\n");
