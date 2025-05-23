@@ -9,7 +9,6 @@
 #include "console.h"
 
 #include "drivers/screen.h"
-#include "drivers/ahci.h"
 #include "drivers/pit.h"
 #include "drivers/ps2.h"
 #include "drivers/pci.h"
@@ -40,7 +39,6 @@ void init_kernel()
     kps2::init();
     
     kpci::init();
-    kahci::init();
     kide::init();
     
     kernel_print_log("Kernel initialization completed.\n");

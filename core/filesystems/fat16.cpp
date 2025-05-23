@@ -2,7 +2,8 @@
 #include "mbr.h"
 
 #include <drivers/screen.h>
-#include <drivers/ahci.h>
+#include <drivers/ide.h>
+// #include <drivers/ahci.h>
 
 #include <heap.h>
 #include <console.h>
@@ -13,6 +14,10 @@ namespace kfat
 {
     FAT16::FAT16(uint8 dev_port)
     {
+        // Now it's IDE and not AHCI. Here we don't have devport, but we can reuse it as a device index.
+        if (dev_port >= kide::deviceCount)
+            RAISE_ERROR("FAT16 driver can't use ATA device that is not registered!");
+        
         this->dev_port = dev_port;
     }
 
@@ -236,7 +241,11 @@ namespace kfat
                 buffer++;
         }
 
-        kahci::read(dev_port, lba, 0, 1, (uint16*) buffer);
+        // kahci::read(dev_port, lba, 0, 1, (uint16*) buffer);
+
+        kide::AtaDevice device = kide::devices[dev_port];
+        kide::ata_read_sector(device.bus, device.isSlave, lba, 1, (uint16*)buffer);
+
         return buffer;
     }
 }
