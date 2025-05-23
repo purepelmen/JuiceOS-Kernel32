@@ -21,5 +21,9 @@ void utf16_to_ascii(uint8* buffer, uint16* utf16_str);
 
 void strcpy(const char* source, char* dest);
 
+void uint_to_hex(unsigned value, char* outBuffer, uint8 width);
+void uint_to_str(unsigned value, char* outBuffer, int base = 10);
+void int_to_str(int value, char* outBuffer, int base = 10);
+
 void raise_error_begin(string message, const char* file, uint32 line);
 void raise_error_end();

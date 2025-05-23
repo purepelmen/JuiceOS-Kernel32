@@ -8,8 +8,6 @@ static char* input_buffer = nullptr;
 
 namespace kconsole
 {
-    static void print_hex4(uint8 char4bit);
-    
     string read_string()
     {
         // Allocating 60 bytes for text
@@ -47,53 +45,15 @@ namespace kconsole
         return string(input_buffer);
     }
 
-    void print_hex8(uint8 byte)
+    void print_hex(unsigned number, uint8 width)
     {
-        print_hex4(byte >> 4);
-        print_hex4(byte & 0x0F);
-    }
-
-    void print_hex16(uint16 word)
-    {
-        print_hex8(word >> 8);
-        print_hex8(word & 0x00FF);
-    }
-
-    void print_hex32(uint32 dword)
-    {
-        print_hex16(dword >> 16);
-        print_hex16(dword & 0x0000FFFF);
-    }
-
-    void print_decimal(uint32 num)
-    {
-        if (num == 0)
-        {
-            kscreen::print_char('0');
-            return;
-        }
-
-        int acc = num;
-        char c[32];
-        int i = 0;
-        while(acc > 0)
-        {
-            c[i] = '0' + acc%10;
-            acc /= 10;
-            i++;
-        }
-
-        c[i] = 0;
-
-        char c2[32];
-        c2[i--] = 0;
-        int j = 0;
-        while(i >= 0)
-        {
-            c2[i--] = c[j++];
-        }
-
-        kscreen::print_string(c2);
+        if (width > 8)
+            width = 8;
+        
+        char temp[9];
+        uint_to_hex(number, temp, width);
+        
+        kscreen::print_string(temp);
     }
 
     void printf(string str, ...)
@@ -101,6 +61,7 @@ namespace kconsole
         uint32 args_addr = (uint32) &str + sizeof(str);
         uint32* args_ptr = (uint32*) args_addr;
 
+        char temp[20];
         for(int i = 0; str[i] != 0x0; i++)
         {
             if(str[i] == '%')
@@ -109,12 +70,16 @@ namespace kconsole
 
                 if(str[i] == 'd')
                 {
-                    print_decimal(*(args_ptr));
+                    int_to_str(*(args_ptr), temp, 10);
+                    kscreen::print_string(temp);
+
                     args_ptr += 1;
                 }
                 else if(str[i] == 'x')
                 {
-                    print_hex32(*(args_ptr));
+                    uint_to_hex(*(args_ptr), temp, 8);
+                    kscreen::print_string(temp);
+
                     args_ptr += 1;
                 }
                 else if(str[i] == 'c')
@@ -132,21 +97,6 @@ namespace kconsole
             }
 
             kscreen::print_char(str[i]);
-        }
-    }
-
-    void print_hex4(uint8 char4bit)
-    {
-        char4bit += 0x30;
-
-        if(char4bit <= 0x39)
-        {
-            kscreen::print_char(char4bit);
-        }
-        else
-        {
-            char4bit += 39;
-            kscreen::print_char(char4bit);
         }
     }
 }
