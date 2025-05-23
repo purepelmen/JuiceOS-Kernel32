@@ -28,9 +28,9 @@ namespace kscreen
     void enable_cursor(uint8 cursor_start, uint8 cursor_end);
     void disable_cursor();
 
-    void print_char(uint8 print_char);
-    void print_char_noupd(uint8 print_char);
+    void print_char(uint8 print_char, bool updateCursor = true);
+    void print_char_raw(uint8 print_char);
 
     void print_string(string str);
-    void print_string_noupd(string str);
+    void print_string_raw(string str);
 }

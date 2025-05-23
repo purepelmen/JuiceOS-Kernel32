@@ -365,13 +365,13 @@ void open_memdumper(void)
     while(true)
     {
         kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
-        kscreen::print_string("                             Juice OS Memory Dumper                             ");
+        kscreen::print_string_raw("                             Juice OS Memory Dumper                             ");
 
         kscreen::outargs.print_color = SCREEN_STDCOLOR;
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 2;
 
-        kscreen::print_string("    Offset: 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
+        kscreen::print_string_raw("    Offset: 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
 
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 4;
@@ -380,54 +380,53 @@ void open_memdumper(void)
         {
             if(asciiFlag)
             {
-                kscreen::print_string("0x");
+                kscreen::print_string_raw("0x");
                 kconsole::print_hex32((uint32) memPtr + i);
-                kscreen::print_string(": ");
+                kscreen::print_string_raw(": ");
 
                 for(int ii = 0; ii < 16; ii++)
                 {
                     kscreen::outargs.print_color = 0x07;
-                    kscreen::print_char_noupd(memPtr[i + ii]);
-                    kscreen::update_cursor();
+                    kscreen::print_char_raw(memPtr[i + ii]);
                     kscreen::outargs.print_color = SCREEN_STDCOLOR;
-                    kscreen::print_string("  ");
+                    kscreen::print_string_raw("  ");
                 }
 
                 i += 15;
-                kscreen::print_char('\n');
+                kscreen::print_char('\n', false);
             } 
             else
             {
-                kscreen::print_string("0x");
+                kscreen::print_string_raw("0x");
                 kconsole::print_hex32((uint32) memPtr + i);
-                kscreen::print_string(": ");
+                kscreen::print_string_raw(": ");
 
                 for(int ii = 0; ii < 16; ii++)
                 {
                     kscreen::outargs.print_color = 0x07;
                     kconsole::print_hex8(memPtr[i + ii]);
                     kscreen::outargs.print_color = SCREEN_STDCOLOR;
-                    kscreen::print_char(' ');
+                    kscreen::print_char_raw(' ');
                 }
 
                 i += 15;
-                kscreen::print_char('\n');
+                kscreen::print_char('\n', false);
             }
         }
 
         kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 24;
-        kscreen::print_string("Dump: 0x");
+        kscreen::print_string_raw("Dump: 0x");
         kconsole::print_hex32((uint32) memPtr);
-        kscreen::print_string(" - 0x");
+        kscreen::print_string_raw(" - 0x");
         kconsole::print_hex32((uint32) memPtr + 255);
-        kscreen::print_string(" | ASCII Flag = ");
+        kscreen::print_string_raw(" | ASCII Flag = ");
         if(asciiFlag)
-            kscreen::print_string("ON ");
+            kscreen::print_string_raw("ON ");
         else
-            kscreen::print_string("OFF");
-        kscreen::print_string_noupd("                                     ");
+            kscreen::print_string_raw("OFF");
+        kscreen::print_string_raw("                                     ");
 
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 0;

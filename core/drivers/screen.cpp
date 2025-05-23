@@ -76,7 +76,7 @@ namespace kscreen
         port_write8(0x3D5, 0x20);
     }
 
-    void print_char(uint8 print_char)
+    void print_char(uint8 print_char, bool updateCursor)
     {
         uint8* addressToPrint = (uint8*) outargs.VIDEO_MEMORY + (outargs.cursor_x * 2 + outargs.cursor_y * 160);
 
@@ -111,11 +111,14 @@ namespace kscreen
             }
         }
 
-        update_cursor();
+        if (updateCursor)
+        {
+            update_cursor();
+        }
         update_scroll();
     }
 
-    void print_char_noupd(uint8 print_char)
+    void print_char_raw(uint8 print_char)
     {
         uint8* adressToPrint = (uint8*) outargs.VIDEO_MEMORY + (outargs.cursor_x * 2 + outargs.cursor_y * 160);
 
@@ -133,12 +136,14 @@ namespace kscreen
     void print_string(string str)
     {
         for(int i = 0; str[i] != 0x0; i++)
-            print_char(str[i]);
+            print_char(str[i], false);
+
+        update_cursor();
     }
 
-    void print_string_noupd(string str)
+    void print_string_raw(string str)
     {
         for(int i = 0; str[i] != 0x0; i++)
-            print_char_noupd(str[i]);
+            print_char_raw(str[i]);
     }
 }
