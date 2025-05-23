@@ -114,11 +114,11 @@ void kshell::open_console(void)
 
         if(command == "scantest")
         {
-            kps2::get_scancode(false);
+            kps2::read_scancode(false);
 
             while(true)
             {
-                uint8 scancode = kps2::get_scancode(false);
+                uint8 scancode = kps2::read_scancode(false);
 
                 kscreen::print_string("0x");
                 kconsole::print_hex(scancode, 2);
@@ -317,7 +317,7 @@ void kshell::open_menu(void)
         kscreen::print_string("Debug");
 
         // Getting input
-        uint8 key = kps2::get_scancode(true);
+        uint8 key = kps2::read_scancode(true);
         if(key == 0x48)
         {
             if(currentPosition == 0) currentPosition = ITEMS_AMOUNT;
@@ -432,7 +432,7 @@ void open_memdumper(void)
         kscreen::outargs.cursor_y = 0;
         kscreen::update_cursor();
 
-        uint8 key = kps2::get_scancode(true);
+        uint8 key = kps2::read_scancode(true);
         if(key == 0x01)
             break;
         if(key == 0x4D)
@@ -619,7 +619,7 @@ void open_debugger(void)
 
     while(true)
     {
-        uint8 key = kps2::get_scancode(true);
+        uint8 key = kps2::read_scancode(true);
         if(key == 0x01) return;
     }
 }

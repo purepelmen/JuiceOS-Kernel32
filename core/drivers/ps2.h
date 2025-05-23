@@ -24,12 +24,12 @@ namespace kps2
         uint8 get_scancode();
     };
 
-    extern struct in_arguments inargs;
-
     void init();
     
+    in_arguments peek();
+    
     // Read the next key scancode from the queue and wait if the buffer is empty. 
-    uint8 get_scancode(bool ignoreReleases, bool discardQueue = true);
+    uint8 read_scancode(bool ignoreReleases, bool discardQueue = true);
     // Read the next key as ASCII char from the queue and wait if the buffer is empty, ignoring key releases and other things.
     uint8 read_ascii(bool discardQueue = true);
 

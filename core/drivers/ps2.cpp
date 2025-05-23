@@ -35,7 +35,12 @@ namespace kps2
         kernel_print_log("Keyboard driver init completed.\n");
     }
 
-    uint8 get_scancode(bool ignoreReleases, bool discardQueue)
+    in_arguments peek()
+    {
+        return inargs;
+    }
+
+    uint8 read_scancode(bool ignoreReleases, bool discardQueue)
     {
         if (discardQueue)
             inargs.full_buffer = false;
@@ -50,9 +55,7 @@ namespace kps2
 
             uint8 scancode = inargs.get_scancode();
             if(ignoreReleases && !inargs.key_pressed)
-            {
                 continue;
-            }
 
             return scancode;
         }

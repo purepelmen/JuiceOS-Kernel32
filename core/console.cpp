@@ -64,39 +64,40 @@ namespace kconsole
         char temp[20];
         for(int i = 0; str[i] != 0x0; i++)
         {
-            if(str[i] == '%')
+            if (str[i] != '%')
             {
-                i++;
-
-                if(str[i] == 'd')
-                {
-                    int_to_str(*(args_ptr), temp, 10);
-                    kscreen::print_string(temp);
-
-                    args_ptr += 1;
-                }
-                else if(str[i] == 'x')
-                {
-                    uint_to_hex(*(args_ptr), temp, 8);
-                    kscreen::print_string(temp);
-
-                    args_ptr += 1;
-                }
-                else if(str[i] == 'c')
-                {
-                    kscreen::print_char(*(args_ptr));
-                    args_ptr += 1;
-                }
-                else if(str[i] == 's')
-                {
-                    kscreen::print_string((const char*) *(args_ptr));
-                    args_ptr += 1;
-                }
-
+                kscreen::print_char(str[i], false);
                 continue;
             }
 
-            kscreen::print_char(str[i]);
+            i++;
+
+            if(str[i] == 'd')
+            {
+                int_to_str(*(args_ptr), temp, 10);
+                kscreen::print_string(temp);
+
+                args_ptr += 1;
+            }
+            else if(str[i] == 'x')
+            {
+                uint_to_hex(*(args_ptr), temp, 8);
+                kscreen::print_string(temp);
+
+                args_ptr += 1;
+            }
+            else if(str[i] == 'c')
+            {
+                kscreen::print_char(*(args_ptr), false);
+                args_ptr += 1;
+            }
+            else if(str[i] == 's')
+            {
+                kscreen::print_string((const char*) *(args_ptr));
+                args_ptr += 1;
+            }
         }
+
+        kscreen::update_cursor();
     }
 }
