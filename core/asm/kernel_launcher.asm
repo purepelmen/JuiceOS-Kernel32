@@ -22,7 +22,10 @@ start:
     mov esp, stack_top
     call verify_multiboot
 
+    push ebx
     call kernel_main
+    
+    add esp, 4
     jmp $
 
 verify_multiboot:
