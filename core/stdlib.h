@@ -1,9 +1,11 @@
 #pragma once
-
 #include "stdint.h"
 #include "string.h"
 
-#define RAISE_ERROR(message) raise_error(message, __FILE__, __LINE__);
+#include "console.h"
+
+#define RAISE_ERROR(message) { raise_error_begin(message, __FILE__, __LINE__); raise_error_end(); }
+#define RAISE_ERROR_D(message, desc, ...) { raise_error_begin(message, __FILE__, __LINE__); kconsole::printf(desc, __VA_ARGS__); raise_error_end(); }
 
 /* Copy 'bytesAmount' bytes of memory from 'source' to 'destination' */
 void mem_copy(void* source, void* destination, uint32 bytes_amount);
@@ -19,5 +21,5 @@ void utf16_to_ascii(uint8* buffer, uint16* utf16_str);
 
 void strcpy(const char* source, char* dest);
 
-/* Raises an error and halts the system. */
-void raise_error(string message, const char* file, uint32 line);
+void raise_error_begin(string message, const char* file, uint32 line);
+void raise_error_end();

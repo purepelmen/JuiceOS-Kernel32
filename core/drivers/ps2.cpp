@@ -16,7 +16,6 @@ namespace kps2
                             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 
     static void keyboard_handler(const kisr::regs_t& regs);
-    static uint8 scancode_to_ascii(uint8 scancode);
 
     uint8 in_arguments::get_char()
     {
@@ -36,17 +35,21 @@ namespace kps2
         kernel_print_log("Keyboard driver init completed.\n");
     }
 
-    uint8 get_scancode(bool ignoreReleases)
+    uint8 get_scancode(bool ignoreReleases, bool discardQueue)
     {
+        if (discardQueue)
+            inargs.full_buffer = false;
+        
         while(true)
         {
-            asm volatile("hlt");
-
-            if(inargs.full_buffer == false)
+            if(!inargs.full_buffer)
+            {
+                asm volatile("hlt");
                 continue;
+            }
 
             uint8 scancode = inargs.get_scancode();
-            if(ignoreReleases && (scancode & (1 << 7)))
+            if(ignoreReleases && !inargs.key_pressed)
             {
                 continue;
             }
@@ -55,16 +58,20 @@ namespace kps2
         }
     }
     
-    uint8 read_ascii()
+    uint8 read_ascii(bool discardQueue)
     {
+        if (discardQueue)
+            inargs.full_buffer = false;
+        
         while(true)
         {
-            asm volatile("hlt");
-
-            if(inargs.full_buffer == false)
+            if(!inargs.full_buffer)
+            {
+                asm volatile("hlt");
                 continue;
+            }
 
-            if(inargs.key_pressed == false)
+            if(!inargs.key_pressed)
                 continue;
 
             return inargs.get_char();
@@ -106,10 +113,10 @@ namespace kps2
             return;
         }
 
-        inargs.key_char = scancode_to_ascii(result);
+        inargs.key_char = scancode_to_ascii(result, inargs.capslock || inargs.lshift);
     }
 
-    uint8 scancode_to_ascii(uint8 scancode)
+    uint8 scancode_to_ascii(uint8 scancode, bool isCapitalized)
     {
         if(scancode & (1 << 7))
         {
@@ -123,8 +130,7 @@ namespace kps2
         }
 
         uint8 ascii = ascii_table[scancode];
-
-        if(inargs.capslock == 0 && inargs.lshift == 0)
+        if(!isCapitalized)
             return ascii;
 
         if(ascii >= 'a' && ascii <= 'z')

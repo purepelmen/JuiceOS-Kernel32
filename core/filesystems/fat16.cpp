@@ -16,7 +16,7 @@ namespace kfat
     {
         // Now it's IDE and not AHCI. Here we don't have devport, but we can reuse it as a device index.
         if (dev_port >= kide::deviceCount)
-            RAISE_ERROR("FAT16 driver can't use ATA device that is not registered!");
+            RAISE_ERROR_D("FAT16::FAT16() invalid dev_port", "Can't use device number %d, when the maximum is %d.", dev_port, kide::deviceCount - 1);
         
         this->dev_port = dev_port;
     }

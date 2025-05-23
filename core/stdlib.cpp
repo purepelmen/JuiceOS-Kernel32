@@ -48,13 +48,18 @@ void strcpy(const char *source, char *dest)
     dest[i] = 0x0;
 }
 
-void raise_error(string message, const char *file, uint32 line)
+void raise_error_begin(string message, const char *file, uint32 line)
 {
     asm volatile("cli");
 
     kscreen::outargs.print_color = 0x47;
     kconsole::printf("PANIC (%s) at %s:%d\n", message, file, line);
 
+    kscreen::outargs.print_color = SCREEN_STDCOLOR;
+}
+
+void raise_error_end()
+{
     asm volatile("hlt");
     while (true);
 }
