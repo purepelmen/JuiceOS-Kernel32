@@ -104,6 +104,55 @@ void int_to_str(int value, char *outBuffer, int base)
     uint_to_str((unsigned)value, outBuffer, base);
 }
 
+unsigned str_to_uint(const char *source, int base)
+{
+    if (base < 2 || base > 16)
+        return 0;
+    
+    unsigned finalNumber = 0;
+    char ch;
+    while ((ch = *source++) != 0x0)
+    {
+        // Convert to lower-case if necessary.
+        if (ch >= 'a' && ch <= 'f')
+            ch -= 'a' - 'A';
+        
+        unsigned number;
+        if (ch >= '0' && ch <= '9')
+            number = ch - '0';
+        else if (ch >= 'A' && ch <= 'F')
+            number = 10 + (ch - 'A');
+        else 
+            break;
+
+        // Digit number bigger than the base is not a part of the whole number.
+        if (number >= base)
+            break;
+
+        finalNumber *= base;
+        finalNumber += number;
+    }
+
+    return finalNumber;
+}
+
+int str_to_int(const char *source, int base)
+{
+    if (base < 2 || base > 16)
+        return 0;
+    
+    int mult = 1;
+    if (*source == '-')
+    {
+        mult = -1;
+        source++;
+    }
+    else if (*source == '+')
+        source++;
+
+    return str_to_uint(source, base) * mult;
+}
+
 void raise_error_begin(string message, const char *file, uint32 line)
 {
     asm volatile("cli");

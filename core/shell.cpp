@@ -30,7 +30,6 @@ void kshell::open_console(void)
 
         string command = kconsole::read_string();
         command.to_lower(command);
-        kscreen::print_char(0xA);
 
         if(command.length() == 0)
         {
@@ -220,7 +219,16 @@ void kshell::open_console(void)
 
         if (command == "iderd")
         {
-            kide::AtaDevice* device = &kide::devices[0];
+            kconsole::printf("ATA device number: ");
+            
+            unsigned deviceNum = str_to_uint(kconsole::read_string().ptr());
+            if (deviceNum >= kide::deviceCount)
+            {
+                kconsole::printf("No ATA device found, there's only %d of them.\n\n", kide::deviceCount);
+                continue;
+            }
+
+            kide::AtaDevice* device = &kide::devices[deviceNum];
 
             uint8 buff[512];
             if (kide::ata_read_sector(device->bus, device->isSlave, 0, 1, (uint16*)buff))

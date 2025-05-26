@@ -42,6 +42,7 @@ namespace kconsole
             i += 1;
         }
 
+        kscreen::print_char(0xA);
         return string(input_buffer);
     }
 

@@ -7,6 +7,7 @@ public:
     string(const char* char_sequence);
     string();
     
+    const char* ptr() { return pointer; }
     uint32 length();
 
     bool compare(string other_str);
