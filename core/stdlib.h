@@ -1,11 +1,14 @@
 #pragma once
 #include "stdint.h"
+#include "stdarg.h"
 #include "string.h"
 
 #include "console.h"
 
 #define RAISE_ERROR(message) { raise_error_begin(message, __FILE__, __LINE__); raise_error_end(); }
 #define RAISE_ERROR_D(message, desc, ...) { raise_error_begin(message, __FILE__, __LINE__); kconsole::printf(desc, __VA_ARGS__); raise_error_end(); }
+
+typedef void (*vsprintf_consumer)(void* context, const char* portion, int length);
 
 /* Copy 'bytesAmount' bytes of memory from 'source' to 'destination' */
 void mem_copy(void* source, void* destination, uint32 bytes_amount);
@@ -20,6 +23,9 @@ void mem_fill(void* ptr, uint8 byte, uint32 amount);
 void utf16_to_ascii(uint8* buffer, uint16* utf16_str);
 
 void strcpy(const char* source, char* dest);
+
+void vsprintf(vsprintf_consumer callback, void* context, const char* source, va_list list);
+void sprintf(char* outBuff, int maxOutLength, const char* source, ...);
 
 void uint_to_hex(unsigned value, char* outBuffer, uint8 width);
 void uint_to_str(unsigned value, char* outBuffer, int base = 10);

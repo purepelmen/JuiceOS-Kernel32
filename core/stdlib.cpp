@@ -1,4 +1,5 @@
 #include "stdlib.h"
+#include "stdarg.h"
 
 #include "drivers/screen.h"
 #include "console.h"
@@ -46,6 +47,86 @@ void strcpy(const char *source, char *dest)
     }
 
     dest[i] = 0x0;
+}
+
+void vsprintf(vsprintf_consumer callback, void* context, const char* source, va_list list)
+{
+    char temp[20];
+
+    char ch;
+    for (int i = 0; (ch = source[i]) != 0x0; i++)
+    {
+        if (ch != '%')
+        {
+            callback(context, &source[i], 1);
+            continue;
+        }
+
+        ch = source[++i];
+
+        if(ch == 'd')
+        {
+            int_to_str(va_arg(list, int), temp);
+            callback(context, temp, string(temp).length());
+        }
+        else if(ch == 'x')
+        {
+            uint_to_hex(va_arg(list, unsigned), temp, 8);
+            callback(context, temp, 8);
+        }
+        else if(ch == 'c')
+        {
+            char argChar = va_arg(list, int);
+            callback(context, &argChar, 1);
+        }
+        else if(ch == 's')
+        {
+            const char* argString = va_arg(list, const char*);
+            callback(context, argString, string(argString).length());
+        }
+    }
+}
+
+void sprintf(char* outBuff, int maxOutLength, const char* source, ...)
+{
+    struct cback_data
+    {
+        char* outBuff;
+        int maxOutLength_noNullTerm;
+        
+        char* outCurrPtr;
+
+        int totallyCopied() { return outCurrPtr - outBuff; }
+    };
+
+    cback_data data;
+    data.outBuff = data.outCurrPtr = outBuff;
+    data.maxOutLength_noNullTerm = maxOutLength - 1;
+    
+    auto callback = [](void* context, const char* portionPtr, int length) 
+    {
+        cback_data* data = (cback_data*)context; 
+
+        int spaceLeft = data->maxOutLength_noNullTerm - data->totallyCopied();
+
+        int overflowAmount = -(spaceLeft - length);
+        if (overflowAmount < 0)
+            overflowAmount = 0;
+
+        for(int i = 0; i < length - overflowAmount; i++)
+        {
+            *data->outCurrPtr++ = portionPtr[i];
+        }
+    };
+    
+    va_list args;
+
+    va_start(args, source);
+    vsprintf(callback, &data, source, args);
+    va_end(args);
+
+    if (maxOutLength - data.totallyCopied() >= 1)
+        *data.outCurrPtr = 0x0;
 }
 
 void uint_to_hex(unsigned value, char *outBuffer, uint8 width)

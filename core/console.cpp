@@ -59,46 +59,16 @@ namespace kconsole
 
     void printf(string str, ...)
     {
-        uint32 args_addr = (uint32) &str + sizeof(str);
-        uint32* args_ptr = (uint32*) args_addr;
+        va_list args;
 
-        char temp[20];
-        for(int i = 0; str[i] != 0x0; i++)
+        va_start(args, str);
+        vsprintf([](void* context, const char* portionPtr, int length) 
         {
-            if (str[i] != '%')
-            {
-                kscreen::print_char(str[i], false);
-                continue;
-            }
+            for(int i = 0; i < length; i++)
+                kscreen::print_char(portionPtr[i], false);
+        }, nullptr, str.ptr(), args);
 
-            i++;
-
-            if(str[i] == 'd')
-            {
-                int_to_str(*(args_ptr), temp, 10);
-                kscreen::print_string(temp);
-
-                args_ptr += 1;
-            }
-            else if(str[i] == 'x')
-            {
-                uint_to_hex(*(args_ptr), temp, 8);
-                kscreen::print_string(temp);
-
-                args_ptr += 1;
-            }
-            else if(str[i] == 'c')
-            {
-                kscreen::print_char(*(args_ptr), false);
-                args_ptr += 1;
-            }
-            else if(str[i] == 's')
-            {
-                kscreen::print_string((const char*) *(args_ptr));
-                args_ptr += 1;
-            }
-        }
-
+        va_end(args);
         kscreen::update_cursor();
     }
 }
