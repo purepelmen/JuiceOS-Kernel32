@@ -40,11 +40,11 @@ namespace kps2
         return inargs;
     }
 
-    uint8 read_scancode(bool ignoreReleases, bool discardQueue)
+    in_arguments read(bool ignoreReleases, bool discardQueue)
     {
         if (discardQueue)
             inargs.full_buffer = false;
-        
+
         while(true)
         {
             if(!inargs.full_buffer)
@@ -53,12 +53,19 @@ namespace kps2
                 continue;
             }
 
-            uint8 scancode = inargs.get_scancode();
-            if(ignoreReleases && !inargs.key_pressed)
+            inargs.full_buffer = false;
+            in_arguments args = inargs;
+
+            if(ignoreReleases && !args.key_pressed)
                 continue;
 
-            return scancode;
+            return args;
         }
+    }
+
+    uint8 read_scancode(bool ignoreReleases, bool discardQueue)
+    {
+        return read(ignoreReleases, discardQueue).get_scancode();
     }
     
     uint8 read_ascii(bool discardQueue)
@@ -74,6 +81,9 @@ namespace kps2
                 continue;
             }
 
+            // Non valid ASCII character?
+            if(inargs.key_char == 0x0)
+                continue;
             if(!inargs.key_pressed)
                 continue;
 

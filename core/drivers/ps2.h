@@ -28,6 +28,7 @@ namespace kps2
     
     in_arguments peek();
     
+    in_arguments read(bool ignoreReleases, bool discardQueue = true);
     // Read the next key scancode from the queue and wait if the buffer is empty. 
     uint8 read_scancode(bool ignoreReleases, bool discardQueue = true);
     // Read the next key as ASCII char from the queue and wait if the buffer is empty, ignoring key releases and other things.
