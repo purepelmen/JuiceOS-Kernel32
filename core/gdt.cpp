@@ -22,7 +22,7 @@ namespace kgdt
         gdtr.table_offset = (uint32) &gdt_descriptors;
 
         gdt_flush(&gdtr);
-        kernel_print_log("GDT initialized.\n");
+        kernel_log("GDT initialized.\n");
     }
 
     static void gdt_set_gate(int desc_number, uint32 base, uint32 limit, bool is_executable, uint8 privilege_level)

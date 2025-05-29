@@ -11,7 +11,7 @@
 typedef void (*vsprintf_consumer)(void* context, const char* portion, int length);
 
 /* Copy 'bytesAmount' bytes of memory from 'source' to 'destination' */
-void mem_copy(void* source, void* destination, uint32 bytes_amount);
+void mem_copy(const void* source, void* destination, uint32 bytes_amount);
 
 /* Compare two parts of memory */
 bool mem_compare(uint8* first, uint8* seconds, uint32 bytes_amount);

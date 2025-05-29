@@ -5,7 +5,7 @@
 #include "console.h"
 #include "heap.h"
 
-void mem_copy(void* source, void* destination, uint32 bytes_amount)
+void mem_copy(const void* source, void* destination, uint32 bytes_amount)
 {
     for(int i = 0; i < bytes_amount; i++)
         ((uint8*)destination)[i] = ((uint8*)source)[i];
@@ -52,15 +52,18 @@ void strcpy(const char *source, char *dest)
 void vsprintf(vsprintf_consumer callback, void* context, const char* source, va_list list)
 {
     char temp[20];
+    const char* start = source;
 
+    int i;
     char ch;
-    for (int i = 0; (ch = source[i]) != 0x0; i++)
+    for (i = 0; (ch = source[i]) != 0x0; i++)
     {
         if (ch != '%')
-        {
-            callback(context, &source[i], 1);
             continue;
-        }
+        
+        const char* currPtr = &source[i];
+        if (currPtr != start)
+            callback(context, start, currPtr - start);
 
         ch = source[++i];
 
@@ -84,7 +87,18 @@ void vsprintf(vsprintf_consumer callback, void* context, const char* source, va_
             const char* argString = va_arg(list, const char*);
             callback(context, argString, string(argString).length());
         }
+        else
+        {
+            callback(context, "%", 1);
+            i--;
+        }
+
+        start = &source[i + 1];
     }
+
+    const char* currPtr = &source[i];
+    if (currPtr != start)
+        callback(context, start, currPtr - start);
 }
 
 void sprintf(char* outBuff, int maxOutLength, const char* source, ...)

@@ -79,7 +79,7 @@ namespace kpci
             }
         }
 
-        kernel_print_log("PCI driver init completed.\n");
+        kernel_log("PCI driver init completed.\n");
     }
 
     pci_device* find_device(uint8 classid, uint8 subclass)

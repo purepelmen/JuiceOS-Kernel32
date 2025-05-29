@@ -34,7 +34,7 @@ namespace kahci
         kpci::pci_device* ahci = kpci::find_device(0x01, 0x06);
         if(ahci == nullptr)
         {
-            kernel_print_log("[AHCI] WARNING: Controller not found in PCI device list.\n");
+            kernel_log("[AHCI] WARNING: Controller not found in PCI device list.\n");
             return;
         }
 
@@ -77,7 +77,7 @@ namespace kahci
         // Enabling all types of interrupts for the entire controller
         hba_memory->ghc |= 2;
 
-        kernel_print_log("AHCI driver init completed.\n");
+        kernel_log("AHCI driver init completed.\n");
     }
 
     string get_version()

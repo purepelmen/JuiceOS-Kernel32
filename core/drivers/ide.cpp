@@ -46,14 +46,14 @@ namespace kide
         kpci::pci_device* ide = kpci::find_device(0x01, 0x01);
         if(ide == nullptr)
         {
-            kernel_print_log("[IDE] WARNING: Controller wasn't found in PCI device list.\n");
+            kernel_log("[IDE] WARNING: Controller wasn't found in PCI device list.\n");
             return;
         }
 
         // Check for floating buses. The status is 0xFF if no there are no drives (not definite though).
         if (port_read8(BUS_CMD_STATUS(PRIMARY_CMD_IDE)) == 0xFF)
         {
-            kernel_print_log("[IDE] Info: The primary bus has no drives.\n");
+            kernel_log("[IDE] Info: The primary bus has no drives.\n");
         }
         else
         {
@@ -64,7 +64,7 @@ namespace kide
         // Check the secondary bus for floating.
         if (port_read8(BUS_CMD_STATUS(SECONDARY_CMD_IDE)) == 0xFF)
         {
-            kernel_print_log("[IDE] Info: The secondary bus has no drives.\n");
+            kernel_log("[IDE] Info: The secondary bus has no drives.\n");
         }
         else
         {
@@ -77,7 +77,7 @@ namespace kide
     {
         if (deviceCount >= MAX_DEVICES)
         {
-            kernel_print_log("[IDE] Error: ata_register_device failed to register another device. The maximum is reached.\n");
+            kernel_log("[IDE] Error: ata_register_device failed to register another device. The maximum is reached.\n");
             return;
         }
 

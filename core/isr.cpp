@@ -17,7 +17,7 @@ namespace kisr
     {
         if(isr_handlers[int_number] != 0)
         {
-            kernel_print_log("WARNING: An ISR handler was replaced.\n");
+            kernel_log("WARNING: An ISR handler was replaced.\n");
         }
 
         isr_handlers[int_number] = handler;

@@ -24,7 +24,7 @@ namespace kpaging
         kisr::register_handler(14, page_fault_handler);
 
         paging_enable(directory);
-        kernel_print_log("Paging initialized.\n");
+        kernel_log("Paging initialized.\n");
     }
 
     void map_address(uint32 address)

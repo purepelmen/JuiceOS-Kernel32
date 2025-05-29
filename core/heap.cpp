@@ -21,13 +21,13 @@ namespace kheap
         current_heap_value = (uint8*) &end;
         heap_start_value = current_heap_value;
 
-        kernel_print_log("Heap was initialized.\n");
+        kernel_log("Heap was initialized.\n");
     }
 
     void reset()
     {
         current_heap_value = heap_start_value;
-        kernel_print_log("Heap resetting has been completed.\n");
+        kernel_log("Heap resetting has been completed.\n");
     }
 
     void* alloc(uint32 size)

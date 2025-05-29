@@ -23,7 +23,7 @@ namespace ktimer
         port_write8(0x40, (DIVISOR >> 8) & 0xFF);
 
         kisr::register_handler(IRQ_BASE, timer_handler);
-        kernel_print_log("Timer was initialized.\n");
+        kernel_log("Timer was initialized.\n");
     }
 
     void wait(uint32 ms)

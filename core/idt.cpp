@@ -32,7 +32,7 @@ namespace kidt
         idtr.table_offset = idt_descriptors;
 
         idt_flush(&idtr);
-        kernel_print_log("IDT initialized.\n");
+        kernel_log("IDT initialized.\n");
     }
 
     static void idt_set_gate(int desc_number, uint32 handler_offset, uint16 segment_selector, uint8 flags)

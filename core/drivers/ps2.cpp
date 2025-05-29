@@ -32,7 +32,7 @@ namespace kps2
     void init()
     {
         kisr::register_handler(IRQ_BASE + 1, keyboard_handler);
-        kernel_print_log("Keyboard driver init completed.\n");
+        kernel_log("Keyboard driver init completed.\n");
     }
 
     in_arguments peek()

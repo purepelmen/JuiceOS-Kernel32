@@ -5,6 +5,6 @@
 #include "string.h"
 
 /* Print new string to logs */
-void kernel_print_log(string str);
+void kernel_log(string str, ...);
 
 string kernel_read_logs();
