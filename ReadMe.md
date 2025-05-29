@@ -1,5 +1,3 @@
-**! Development was stopped indefinitely. Not all parts of this kernel can work as expected even on emulators. !**
-
 # JuiceOS-Kernel32
 JuiceOS Kernel32 - my x86 hobby OS kernel.
 

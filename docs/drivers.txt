@@ -1,23 +1,27 @@
 There is information about drivers written for this OS.
 
 SCREEN.HPP / SCREEN.CPP --- Screen driver ---------------------------------------------------
-I don't know... Can I call it "driver", but... I call it "driver".
 This driver works with the screen. It can print a string, clear the screen or disable/enable the cursor.
 For now this driver can't work with graphics, but in future maybe will be able to. 
------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
 
 PS2.HPP / PS2.CPP --- PS/2 keyboard driver --------------------------------------------------
 This is a PS/2 keyboard driver. It has functions for waiting for scancode and
 waiting for any key with returning its ASCII value. It can handle Shift, CapsLock and Ctrl.
------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
 
 PCI.HPP / PCI.CPP --- PCI driver ------------------------------------------------------------
 This driver provides functions to find PCI devices and communicate with them.
------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
 
-AHCI.HPP / AHCI.CPP - AHCI driver -----------------------------------------------------------
+IDE.H / IDE.CPP --- IDE controller driver ---------------------------------------------------
+Handles ATA devices. Contains a registry of them which is used like the only registry of
+storage devices for now (the abstraction should be done eventually). At initialization tries
+to check all connected non-packet devices and register them. Only allows to read data from
+devices for now.
+---------------------------------------------------------------------------------------------
+
+AHCI.HPP / AHCI.CPP - AHCI driver (moved to 'non_ready') ------------------------------------
 This is an AHCI controller driver. It has functions for working with SATA/ATAPI devices.
 Now it can only read data from drives.
 ---------------------------------------------------------------------------------------------
-
-P.S. My English is now very well, so... sorry for any errors, that you can see in this text.
