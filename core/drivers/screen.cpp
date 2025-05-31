@@ -76,6 +76,56 @@ namespace kscreen
         port_write8(0x3D5, 0x20);
     }
 
+    inline void putc_core(char ch)
+    {
+        uint8* addressToPrint = (uint8*) outargs.VIDEO_MEMORY + (outargs.cursor_x * 2 + outargs.cursor_y * 160);
+
+        addressToPrint[0] = ch;
+        addressToPrint[1] = outargs.print_color;
+
+        outargs.cursor_x += 1;
+        if (outargs.cursor_x == 80)
+        {
+            outargs.cursor_y += 1;
+            outargs.cursor_x = 0;
+        }
+
+        update_scroll();
+    }
+
+    void putc(unsigned x, unsigned y, char ch)
+    {
+        outargs.cursor_x = x;
+        outargs.cursor_y = y;
+
+        putc_core(ch);
+    }
+
+    void printc(char ch)
+    {
+        putc_core(ch);
+    }
+
+    void print(const char* source, size_t bufferLength)
+    {
+        for (int i = 0; source[i] != 0x0 && i < bufferLength; i++)
+        {
+            putc_core(source[i]);
+        }
+    }
+
+    void print(unsigned x, unsigned y, const char* source, size_t bufferLength)
+    {
+        outargs.cursor_x = x;
+        outargs.cursor_y = y;
+
+        print(source, bufferLength);
+    }
+
+    // =================================================
+    // OLD FUNCTIONS BELOW.
+    // =================================================
+
     void print_char(uint8 print_char, bool updateCursor)
     {
         uint8* addressToPrint = (uint8*) outargs.VIDEO_MEMORY + (outargs.cursor_x * 2 + outargs.cursor_y * 160);

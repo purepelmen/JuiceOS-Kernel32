@@ -11,6 +11,9 @@ namespace kconsole
         the output string is reused every time this function is called! */
     string read_string();
 
+    void print(const char* text);
+    void printc(char ch);
+
     void print_hex(unsigned number, uint8 width);
 
     /* Print a formated string. */

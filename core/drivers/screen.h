@@ -28,6 +28,12 @@ namespace kscreen
     void enable_cursor(uint8 cursor_start, uint8 cursor_end);
     void disable_cursor();
 
+    void putc(unsigned x, unsigned y, char ch);
+    void printc(char ch);
+    
+    void print(const char* source, size_t bufferLength = 0xFFFF);
+    void print(unsigned x, unsigned y, const char* source, size_t bufferLength = 0xFFFF);
+
     void print_char(uint8 print_char, bool updateCursor = true);
     void print_char_raw(uint8 print_char);
 

@@ -46,6 +46,44 @@ namespace kconsole
         return string(input_buffer);
     }
 
+    void print(const char* text)
+    {
+        int i, start = 0;
+        for (i = 0; text[i] != 0x0; i++)
+        {
+            char ch = text[i];
+            
+            // Is a control ASCII char?
+            if (ch < 0x20)
+            {
+                int len = i - start; 
+                if (len > 0)
+                    kscreen::print(text + start, len);
+
+                if (ch == 0x0A)
+                {
+                    kscreen::outargs.cursor_y += 1;
+                    kscreen::outargs.cursor_x = 0;
+                    // kscreen::update_scroll();
+                }
+                
+                start = i + 1;
+            }
+        }
+
+        int len = i - start; 
+        if (len > 0)
+            kscreen::print(text + start, len);
+
+        kscreen::update_cursor();
+    }
+
+    void printc(char ch)
+    {
+        char temp[] = { ch, 0x0 };
+        print(temp);
+    }
+
     void print_hex(unsigned number, uint8 width)
     {
         if (width > 8)
