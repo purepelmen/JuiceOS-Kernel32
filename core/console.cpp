@@ -8,11 +8,21 @@ static char* input_buffer = nullptr;
 
 namespace kconsole
 {
+    static void scursor_step_back()
+    {
+        kscreen::outargs.cursor_x--;
+        if (kscreen::outargs.cursor_x < 0)
+        {
+            kscreen::outargs.cursor_y -= 1;
+            kscreen::outargs.cursor_x = 79;
+        }
+    }
+
     string read_string()
     {
         // Allocating 60 bytes for text
         if(input_buffer == 0)
-            input_buffer = kheap::alloc_casted<char>(60);
+            input_buffer = kheap::alloc_casted<char>(100);
 
         for(int i = 0; true; )
         {
@@ -29,45 +39,50 @@ namespace kconsole
             {
                 if(i <= 0) continue;
 
-                kscreen::print_char(key);
+                scursor_step_back();
+                kscreen::printc(' ');
+                scursor_step_back();
+
+                kscreen::update_cursor();
+
                 i -= 1;
                 input_buffer[i] = 0x0;
                 continue;
             }
             
-            if(i >= 58) continue;
+            if(i >= 98) continue;
             
-            kscreen::print_char(key);
+            printc(key);
             input_buffer[i] = key;
             i += 1;
         }
 
-        kscreen::print_char(0xA);
+        printc(0xA);
         return string(input_buffer);
     }
 
-    void print(const char* text)
+    void print(const char* text, size_t maxLength)
     {
         int i, start = 0;
-        for (i = 0; text[i] != 0x0; i++)
+        for (i = 0; text[i] != 0x0 && i < maxLength; i++)
         {
             char ch = text[i];
             
             // Is a control ASCII char?
             if (ch < 0x20)
             {
-                int len = i - start; 
-                if (len > 0)
-                    kscreen::print(text + start, len);
-
                 if (ch == 0x0A)
                 {
+                    int len = i - start; 
+                    if (len > 0)
+                        kscreen::print(text + start, len);
+                    
                     kscreen::outargs.cursor_y += 1;
                     kscreen::outargs.cursor_x = 0;
-                    // kscreen::update_scroll();
+                    kscreen::update_scroll();
+
+                    start = i + 1;
                 }
-                
-                start = i + 1;
             }
         }
 
@@ -80,8 +95,7 @@ namespace kconsole
 
     void printc(char ch)
     {
-        char temp[] = { ch, 0x0 };
-        print(temp);
+        print(&ch, 1);
     }
 
     void print_hex(unsigned number, uint8 width)
@@ -92,7 +106,7 @@ namespace kconsole
         char temp[9];
         uint_to_hex(number, temp, width);
         
-        kscreen::print_string(temp);
+        print(temp);
     }
 
     void printf(string str, ...)
@@ -102,8 +116,7 @@ namespace kconsole
         va_start(args, str);
         vsprintf([](void* context, const char* portionPtr, int length) 
         {
-            for(int i = 0; i < length; i++)
-                kscreen::print_char(portionPtr[i], false);
+            print(portionPtr, length);
         }, nullptr, str.ptr(), args);
 
         va_end(args);

@@ -33,10 +33,4 @@ namespace kscreen
     
     void print(const char* source, size_t bufferLength = 0xFFFF);
     void print(unsigned x, unsigned y, const char* source, size_t bufferLength = 0xFFFF);
-
-    void print_char(uint8 print_char, bool updateCursor = true);
-    void print_char_raw(uint8 print_char);
-
-    void print_string(string str);
-    void print_string_raw(string str);
 }

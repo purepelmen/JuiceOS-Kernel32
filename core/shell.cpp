@@ -25,7 +25,7 @@ void kshell::open_console(void)
     while(true)
     {
         kscreen::outargs.print_color = 0x02;
-        kscreen::print_string("PC:>>");
+        kconsole::print("PC:>>");
         kscreen::outargs.print_color = SCREEN_STDCOLOR;
 
         string command = kconsole::read_string();
@@ -39,7 +39,7 @@ void kshell::open_console(void)
 
         if(command == "hello")
         {
-            kscreen::print_string("Helloooo :)\n\n");
+            kconsole::print("Helloooo :)\n\n");
             continue;
         }
 
@@ -47,7 +47,7 @@ void kshell::open_console(void)
         // TO FIX: This not working (all just hangs) 
         if(command == "reboot")
         {
-            kscreen::print_string("This command doesn't work for now. It will be fixed soon.\n\n");
+            kconsole::print("This command doesn't work for now. It will be fixed soon.\n\n");
             continue;
         }
 
@@ -59,7 +59,7 @@ void kshell::open_console(void)
 
         if(command == "system")
         {
-            kscreen::print_string("JuiceOS Kernel32 v" KERNEL_VERSION "\n\n");
+            kconsole::print("JuiceOS Kernel32 v" KERNEL_VERSION "\n\n");
             continue;
         }
 
@@ -70,15 +70,15 @@ void kshell::open_console(void)
 
         if(command == "ascii")
         {
-            kscreen::print_string("Type any char.\n");
+            kconsole::print("Type any char.\n");
 
             uint8 key = kps2::read_ascii();
-            kscreen::print_string("ASCII code of typed key is: 0x");
+            kconsole::print("ASCII code of typed key is: 0x");
             kconsole::print_hex(key, 2);
-            kscreen::print_string("\nIt displays as: ");
+            kconsole::print("\nIt displays as: ");
 
-            kscreen::print_char(key);
-            kscreen::print_string("\n\n");
+            kconsole::printc(key);
+            kconsole::print("\n\n");
             continue;
         }
 
@@ -91,23 +91,23 @@ void kshell::open_console(void)
 
         if(command == "help")
         {
-            kscreen::print_string("ASCII - Print hex representation of a typed char.\n");
-            kscreen::print_string("CLS - Clear the console.\n");
-            kscreen::print_string("EXIT - Quit from console to OS menu.\n");
-            kscreen::print_string("HELP - Print this message.\n");
-            kscreen::print_string("HELLO - Test command that say hello to you.\n");
-            kscreen::print_string("MEMDUMP - Open Memory dumper.\n");
-            kscreen::print_string("REBOOT - Reboot your PC.\n");
-            kscreen::print_string("SCANTEST - Print scancode of every pressed key.\n");
-            kscreen::print_string("SYSTEM - Print system information.\n");
-            kscreen::print_string("PCI - Print all PCI devices.\n");
-            // kscreen::print_string("AHCIVER - Print AHCI specification version.\n");
-            // kscreen::print_string("AHCIDEV - Print all AHCI ports and connected devices.\n");
-            // kscreen::print_string("AHCIRD - Read first sector from AHCI port #0.\n");
-            kscreen::print_string("IDEDEV - Print all ATA devices from IDE driver.\n");
-            kscreen::print_string("IDERD - Read first sector from the first IDE device.\n");
+            kconsole::print("ASCII - Print hex representation of a typed char.\n");
+            kconsole::print("CLS - Clear the console.\n");
+            kconsole::print("EXIT - Quit from console to OS menu.\n");
+            kconsole::print("HELP - Print this message.\n");
+            kconsole::print("HELLO - Test command that say hello to you.\n");
+            kconsole::print("MEMDUMP - Open Memory dumper.\n");
+            kconsole::print("REBOOT - Reboot your PC.\n");
+            kconsole::print("SCANTEST - Print scancode of every pressed key.\n");
+            kconsole::print("SYSTEM - Print system information.\n");
+            kconsole::print("PCI - Print all PCI devices.\n");
+            // kconsole::print("AHCIVER - Print AHCI specification version.\n");
+            // kconsole::print("AHCIDEV - Print all AHCI ports and connected devices.\n");
+            // kconsole::print("AHCIRD - Read first sector from AHCI port #0.\n");
+            kconsole::print("IDEDEV - Print all ATA devices from IDE driver.\n");
+            kconsole::print("IDERD - Read first sector from the first IDE device.\n");
 
-            kscreen::print_char('\n');
+            kconsole::printc('\n');
             continue;
         }
 
@@ -119,14 +119,14 @@ void kshell::open_console(void)
             {
                 uint8 scancode = kps2::read_scancode(false);
 
-                kscreen::print_string("0x");
+                kconsole::print("0x");
                 kconsole::print_hex(scancode, 2);
 
-                kscreen::print_char('\n');
+                kconsole::printc('\n');
                 if(scancode == 0x81) break;
             }
             
-            kscreen::print_char('\n');
+            kconsole::printc('\n');
             continue;
         }
 
@@ -139,7 +139,7 @@ void kshell::open_console(void)
                     device->bus, device->slot, device->function, device->classid, device->subclass);
             }
 
-            kscreen::print_char('\n');
+            kconsole::printc('\n');
             continue;
         }
 
@@ -213,7 +213,7 @@ void kshell::open_console(void)
                 kconsole::printf("      Addressable space: %dKB (%d sectors).\n", device.totalAddressableSectors / 2, device.totalAddressableSectors);
             }
 
-            kscreen::print_char('\n');
+            kconsole::printc('\n');
             continue;
         }
 
@@ -236,17 +236,17 @@ void kshell::open_console(void)
                 for(int i = 0; i < 256; i++)
                 {
                     kconsole::print_hex(buff[i], 2);
-                    kscreen::print_char(' ');
+                    kconsole::printc(' ');
                 }
 
-                kscreen::print_char('\n');
+                kconsole::printc('\n');
             }
             else
             {
                 kconsole::printf("Failed to read test data from an ATA device.\n");
             }
 
-            kscreen::print_char('\n');
+            kconsole::printc('\n');
             continue;
         }
 
@@ -272,7 +272,7 @@ void kshell::open_console(void)
         if(command == "\x1B")
             return;
         
-        kscreen::print_string("Unknown command.\n\n");
+        kconsole::print("Unknown command.\n\n");
     }
 }
 
@@ -290,7 +290,7 @@ void kshell::open_menu(void)
 
         kscreen::outargs.cursor_x = 25;
         kscreen::outargs.cursor_y = 1;
-        kscreen::print_string("Juice OS v" KERNEL_VERSION " Menu");
+        kconsole::print("Juice OS v" KERNEL_VERSION " Menu");
 
         kscreen::outargs.cursor_x = 6;
         kscreen::outargs.cursor_y = 3;
@@ -298,7 +298,7 @@ void kshell::open_menu(void)
             kscreen::outargs.print_color = SELECTED_COLOR;
         else 
             kscreen::outargs.print_color = NON_SELECTED_COLOR;
-        kscreen::print_string("Open console");
+        kconsole::print("Open console");
 
         kscreen::outargs.cursor_x = 6;
         kscreen::outargs.cursor_y = 4;
@@ -306,7 +306,7 @@ void kshell::open_menu(void)
             kscreen::outargs.print_color = SELECTED_COLOR;
         else 
             kscreen::outargs.print_color = NON_SELECTED_COLOR;
-        kscreen::print_string("Memory dumper");
+        kconsole::print("Memory dumper");
 
         kscreen::outargs.cursor_x = 6;
         kscreen::outargs.cursor_y = 5;
@@ -314,7 +314,7 @@ void kshell::open_menu(void)
             kscreen::outargs.print_color = SELECTED_COLOR;
         else 
             kscreen::outargs.print_color = NON_SELECTED_COLOR;
-        kscreen::print_string("System logs");
+        kconsole::print("System logs");
 
         kscreen::outargs.cursor_x = 6;
         kscreen::outargs.cursor_y = 6;
@@ -322,7 +322,7 @@ void kshell::open_menu(void)
             kscreen::outargs.print_color = SELECTED_COLOR;
         else 
             kscreen::outargs.print_color = NON_SELECTED_COLOR;
-        kscreen::print_string("Debug");
+        kconsole::print("Debug");
 
         // Getting input
         uint8 key = kps2::read_scancode(true);
@@ -373,68 +373,69 @@ void open_memdumper(void)
     while(true)
     {
         kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
-        kscreen::print_string_raw("                             Juice OS Memory Dumper                             ");
+        kscreen::outargs.cursor_x = 0;
+        kscreen::outargs.cursor_y = 0;
+        kscreen::print("                             Juice OS Memory Dumper                             ");
 
         kscreen::outargs.print_color = SCREEN_STDCOLOR;
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 2;
 
-        kscreen::print_string_raw("    Offset: 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
+        kscreen::print("    Offset: 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
 
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 4;
 
-        for(int i = 0; i < 256; i++)
+        for (int i = 0; i < 256; i++)
         {
             if(asciiFlag)
             {
-                kscreen::print_string_raw("0x");
+                kscreen::print("0x");
                 kconsole::print_hex((uint32) memPtr + i, 8);
-                kscreen::print_string_raw(": ");
+                kscreen::print(": ");
 
                 for(int ii = 0; ii < 16; ii++)
                 {
                     kscreen::outargs.print_color = 0x07;
-                    kscreen::print_char_raw(memPtr[i + ii]);
+                    kscreen::printc(memPtr[i + ii]);
                     kscreen::outargs.print_color = SCREEN_STDCOLOR;
-                    kscreen::print_string_raw("  ");
+                    kscreen::print("  ");
                 }
-
-                i += 15;
-                kscreen::print_char('\n', false);
             } 
             else
             {
-                kscreen::print_string_raw("0x");
+                kscreen::print("0x");
                 kconsole::print_hex((uint32) memPtr + i, 8);
-                kscreen::print_string_raw(": ");
+                kscreen::print(": ");
 
                 for(int ii = 0; ii < 16; ii++)
                 {
                     kscreen::outargs.print_color = 0x07;
                     kconsole::print_hex(memPtr[i + ii], 2);
                     kscreen::outargs.print_color = SCREEN_STDCOLOR;
-                    kscreen::print_char_raw(' ');
+                    kscreen::printc(' ');
                 }
-
-                i += 15;
-                kscreen::print_char('\n', false);
             }
+
+            kscreen::outargs.cursor_x = 0;
+            kscreen::outargs.cursor_y++;
+            
+            i += 15;
         }
 
         kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 24;
-        kscreen::print_string_raw("Dump: 0x");
+        kscreen::print("Dump: 0x");
         kconsole::print_hex((uint32) memPtr, 8);
-        kscreen::print_string_raw(" - 0x");
+        kscreen::print(" - 0x");
         kconsole::print_hex((uint32) memPtr + 255, 8);
-        kscreen::print_string_raw(" | ASCII Flag = ");
+        kscreen::print(" | ASCII Flag = ");
         if(asciiFlag)
-            kscreen::print_string_raw("ON ");
+            kscreen::print("ON ");
         else
-            kscreen::print_string_raw("OFF");
-        kscreen::print_string_raw("                                     ");
+            kscreen::print("OFF");
+        kscreen::print("                                ");
 
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 0;
@@ -463,7 +464,7 @@ void open_memdumper(void)
 void open_syslogs(void)
 {
     kscreen::clear();
-    kscreen::print_string(kernel_read_logs());
+    kconsole::print(kernel_read_logs().ptr());
 
     kps2::read_ascii();
 }
@@ -478,13 +479,13 @@ void open_debugger(void)
     kscreen::outargs.cursor_y = 0;
 
     kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
-    kscreen::print_string("                                    Debugger                                    ");
+    kscreen::print("                                    Debugger                                    ");
     kscreen::outargs.print_color = SCREEN_STDCOLOR;
 
     // EBP ---------------------------------
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 2;
-    kscreen::print_string("EBP: 0x");
+    kscreen::print("EBP: 0x");
 
     __asm__("mov %%ebp, %%edx" : "=d" (res));
     kconsole::print_hex(res, 8);
@@ -492,7 +493,7 @@ void open_debugger(void)
     // ESP ---------------------------------
     kscreen::outargs.cursor_x = 22;
     kscreen::outargs.cursor_y = 2;
-    kscreen::print_string("ESP: 0x");
+    kscreen::print("ESP: 0x");
 
     __asm__("mov %%esp, %%edx" : "=d" (res));
     kconsole::print_hex(res, 8);
@@ -500,7 +501,7 @@ void open_debugger(void)
     // CS ---------------------------------
     kscreen::outargs.cursor_x = 42;
     kscreen::outargs.cursor_y = 2;
-    kscreen::print_string("CS: 0x");
+    kscreen::print("CS: 0x");
 
     __asm__("mov %%cs, %%edx" : "=d" (res));
     kconsole::print_hex(res, 8);
@@ -508,7 +509,7 @@ void open_debugger(void)
     // DS ---------------------------------
     kscreen::outargs.cursor_x = 62;
     kscreen::outargs.cursor_y = 2;
-    kscreen::print_string("DS: 0x");
+    kscreen::print("DS: 0x");
 
     __asm__("mov %%ds, %%edx" : "=d" (res));
     kconsole::print_hex(res, 8);
@@ -516,7 +517,7 @@ void open_debugger(void)
     // ES ---------------------------------
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 4;
-    kscreen::print_string("ES: 0x");
+    kscreen::print("ES: 0x");
 
     __asm__("mov %%es, %%edx" : "=d" (res));
     kconsole::print_hex(res, 8);
@@ -524,7 +525,7 @@ void open_debugger(void)
     // GS ---------------------------------
     kscreen::outargs.cursor_x = 22;
     kscreen::outargs.cursor_y = 4;
-    kscreen::print_string("GS: 0x");
+    kscreen::print("GS: 0x");
 
     __asm__("mov %%gs, %%edx" : "=d" (res));
     kconsole::print_hex(res, 8);
@@ -532,7 +533,7 @@ void open_debugger(void)
     // FS ---------------------------------
     kscreen::outargs.cursor_x = 42;
     kscreen::outargs.cursor_y = 4;
-    kscreen::print_string("FS: 0x");
+    kscreen::print("FS: 0x");
 
     __asm__("mov %%fs, %%edx" : "=d" (res));
     kconsole::print_hex(res, 8);
@@ -540,7 +541,7 @@ void open_debugger(void)
     // SS ---------------------------------
     kscreen::outargs.cursor_x = 62;
     kscreen::outargs.cursor_y = 4;
-    kscreen::print_string("SS: 0x");
+    kscreen::print("SS: 0x");
 
     __asm__("mov %%ss, %%edx" : "=d" (res));
     kconsole::print_hex(res, 8);
@@ -548,7 +549,7 @@ void open_debugger(void)
     // CR0 --------------------------------
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 6;
-    kscreen::print_string("CR0: 0x");
+    kscreen::print("CR0: 0x");
 
     __asm__("mov %%cr0, %%edx" : "=d" (res));
     kconsole::print_hex(res, 8);
@@ -556,7 +557,7 @@ void open_debugger(void)
     // CR2 --------------------------------
     kscreen::outargs.cursor_x = 22;
     kscreen::outargs.cursor_y = 6;
-    kscreen::print_string("CR2: 0x");
+    kscreen::print("CR2: 0x");
 
     __asm__("mov %%cr2, %%edx" : "=d" (res));
     kconsole::print_hex(res, 8);
@@ -564,7 +565,7 @@ void open_debugger(void)
     // CR3 --------------------------------
     kscreen::outargs.cursor_x = 42;
     kscreen::outargs.cursor_y = 6;
-    kscreen::print_string("CR3: 0x");
+    kscreen::print("CR3: 0x");
 
     __asm__("mov %%cr3, %%edx" : "=d" (res));
     kconsole::print_hex(res, 8);
@@ -572,19 +573,19 @@ void open_debugger(void)
     // CR4 --------------------------------
     kscreen::outargs.cursor_x = 62;
     kscreen::outargs.cursor_y = 6;
-    kscreen::print_string("CR4: 0x");
+    kscreen::print("CR4: 0x");
 
     __asm__("mov %%cr4, %%edx" : "=d" (res));
     kconsole::print_hex(res, 8);
 
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 8;
-    kscreen::print_string("----------------------------------------------------------------------------");
+    kscreen::print("----------------------------------------------------------------------------");
 
     // System memory ----------------------
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 10;
-    kscreen::print_string("Memory allocated for the system: ");
+    kscreen::print("Memory allocated for the system: ");
 
     uint32 systemMemory = kheap::get_system_mem_size();
     if(systemMemory / 1048576 > 0)
@@ -603,7 +604,7 @@ void open_debugger(void)
     // Heap -------------------------------
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 12;
-    kscreen::print_string("Heap allocated: ");
+    kscreen::print("Heap allocated: ");
 
     uint32 allocatedHeap = kheap::get_allocated_size();
     if(allocatedHeap / 1048576 > 0) 
@@ -622,7 +623,7 @@ void open_debugger(void)
     // Heap memory location ---------------
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 14;
-    kscreen::print_string("Heap located at: 0x");
+    kscreen::print("Heap located at: 0x");
     kconsole::print_hex((uint32) kheap::get_location_ptr(), 8);
 
     while(true)

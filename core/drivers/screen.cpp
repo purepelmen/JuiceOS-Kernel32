@@ -78,19 +78,18 @@ namespace kscreen
 
     inline void putc_core(char ch)
     {
-        uint8* addressToPrint = (uint8*) outargs.VIDEO_MEMORY + (outargs.cursor_x * 2 + outargs.cursor_y * 160);
-
-        addressToPrint[0] = ch;
-        addressToPrint[1] = outargs.print_color;
-
-        outargs.cursor_x += 1;
-        if (outargs.cursor_x == 80)
+        if (outargs.cursor_x >= 80)
         {
             outargs.cursor_y += 1;
             outargs.cursor_x = 0;
         }
-
         update_scroll();
+
+        uint8* addressToPrint = (uint8*) outargs.VIDEO_MEMORY + (outargs.cursor_x * 2 + outargs.cursor_y * 160);
+        addressToPrint[0] = ch;
+        addressToPrint[1] = outargs.print_color;
+
+        outargs.cursor_x += 1;
     }
 
     void putc(unsigned x, unsigned y, char ch)
@@ -120,80 +119,5 @@ namespace kscreen
         outargs.cursor_y = y;
 
         print(source, bufferLength);
-    }
-
-    // =================================================
-    // OLD FUNCTIONS BELOW.
-    // =================================================
-
-    void print_char(uint8 print_char, bool updateCursor)
-    {
-        uint8* addressToPrint = (uint8*) outargs.VIDEO_MEMORY + (outargs.cursor_x * 2 + outargs.cursor_y * 160);
-
-        if(print_char == 0xA)
-        {
-            // New line
-            outargs.cursor_y += 1;
-            outargs.cursor_x = 0;
-        } 
-        else if (print_char == 0x08)
-        {
-            // Backspace
-            if(outargs.cursor_x != 0)
-            {
-                outargs.cursor_x -= 1;
-
-                addressToPrint = (uint8*) outargs.VIDEO_MEMORY + (outargs.cursor_x * 2 + outargs.cursor_y * 160);
-                addressToPrint[0] = ' ';
-                addressToPrint[1] = outargs.print_color;
-            }
-        } 
-        else
-        {
-            addressToPrint[0] = print_char;
-            addressToPrint[1] = outargs.print_color;
-
-            outargs.cursor_x += 1;
-            if(outargs.cursor_x == 80)
-            {
-                outargs.cursor_y += 1;
-                outargs.cursor_x = 0;
-            }
-        }
-
-        if (updateCursor)
-        {
-            update_cursor();
-        }
-        update_scroll();
-    }
-
-    void print_char_raw(uint8 print_char)
-    {
-        uint8* adressToPrint = (uint8*) outargs.VIDEO_MEMORY + (outargs.cursor_x * 2 + outargs.cursor_y * 160);
-
-        adressToPrint[0] = print_char;
-        adressToPrint[1] = outargs.print_color;
-
-        outargs.cursor_x += 1;
-        if(outargs.cursor_x == 80)
-        {
-            outargs.cursor_y += 1;
-            outargs.cursor_x = 0;
-        }
-    }
-
-    void print_string(string str)
-    {
-        for(int i = 0; str[i] != 0x0; i++)
-            print_char(str[i], false);
-
-        update_cursor();
-    }
-
-    void print_string_raw(string str)
-    {
-        for(int i = 0; str[i] != 0x0; i++)
-            print_char_raw(str[i]);
     }
 }
