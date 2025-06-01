@@ -279,17 +279,60 @@ void console_handle(string command, bool* shouldContinue)
     kconsole::print("Unknown command.\n");
 }
 
+static int make_menu(const char** items, size_t itemsAmount, int* currentPosition)
+{
+    const uint8 NON_SELECTED_COLOR = SCREEN_STDCOLOR;
+    const uint8 SELECTED_COLOR = SCREEN_INVERTCOLOR;
+
+    uint8 baseX = kscreen::outargs.cursor_x;
+    for (int i = 0; i < itemsAmount; i++)
+    {
+        kscreen::outargs.print_color = *currentPosition == i ? SELECTED_COLOR : NON_SELECTED_COLOR;
+        kscreen::outargs.cursor_x = baseX;
+        kconsole::print(items[i]);
+
+        kscreen::outargs.cursor_y++;
+    }
+
+    kscreen::outargs.print_color = NON_SELECTED_COLOR;
+
+    // Checking input.
+    uint8 key = kps2::read_scancode(true);
+
+    if(key == 0x1C)
+        return *currentPosition;
+
+    if(key == 0x48)
+    {
+        (*currentPosition)--;
+        if (*currentPosition < 0)
+            *currentPosition = itemsAmount - 1;
+    }
+    else if(key == 0x50)
+    {
+        (*currentPosition)++;
+        if (*currentPosition == itemsAmount)
+            *currentPosition = 0;
+    }
+
+    return -1;
+}
+
 void kshell::open_menu(void)
 {
     kscreen::clear();
-    const uint8 NON_SELECTED_COLOR = SCREEN_STDCOLOR;
-    const uint8 SELECTED_COLOR = SCREEN_INVERTCOLOR;
-    const uint8 ITEMS_AMOUNT = 3;         // Zero means - 1
+    const char* menuItems[] =
+    { 
+        "Open console",
+        "Memory dumper",
+        "System logs",
+        "Debug"
+    };
 
-    uint8 currentPosition = 0;
-    while(true)
+    int menuPos = 0;
+    while (true)
     {
-        kscreen::outargs.print_color = NON_SELECTED_COLOR;
+        kscreen::outargs.print_color = SCREEN_STDCOLOR;
 
         kscreen::outargs.cursor_x = 25;
         kscreen::outargs.cursor_y = 1;
@@ -297,56 +340,25 @@ void kshell::open_menu(void)
 
         kscreen::outargs.cursor_x = 6;
         kscreen::outargs.cursor_y = 3;
-        kscreen::outargs.print_color = currentPosition == 0 ? SELECTED_COLOR : NON_SELECTED_COLOR;
-        kconsole::print("Open console");
 
-        kscreen::outargs.cursor_x = 6;
-        kscreen::outargs.cursor_y = 4;
-        kscreen::outargs.print_color = currentPosition == 1 ? SELECTED_COLOR : NON_SELECTED_COLOR;
-        kconsole::print("Memory dumper");
-
-        kscreen::outargs.cursor_x = 6;
-        kscreen::outargs.cursor_y = 5;
-        kscreen::outargs.print_color = currentPosition == 2 ? SELECTED_COLOR : NON_SELECTED_COLOR;
-        kconsole::print("System logs");
-
-        kscreen::outargs.cursor_x = 6;
-        kscreen::outargs.cursor_y = 6;
-        kscreen::outargs.print_color = currentPosition == 3 ? SELECTED_COLOR : NON_SELECTED_COLOR;
-        kconsole::print("Debug");
-
-        // Getting input
-        uint8 key = kps2::read_scancode(true);
-        if(key == 0x48)
+        if (make_menu(menuItems, 4, &menuPos) != -1)
         {
-            if(currentPosition == 0) currentPosition = ITEMS_AMOUNT;
-            else currentPosition--;
-        }
-        if(key == 0x50)
-        {
-            if(currentPosition == ITEMS_AMOUNT) currentPosition = 0;
-            else currentPosition++;
-        }
-
-        if(key == 0x1C)
-        {
-            kscreen::outargs.print_color = NON_SELECTED_COLOR;
-            if(currentPosition == 0)
+            if (menuPos == 0)
             {
                 kshell::open_console();
                 kscreen::clear();
             }
-            if(currentPosition == 1)
+            else if (menuPos == 1)
             {
                 open_memdumper();
                 kscreen::clear();
             }
-            if(currentPosition == 2)
+            else if (menuPos == 2)
             {
                 open_syslogs();
                 kscreen::clear();
             }
-            if(currentPosition == 3)
+            else if (menuPos == 3)
             {
                 open_debugger();
                 kscreen::clear();
@@ -407,13 +419,7 @@ void open_memdumper(void)
         kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 24;
-        kscreen::print("Dump: 0x");
-        kconsole::print_hex((uint32) memPtr, 8);
-        kscreen::print(" - 0x");
-        kconsole::print_hex((uint32) memPtr + 255, 8);
-        kscreen::print(" | ASCII Flag = ");
-        kscreen::print(asciiFlag ? "ON " : "OFF");
-        kscreen::print("                                ");
+        kconsole::printf("Dump: 0x%x - 0x%x | ASCII Flag = %s                                ", memPtr, memPtr + 255, asciiFlag ? "ON " : "OFF");
 
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 0;
