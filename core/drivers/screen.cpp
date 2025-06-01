@@ -3,6 +3,9 @@
 
 namespace kscreen
 {
+    uint8* const VIDEO_MEMORY = (uint8*)0xB8000;
+    const uint8 WIDTH = 80, HEIGHT = 25;
+
     struct out_arguments outargs;
 
     void out_arguments::set_cursor_pos(int x, int y)
@@ -13,15 +16,12 @@ namespace kscreen
 
     void clear()
     {
-        outargs.VIDEO_MEMORY = (uint8*) 0xb8000;
         outargs.print_color = SCREEN_STDCOLOR;
         
-        for(int i = 0; i < 80 * 25 * 2; i++)
+        for (int i = 0; i < WIDTH * HEIGHT * 2; i += 2)
         {
-            outargs.VIDEO_MEMORY[i] = ' ';
-            i++;
-            
-            outargs.VIDEO_MEMORY[i] = outargs.print_color;
+            VIDEO_MEMORY[i] = ' ';
+            VIDEO_MEMORY[i + 1] = outargs.print_color;
         }
 
         outargs.set_cursor_pos(0, 0);
@@ -30,35 +30,24 @@ namespace kscreen
 
     void update_scroll()
     {
-        if(outargs.cursor_y >= 25)
+        if(outargs.cursor_y >= HEIGHT)
         {
-            uint8* si = (uint8*) outargs.VIDEO_MEMORY + (80 * 2);
-            uint8* di = (uint8*) outargs.VIDEO_MEMORY;
+            size_t hzLineInBytes = WIDTH * 2;
 
-            for(int i = 0; i < 80 * 24 * 2; i++)
-                di[i] = si[i];
+            uint8* si = VIDEO_MEMORY + hzLineInBytes;
+            uint8* di = VIDEO_MEMORY;
+            
+            mem_copy(si, di, hzLineInBytes * (HEIGHT - 1));
 
-            di = (uint8*) outargs.VIDEO_MEMORY + (80 * 24 * 2);
-            for(int i = 0; i < 80 * 2; i++)
+            di = VIDEO_MEMORY + (hzLineInBytes * (HEIGHT - 1));
+            for (int i = 0; i < hzLineInBytes; i += 2)
             {
                 di[i] = ' ';
-                i++;
-                di[i] = outargs.print_color;
+                di[i + 1] = outargs.print_color;
             }
             
-            outargs.cursor_y = 24;
+            outargs.cursor_y = HEIGHT - 1;
         }
-    }
-
-    void update_cursor()
-    {
-        uint16 cursorPosition = outargs.cursor_y * 80 + outargs.cursor_x;
-
-        port_write8(0x03D4, 0x0F);
-        port_write8(0x03D5, cursorPosition);
-
-        port_write8(0x03D4, 0x0E);
-        port_write8(0x03D5, cursorPosition >> 8);
     }
 
     void enable_cursor(uint8 cursor_start, uint8 cursor_end)
@@ -76,6 +65,17 @@ namespace kscreen
         port_write8(0x3D5, 0x20);
     }
 
+    void update_cursor()
+    {
+        uint16 cursorPosition = outargs.cursor_y * WIDTH + outargs.cursor_x;
+
+        port_write8(0x03D4, 0x0F);
+        port_write8(0x03D5, cursorPosition);
+
+        port_write8(0x03D4, 0x0E);
+        port_write8(0x03D5, cursorPosition >> 8);
+    }
+
     inline void putc_core(char ch)
     {
         if (outargs.cursor_x >= 80)
@@ -85,7 +85,7 @@ namespace kscreen
         }
         update_scroll();
 
-        uint8* addressToPrint = (uint8*) outargs.VIDEO_MEMORY + (outargs.cursor_x * 2 + outargs.cursor_y * 160);
+        uint8* addressToPrint = VIDEO_MEMORY + (outargs.cursor_x * 2 + outargs.cursor_y * WIDTH * 2);
         addressToPrint[0] = ch;
         addressToPrint[1] = outargs.print_color;
 
