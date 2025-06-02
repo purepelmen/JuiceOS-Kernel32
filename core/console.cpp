@@ -4,10 +4,11 @@
 #include "drivers/ps2.h"
 #include "drivers/screen.h"
 
-static char* input_buffer = nullptr;
-
 namespace kconsole
 {
+    const size_t INPUT_MAXCHARS = 100;
+    static char* input_buffer = nullptr;
+
     static void scursor_step_back()
     {
         kscreen::outargs.cursor_x--;
@@ -20,22 +21,21 @@ namespace kconsole
 
     string read_string()
     {
-        // Allocating 60 bytes for text
-        if(input_buffer == 0)
-            input_buffer = kheap::alloc_casted<char>(100);
+        if (input_buffer == 0)
+            input_buffer = kheap::alloc_casted<char>(INPUT_MAXCHARS + 1);
 
-        for(int i = 0; true; )
+        for (int i = 0; true; )
         {
             uint8 key = kps2::read_ascii();
-            if(key == 0x0) continue;
+            if (key == 0x0) continue;
             
-            if(key == 0xA)
+            if (key == 0xA)
             {
                 input_buffer[i] = 0x0;
                 break;
             }
 
-            if(key == 0x08)
+            if (key == 0x08)
             {
                 if(i <= 0) continue;
 
@@ -50,11 +50,10 @@ namespace kconsole
                 continue;
             }
             
-            if(i >= 98) continue;
+            if (i >= INPUT_MAXCHARS) continue;
             
             printc(key);
-            input_buffer[i] = key;
-            i += 1;
+            input_buffer[i++] = key;
         }
 
         printc(0xA);
