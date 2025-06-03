@@ -11,12 +11,13 @@ namespace kconsole
 
     static void scursor_step_back()
     {
-        kscreen::outargs.cursor_x--;
-        if (kscreen::outargs.cursor_x < 0)
+        if (kscreen::outargs.cursor_x == 0)
         {
             kscreen::outargs.cursor_y -= 1;
-            kscreen::outargs.cursor_x = 79;
+            kscreen::outargs.cursor_x = kscreen::width();
         }
+
+        kscreen::outargs.cursor_x--;
     }
 
     string read_string()

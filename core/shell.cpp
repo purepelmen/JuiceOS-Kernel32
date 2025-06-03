@@ -289,7 +289,7 @@ static int make_menu(const char** items, size_t itemsAmount, int* currentPositio
     {
         kscreen::outargs.print_color = *currentPosition == i ? SELECTED_COLOR : NON_SELECTED_COLOR;
         kscreen::outargs.cursor_x = baseX;
-        kconsole::print(items[i]);
+        kscreen::print(items[i]);
 
         kscreen::outargs.cursor_y++;
     }
@@ -336,7 +336,7 @@ void kshell::open_menu(void)
 
         kscreen::outargs.cursor_x = 25;
         kscreen::outargs.cursor_y = 1;
-        kconsole::print("Juice OS v" KERNEL_VERSION " Menu");
+        kscreen::print("Juice OS v" KERNEL_VERSION " Menu");
 
         kscreen::outargs.cursor_x = 6;
         kscreen::outargs.cursor_y = 3;
@@ -376,15 +376,10 @@ void open_memdumper(void)
     while(true)
     {
         kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
-        kscreen::outargs.cursor_x = 0;
-        kscreen::outargs.cursor_y = 0;
-        kscreen::print("                             Juice OS Memory Dumper                             ");
+        kscreen::print(0, 0, "                             Juice OS Memory Dumper                             ");
 
         kscreen::outargs.print_color = SCREEN_STDCOLOR;
-        kscreen::outargs.cursor_x = 0;
-        kscreen::outargs.cursor_y = 2;
-
-        kscreen::print("    Offset: 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
+        kscreen::print(0, 2, "    Offset: 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
 
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 4;

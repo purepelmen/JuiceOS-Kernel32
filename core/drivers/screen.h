@@ -11,13 +11,16 @@ namespace kscreen
     {
         uint8 print_color;
 
-        int cursor_x;
-        int cursor_y;
+        unsigned cursor_x;
+        unsigned cursor_y;
 
         void set_cursor_pos(int x, int y);
     };
 
     extern struct out_arguments outargs;
+
+    size_t width();
+    size_t height();
 
     void clear();
     void update_scroll();

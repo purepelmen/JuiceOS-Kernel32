@@ -14,6 +14,16 @@ namespace kscreen
         cursor_y = y;
     }
 
+    size_t width()
+    {
+        return WIDTH;
+    }
+
+    size_t height()
+    {
+        return HEIGHT;
+    }
+
     void clear()
     {
         outargs.print_color = SCREEN_STDCOLOR;
@@ -76,48 +86,45 @@ namespace kscreen
         port_write8(0x03D5, cursorPosition >> 8);
     }
 
-    inline void putc_core(char ch)
+    inline void putc_core(unsigned* posX, unsigned* posY, char ch)
     {
-        if (outargs.cursor_x >= 80)
+        if (*posX >= WIDTH)
         {
-            outargs.cursor_y += 1;
-            outargs.cursor_x = 0;
+            *posY += 1;
+            *posX = 0;
         }
         update_scroll();
 
-        uint8* addressToPrint = VIDEO_MEMORY + (outargs.cursor_x * 2 + outargs.cursor_y * WIDTH * 2);
+        uint8* addressToPrint = VIDEO_MEMORY + (*posX * 2 + *posY * WIDTH * 2);
         addressToPrint[0] = ch;
         addressToPrint[1] = outargs.print_color;
 
-        outargs.cursor_x += 1;
+        *posX += 1;
     }
 
     void putc(unsigned x, unsigned y, char ch)
     {
-        outargs.cursor_x = x;
-        outargs.cursor_y = y;
-
-        putc_core(ch);
+        putc_core(&x, &y, ch);
     }
 
     void printc(char ch)
     {
-        putc_core(ch);
+        putc_core(&outargs.cursor_x, &outargs.cursor_y, ch);
     }
 
     void print(const char* source, size_t bufferLength)
     {
         for (int i = 0; source[i] != 0x0 && i < bufferLength; i++)
         {
-            putc_core(source[i]);
+            putc_core(&outargs.cursor_x, &outargs.cursor_y, source[i]);
         }
     }
 
     void print(unsigned x, unsigned y, const char* source, size_t bufferLength)
     {
-        outargs.cursor_x = x;
-        outargs.cursor_y = y;
-
-        print(source, bufferLength);
+        for (int i = 0; source[i] != 0x0 && i < bufferLength; i++)
+        {
+            putc_core(&x, &y, source[i]);
+        }
     }
 }
