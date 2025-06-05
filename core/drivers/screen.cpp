@@ -8,7 +8,7 @@ namespace kscreen
 
     struct out_arguments outargs;
 
-    void out_arguments::set_cursor_pos(int x, int y)
+    void out_arguments::set_cursorXY(unsigned x, unsigned y)
     {
         cursor_x = x;
         cursor_y = y;
@@ -26,14 +26,14 @@ namespace kscreen
 
     void clear()
     {
-        outargs.print_color = SCREEN_STDCOLOR;
+        outargs.print_color = KSCREEN_STDCOLOR;
         for (int i = 0; i < WIDTH * HEIGHT * 2; i += 2)
         {
             VIDEO_MEMORY[i] = ' ';
             VIDEO_MEMORY[i + 1] = outargs.print_color;
         }
 
-        outargs.set_cursor_pos(0, 0);
+        outargs.set_cursorXY(0, 0);
     }
 
     void update_scroll()
@@ -58,7 +58,7 @@ namespace kscreen
         }
     }
 
-    void enable_cursor(uint8 cursor_start, uint8 cursor_end)
+    void enable_hwcursor(uint8 cursor_start, uint8 cursor_end)
     {
         port_write8(0x03D4, 0x0A);
         port_write8(0x03D5, (port_read8(0x03D5) & 0xC0) | cursor_start);
@@ -67,13 +67,13 @@ namespace kscreen
         port_write8(0x03D5, (port_read8(0x03D5) & 0xE0) | cursor_end);
     }
 
-    void disable_cursor()
+    void disable_hwcursor()
     {
         port_write8(0x3D4, 0x0A);
         port_write8(0x3D5, 0x20);
     }
 
-    void update_cursor(uint16 x, uint16 y)
+    void update_hwcursor(uint16 x, uint16 y)
     {
         uint16 cursorPosition = y * WIDTH + x;
 

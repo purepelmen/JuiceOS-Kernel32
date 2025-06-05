@@ -255,7 +255,7 @@ void raise_error_begin(string message, const char *file, uint32 line)
     kconsole::cursor.color = 0x47;
     kconsole::printf("PANIC (%s) at %s:%d\n", message, file, line);
 
-    kconsole::cursor.color = SCREEN_STDCOLOR;
+    kconsole::cursor.color = KSCREEN_STDCOLOR;
 }
 
 void raise_error_end()

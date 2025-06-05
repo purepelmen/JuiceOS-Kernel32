@@ -16,13 +16,13 @@ namespace kconsole
         kscreen::clear();
         
         cursor.posX = cursor.posY = 0;
-        cursor.color = SCREEN_STDCOLOR;
+        cursor.color = KSCREEN_STDCOLOR;
         sync_hwcursor();
     }
 
     void sync_hwcursor()
     {
-        kscreen::update_cursor(cursor.posX, cursor.posY);
+        kscreen::update_hwcursor(cursor.posX, cursor.posY);
     }
 
     void sync_scursor_coords()
@@ -44,7 +44,7 @@ namespace kconsole
 
     static void update_scursor()
     {
-        kscreen::outargs.set_cursor_pos(cursor.posX, cursor.posY);
+        kscreen::outargs.set_cursorXY(cursor.posX, cursor.posY);
         kscreen::outargs.print_color = cursor.color;
     }
 

@@ -29,7 +29,7 @@ void kshell::open_console(void)
     {
         kconsole::cursor.color = 0x02;
         kconsole::print("PC:>>");
-        kconsole::cursor.color = SCREEN_STDCOLOR;
+        kconsole::cursor.color = KSCREEN_STDCOLOR;
 
         string command = kconsole::read_string();
         command.to_lower(command);
@@ -281,8 +281,8 @@ void console_handle(string command, bool* shouldContinue)
 
 static int make_menu(const char** items, size_t itemsAmount, int* currentPosition)
 {
-    const uint8 NON_SELECTED_COLOR = SCREEN_STDCOLOR;
-    const uint8 SELECTED_COLOR = SCREEN_INVERTCOLOR;
+    const uint8 NON_SELECTED_COLOR = KSCREEN_STDCOLOR;
+    const uint8 SELECTED_COLOR = KSCREEN_INVERTCOLOR;
 
     uint8 baseX = kscreen::outargs.cursor_x;
     for (int i = 0; i < itemsAmount; i++)
@@ -332,7 +332,7 @@ void kshell::open_menu(void)
     int menuPos = 0;
     while (true)
     {
-        kscreen::outargs.print_color = SCREEN_STDCOLOR;
+        kscreen::outargs.print_color = KSCREEN_STDCOLOR;
 
         kscreen::outargs.cursor_x = 25;
         kscreen::outargs.cursor_y = 1;
@@ -388,10 +388,10 @@ void open_memdumper(void)
 
     while(true)
     {
-        kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
+        kscreen::outargs.print_color = KSCREEN_INVERTCOLOR;
         kscreen::print(0, 0, "                             Juice OS Memory Dumper                             ");
 
-        kscreen::outargs.print_color = SCREEN_STDCOLOR;
+        kscreen::outargs.print_color = KSCREEN_STDCOLOR;
         kscreen::print(0, 2, "    Offset: 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F");
 
         kscreen::outargs.cursor_x = 0;
@@ -425,12 +425,12 @@ void open_memdumper(void)
             i += 15;
         }
 
-        kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
+        kscreen::outargs.print_color = KSCREEN_INVERTCOLOR;
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 24;
         screen_printf("Dump: 0x%x - 0x%x | ASCII Flag = %s                                ", memPtr, memPtr + 255, asciiFlag ? "ON " : "OFF");
 
-        kscreen::update_cursor(0, 0);
+        kscreen::update_hwcursor(0, 0);
 
         uint8 key = kps2::read_scancode(true);
         if(key == 0x01)
@@ -488,9 +488,9 @@ void open_debugger(void)
     kscreen::outargs.cursor_x = 0;
     kscreen::outargs.cursor_y = 0;
 
-    kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
+    kscreen::outargs.print_color = KSCREEN_INVERTCOLOR;
     kscreen::print("                                    Debugger                                    ");
-    kscreen::outargs.print_color = SCREEN_STDCOLOR;
+    kscreen::outargs.print_color = KSCREEN_STDCOLOR;
 
     // EBP ---------------------------------
     __asm__("mov %%ebp, %%edx" : "=d" (res));

@@ -2,8 +2,8 @@
 
 #include "../stdlib.h"
 
-#define SCREEN_STDCOLOR     0x07
-#define SCREEN_INVERTCOLOR  0x70
+#define KSCREEN_STDCOLOR     0x07
+#define KSCREEN_INVERTCOLOR  0x70
 
 namespace kscreen
 {
@@ -14,7 +14,7 @@ namespace kscreen
         unsigned cursor_x;
         unsigned cursor_y;
 
-        void set_cursor_pos(int x, int y);
+        void set_cursorXY(unsigned x, unsigned y);
     };
 
     extern struct out_arguments outargs;
@@ -25,9 +25,9 @@ namespace kscreen
     void clear();
     void update_scroll();
     
-    void enable_cursor(uint8 cursor_start, uint8 cursor_end);
-    void disable_cursor();
-    void update_cursor(uint16 x, uint16 y);
+    void enable_hwcursor(uint8 cursor_start, uint8 cursor_end);
+    void disable_hwcursor();
+    void update_hwcursor(uint16 x, uint16 y);
 
     void putc(unsigned x, unsigned y, char ch);
     void printc(char ch);
