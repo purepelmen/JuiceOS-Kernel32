@@ -252,10 +252,10 @@ void raise_error_begin(string message, const char *file, uint32 line)
 {
     asm volatile("cli");
 
-    kscreen::outargs.print_color = 0x47;
+    kconsole::cursor.color = 0x47;
     kconsole::printf("PANIC (%s) at %s:%d\n", message, file, line);
 
-    kscreen::outargs.print_color = SCREEN_STDCOLOR;
+    kconsole::cursor.color = SCREEN_STDCOLOR;
 }
 
 void raise_error_end()

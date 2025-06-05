@@ -22,14 +22,14 @@ static void open_debugger(void);
 
 void kshell::open_console(void)
 {
-    kscreen::clear();
+    kconsole::clear();
 
     bool shouldContinue = true;
     while (shouldContinue)
     {
-        kscreen::outargs.print_color = 0x02;
+        kconsole::cursor.color = 0x02;
         kconsole::print("PC:>>");
-        kscreen::outargs.print_color = SCREEN_STDCOLOR;
+        kconsole::cursor.color = SCREEN_STDCOLOR;
 
         string command = kconsole::read_string();
         command.to_lower(command);
@@ -66,7 +66,7 @@ void console_handle(string command, bool* shouldContinue)
 
     if(command == "cls")
     {
-        kscreen::clear();
+        kconsole::clear();
         return;
     }
 
@@ -99,7 +99,7 @@ void console_handle(string command, bool* shouldContinue)
     if(command == "memdump")
     {
         open_memdumper();
-        kscreen::clear();
+        kconsole::clear();
         return;
     }
 
@@ -320,7 +320,7 @@ static int make_menu(const char** items, size_t itemsAmount, int* currentPositio
 
 void kshell::open_menu(void)
 {
-    kscreen::clear();
+    kconsole::clear();
     const char* menuItems[] =
     { 
         "Open console",
@@ -346,32 +346,45 @@ void kshell::open_menu(void)
             if (menuPos == 0)
             {
                 kshell::open_console();
-                kscreen::clear();
+                kconsole::clear();
             }
             else if (menuPos == 1)
             {
                 open_memdumper();
-                kscreen::clear();
+                kconsole::clear();
             }
             else if (menuPos == 2)
             {
                 open_syslogs();
-                kscreen::clear();
+                kconsole::clear();
             }
             else if (menuPos == 3)
             {
                 open_debugger();
-                kscreen::clear();
+                kconsole::clear();
             }
         }
     }
+}
+
+void screen_printf(const char* str, ...)
+{
+    va_list args;
+
+    va_start(args, str);
+    vsprintf([](void* context, const char* portionPtr, int length) 
+    {
+        kscreen::print(portionPtr, length);
+    }, nullptr, str, args);
+
+    va_end(args);
 }
 
 void open_memdumper(void)
 {
     uint8* memPtr = (uint8*) 0x0;
     uint8 asciiFlag = false;
-    kscreen::clear();
+    kconsole::clear();
 
     while(true)
     {
@@ -386,7 +399,7 @@ void open_memdumper(void)
 
         for (int i = 0; i < 256; i++)
         {
-            kconsole::printf("0x%x: ", memPtr + i);
+            screen_printf("0x%x: ", memPtr + i);
 
             if (asciiFlag)
             {
@@ -400,6 +413,7 @@ void open_memdumper(void)
             {
                 for(int j = 0; j < 16; j++)
                 {
+                    kconsole::sync_scursor_coords();
                     kconsole::print_hex(memPtr[i + j], 2);
                     kscreen::printc(' ');
                 }
@@ -414,11 +428,9 @@ void open_memdumper(void)
         kscreen::outargs.print_color = SCREEN_INVERTCOLOR;
         kscreen::outargs.cursor_x = 0;
         kscreen::outargs.cursor_y = 24;
-        kconsole::printf("Dump: 0x%x - 0x%x | ASCII Flag = %s                                ", memPtr, memPtr + 255, asciiFlag ? "ON " : "OFF");
+        screen_printf("Dump: 0x%x - 0x%x | ASCII Flag = %s                                ", memPtr, memPtr + 255, asciiFlag ? "ON " : "OFF");
 
-        kscreen::outargs.cursor_x = 0;
-        kscreen::outargs.cursor_y = 0;
-        kscreen::update_cursor();
+        kscreen::update_cursor(0, 0);
 
         uint8 key = kps2::read_scancode(true);
         if(key == 0x01)
@@ -442,7 +454,7 @@ void open_memdumper(void)
 
 void open_syslogs(void)
 {
-    kscreen::clear();
+    kconsole::clear();
     kconsole::print(kernel_read_logs().ptr());
 
     kps2::read_ascii();
@@ -453,18 +465,18 @@ static void printf_size(size_t bytes)
     size_t conv = bytes / (1024 * 1024);
     if (conv > 0)
     {
-        kconsole::printf("%d MB.", conv);
+        screen_printf("%d MB.", conv);
         return;
     }
 
     conv = bytes / 1024;
     if (conv > 0)
     {
-        kconsole::printf("%d KB.", conv);
+        screen_printf("%d KB.", conv);
         return;
     }
 
-    kconsole::printf("%d B.", bytes);
+    screen_printf("%d B.", bytes);
 }
 
 void open_debugger(void)
@@ -485,83 +497,83 @@ void open_debugger(void)
 
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 2;
-    kconsole::printf("EBP: 0x%x", res);
+    screen_printf("EBP: 0x%x", res);
 
     // ESP ---------------------------------
     __asm__("mov %%esp, %%edx" : "=d" (res));
 
     kscreen::outargs.cursor_x = 22;
     kscreen::outargs.cursor_y = 2;
-    kconsole::printf("ESP: 0x%x", res);
+    screen_printf("ESP: 0x%x", res);
 
     // CS ---------------------------------
     __asm__("mov %%cs, %%edx" : "=d" (res));
 
     kscreen::outargs.cursor_x = 42;
     kscreen::outargs.cursor_y = 2;
-    kconsole::printf("CS: 0x%x", res);
+    screen_printf("CS: 0x%x", res);
 
     // DS ---------------------------------
     __asm__("mov %%ds, %%edx" : "=d" (res));
 
     kscreen::outargs.cursor_x = 62;
     kscreen::outargs.cursor_y = 2;
-    kconsole::printf("DS: 0x%x", res);
+    screen_printf("DS: 0x%x", res);
 
     // ES ---------------------------------
     __asm__("mov %%es, %%edx" : "=d" (res));
 
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 4;
-    kconsole::printf("ES: 0x%x", res);
+    screen_printf("ES: 0x%x", res);
 
     // GS ---------------------------------
     __asm__("mov %%gs, %%edx" : "=d" (res));
     kscreen::outargs.cursor_x = 22;
     kscreen::outargs.cursor_y = 4;
-    kconsole::printf("GS: 0x%x", res);
+    screen_printf("GS: 0x%x", res);
 
     // FS ---------------------------------
     __asm__("mov %%fs, %%edx" : "=d" (res));
 
     kscreen::outargs.cursor_x = 42;
     kscreen::outargs.cursor_y = 4;
-    kconsole::printf("FS: 0x%x", res);
+    screen_printf("FS: 0x%x", res);
 
     // SS ---------------------------------
     __asm__("mov %%ss, %%edx" : "=d" (res));
 
     kscreen::outargs.cursor_x = 62;
     kscreen::outargs.cursor_y = 4;
-    kconsole::printf("SS: 0x%x", res);
+    screen_printf("SS: 0x%x", res);
 
     // CR0 --------------------------------
     __asm__("mov %%cr0, %%edx" : "=d" (res));
 
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 6;
-    kconsole::printf("CR0: 0x%x", res);
+    screen_printf("CR0: 0x%x", res);
 
     // CR2 --------------------------------
     __asm__("mov %%cr2, %%edx" : "=d" (res));
 
     kscreen::outargs.cursor_x = 22;
     kscreen::outargs.cursor_y = 6;
-    kconsole::printf("CR2: 0x%x", res);
+    screen_printf("CR2: 0x%x", res);
 
     // CR3 --------------------------------
     __asm__("mov %%cr3, %%edx" : "=d" (res));
 
     kscreen::outargs.cursor_x = 42;
     kscreen::outargs.cursor_y = 6;
-    kconsole::printf("CR3: 0x%x", res);
+    screen_printf("CR3: 0x%x", res);
 
     // CR4 --------------------------------
     __asm__("mov %%cr4, %%edx" : "=d" (res));
     
     kscreen::outargs.cursor_x = 62;
     kscreen::outargs.cursor_y = 6;
-    kconsole::printf("CR4: 0x%x", res);
+    screen_printf("CR4: 0x%x", res);
 
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 8;
@@ -582,7 +594,7 @@ void open_debugger(void)
     // Heap memory location ---------------
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 14;
-    kconsole::printf("Heap located at: 0x%x", kheap::get_location_ptr());
+    screen_printf("Heap located at: 0x%x", kheap::get_location_ptr());
 
     while (kps2::read_scancode(true) != 0x01);
 }

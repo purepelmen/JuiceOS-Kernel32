@@ -45,7 +45,7 @@ namespace kisr
 
         if(regs.int_number < 32)
         {
-            kscreen::clear();
+            kconsole::clear();
             kconsole::printf("Interrupt: #%d\n", regs.int_number);
 
             RAISE_ERROR("Unhandled exception, trap or fault");

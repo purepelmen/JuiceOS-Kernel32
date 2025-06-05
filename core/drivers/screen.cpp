@@ -27,7 +27,6 @@ namespace kscreen
     void clear()
     {
         outargs.print_color = SCREEN_STDCOLOR;
-        
         for (int i = 0; i < WIDTH * HEIGHT * 2; i += 2)
         {
             VIDEO_MEMORY[i] = ' ';
@@ -35,7 +34,6 @@ namespace kscreen
         }
 
         outargs.set_cursor_pos(0, 0);
-        update_cursor();
     }
 
     void update_scroll()
@@ -75,9 +73,9 @@ namespace kscreen
         port_write8(0x3D5, 0x20);
     }
 
-    void update_cursor()
+    void update_cursor(uint16 x, uint16 y)
     {
-        uint16 cursorPosition = outargs.cursor_y * WIDTH + outargs.cursor_x;
+        uint16 cursorPosition = y * WIDTH + x;
 
         port_write8(0x03D4, 0x0F);
         port_write8(0x03D5, cursorPosition);

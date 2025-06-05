@@ -9,6 +9,28 @@ namespace kconsole
     const size_t INPUT_MAXCHARS = 100;
     static char* input_buffer = nullptr;
 
+    struct cursor_state cursor;
+
+    void clear()
+    {
+        kscreen::clear();
+        
+        cursor.posX = cursor.posY = 0;
+        cursor.color = SCREEN_STDCOLOR;
+        sync_hwcursor();
+    }
+
+    void sync_hwcursor()
+    {
+        kscreen::update_cursor(cursor.posX, cursor.posY);
+    }
+
+    void sync_scursor_coords()
+    {
+        cursor.posX = kscreen::outargs.cursor_x;
+        cursor.posY = kscreen::outargs.cursor_y;
+    }
+
     static void scursor_step_back()
     {
         if (kscreen::outargs.cursor_x == 0)
@@ -20,11 +42,18 @@ namespace kconsole
         kscreen::outargs.cursor_x--;
     }
 
+    static void update_scursor()
+    {
+        kscreen::outargs.set_cursor_pos(cursor.posX, cursor.posY);
+        kscreen::outargs.print_color = cursor.color;
+    }
+
     string read_string()
     {
         if (input_buffer == 0)
             input_buffer = kheap::alloc_casted<char>(INPUT_MAXCHARS + 1);
 
+        update_scursor();
         for (int i = 0; true; )
         {
             uint8 key = kps2::read_ascii();
@@ -44,7 +73,8 @@ namespace kconsole
                 kscreen::printc(' ');
                 scursor_step_back();
 
-                kscreen::update_cursor();
+                sync_scursor_coords();
+                sync_hwcursor();
 
                 i -= 1;
                 input_buffer[i] = 0x0;
@@ -63,6 +93,8 @@ namespace kconsole
 
     void print(const char* text, size_t maxLength)
     {
+        update_scursor();
+
         int i, start = 0;
         for (i = 0; text[i] != 0x0 && i < maxLength; i++)
         {
@@ -90,7 +122,8 @@ namespace kconsole
         if (len > 0)
             kscreen::print(text + start, len);
 
-        kscreen::update_cursor();
+        sync_scursor_coords();
+        sync_hwcursor();
     }
 
     void printc(char ch)
@@ -120,6 +153,5 @@ namespace kconsole
         }, nullptr, str.ptr(), args);
 
         va_end(args);
-        kscreen::update_cursor();
     }
 }

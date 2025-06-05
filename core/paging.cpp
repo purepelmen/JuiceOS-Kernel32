@@ -54,7 +54,7 @@ namespace kpaging
 
     void page_fault_handler(const kisr::regs_t& regs)
     {
-        kscreen::clear();
+        kconsole::clear();
         RAISE_ERROR("Page fault!");
     }
 }

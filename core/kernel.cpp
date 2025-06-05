@@ -38,7 +38,7 @@ extern "C" void kernel_main(void* multibootDataFromBootloader)
 
 void kernel_init()
 {
-    kscreen::clear();
+    kconsole::clear();
     kscreen::enable_cursor(0xE, 0xF);
 
     kheap::init();
