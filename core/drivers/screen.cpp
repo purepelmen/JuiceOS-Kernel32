@@ -36,9 +36,9 @@ namespace kscreen
         outargs.set_cursorXY(0, 0);
     }
 
-    void update_scroll()
+    void update_scroll(unsigned* y)
     {
-        if(outargs.cursor_y >= HEIGHT)
+        if(*y >= HEIGHT)
         {
             size_t hzLineInBytes = WIDTH * 2;
 
@@ -54,7 +54,7 @@ namespace kscreen
                 di[i + 1] = outargs.print_color;
             }
             
-            outargs.cursor_y = HEIGHT - 1;
+            *y = HEIGHT - 1;
         }
     }
 
@@ -91,7 +91,7 @@ namespace kscreen
             *posY += 1;
             *posX = 0;
         }
-        update_scroll();
+        update_scroll(posY);
 
         uint8* addressToPrint = VIDEO_MEMORY + (*posX * 2 + *posY * WIDTH * 2);
         addressToPrint[0] = ch;

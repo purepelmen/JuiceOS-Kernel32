@@ -6,6 +6,8 @@
 
 namespace kconsole
 {
+    const size_t TAB_SIZE = 4;
+
     const size_t INPUT_MAXCHARS = 100;
     static char* input_buffer = nullptr;
 
@@ -69,14 +71,22 @@ namespace kconsole
             {
                 if(i <= 0) continue;
 
-                scursor_step_back();
-                kscreen::printc(' ');
-                scursor_step_back();
+                char clearCh = input_buffer[--i];
+                if (clearCh == '\t')
+                {
+                    for (int j = 0; j < TAB_SIZE; j++)
+                        scursor_step_back();
+                }
+                else
+                {
+                    scursor_step_back();
+                    kscreen::printc(' ');
+                    scursor_step_back();
+                }
 
                 sync_scursor_coords();
                 sync_hwcursor();
 
-                i -= 1;
                 input_buffer[i] = 0x0;
                 continue;
             }
@@ -112,6 +122,18 @@ namespace kconsole
                     kscreen::outargs.cursor_y += 1;
                     kscreen::outargs.cursor_x = 0;
                     kscreen::update_scroll();
+
+                    start = i + 1;
+                }
+
+                if (ch == '\t')
+                {
+                    int len = i - start; 
+                    if (len > 0)
+                        kscreen::print(text + start, len);
+
+                    for (int j = 0; j < TAB_SIZE; j++)
+                        kscreen::printc(' ');
 
                     start = i + 1;
                 }

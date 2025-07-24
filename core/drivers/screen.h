@@ -23,7 +23,8 @@ namespace kscreen
     size_t height();
 
     void clear();
-    void update_scroll();
+    void update_scroll(unsigned* y);
+    inline void update_scroll() { update_scroll(&outargs.cursor_y); }
     
     void enable_hwcursor(uint8 cursor_start, uint8 cursor_end);
     void disable_hwcursor();
