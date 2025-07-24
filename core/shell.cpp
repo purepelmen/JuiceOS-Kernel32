@@ -446,13 +446,13 @@ void open_memdumper(void)
         if(key == 0x4D)
             // Right arrow
             memPtr += 0x100;
-        if(key == 0x4B)
+        if(key == 0x4B && (int) memPtr - 0x100 >= 0x00)
             // Left arrow
             memPtr -= 0x100;
         if(key == 0x50)
             // Down arrow
             memPtr += 0x1000;
-        if(key == 0x48)
+        if(key == 0x48 && (int) memPtr - 0x1000 >= 0x00)
             // Up arrow
             memPtr -= 0x1000;
         if(key == 0x2A)
