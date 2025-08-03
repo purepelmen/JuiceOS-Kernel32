@@ -18,6 +18,8 @@ static void open_memdumper(void);
 static void open_syslogs(void);
 static void open_debugger(void);
 
+void print_systemcpu(void);
+
 void kshell::open_console(void)
 {
     kscreen::clear();
@@ -59,8 +61,15 @@ void kshell::open_console(void)
 
         if(command == "system")
         {
-            kscreen::print_string("JuiceOS Kernel32 v" KERNEL_VERSION "\n\n");
+            kscreen::print_string("JuiceOS Kernel32 v" KERNEL_VERSION "\n");
+            print_systemcpu();
             continue;
+        }
+
+        if(command == "systemcpu")
+        {
+        	print_systemcpu();
+        	continue;
         }
 
         if(command == "exit")
@@ -100,6 +109,7 @@ void kshell::open_console(void)
             kscreen::print_string("REBOOT - Reboot your PC.\n");
             kscreen::print_string("SCANTEST - Print scancode of every pressed key.\n");
             kscreen::print_string("SYSTEM - Print system information.\n");
+            kscreen::print_string("SYSTEMCPU - Print CPU information.\n");
             kscreen::print_string("PCI - Print all PCI devices.\n");
             // kscreen::print_string("AHCIVER - Print AHCI specification version.\n");
             // kscreen::print_string("AHCIDEV - Print all AHCI ports and connected devices.\n");
@@ -630,4 +640,31 @@ void open_debugger(void)
         uint8 key = kps2::read_scancode(true);
         if(key == 0x01) return;
     }
+}
+
+void print_systemcpu(void) 
+{
+    char cpuinfo_buffer[49];
+    
+	// registers[0] -> eax
+	// registers[1] -> ebx
+	// registers[2] -> ecx
+	// registers[3] -> edx
+	int registers[4];
+
+	int cpuid_addr = 0x80000002;
+	
+    for(int i = 0; i < 3; i++) 
+    {
+    	cpuid_addr += i;
+        __asm__("cpuid" : "=a"(registers[0]), "=b"(registers[1]), "=c"(registers[2]), "=d"(registers[3]) : "a"(cpuid_addr));
+        
+        for(int j = 0; j < 4; j++)
+            ((int*)(cpuinfo_buffer + i * 16))[j] = registers[j];
+    }
+
+    cpuinfo_buffer[48] = '\0';
+    
+    kscreen::print_string(cpuinfo_buffer);
+    kscreen::print_string("\n\n");
 }
