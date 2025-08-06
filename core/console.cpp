@@ -208,11 +208,15 @@ namespace kconsole
         va_list args;
 
         va_start(args, str);
+        vprintf(str, args);
+        va_end(args);
+    }
+
+    void vprintf(string str, va_list args)
+    {
         vsprintf([](void* context, const char* portionPtr, int length) 
         {
             print(portionPtr, length);
         }, nullptr, str.ptr(), args);
-
-        va_end(args);
     }
 }

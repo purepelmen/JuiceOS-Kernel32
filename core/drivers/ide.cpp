@@ -71,6 +71,8 @@ namespace kide
             ata_register_device("SECONDARY MASTER", SECONDARY_CMD_IDE, false);
             ata_register_device("SECONDARY SLAVE", SECONDARY_CMD_IDE, true);
         }
+
+        kernel_log("IDE driver init completed. Registered %d ATA device(s).\n", deviceCount);
     }
 
     void ata_register_device(const char* name, uint16 busBase, bool isSlave)
@@ -111,7 +113,7 @@ namespace kide
 
         if (port_read8(BUS_CMD_STATUS(busBase)) == 0)
         {
-            kconsole::printf("[IDE] ATA Device (BUS=%x SLAVE=%d): drive is not connected.\n", busBase, isSlave);
+            kernel_log("[IDE] ATA Device (BUS=%x SLAVE=%d): drive is not connected.\n", busBase, isSlave);
             return false;
         }
 
@@ -119,11 +121,11 @@ namespace kide
         while (port_read8(BUS_CMD_STATUS(busBase)) & 1 << 7);
 
         device->type = ata_read_dev_type(busBase);
-        kconsole::printf("[IDE] ATA Device (BUS=%x SLAVE=%d) is detected as %s.\n", busBase, isSlave, ata_devtype_as_string(device->type));
+        kernel_log("[IDE] ATA Device (BUS=%x SLAVE=%d) is detected as %s.\n", busBase, isSlave, ata_devtype_as_string(device->type));
         
         if (device->type != AtaDevType::PATA && device->type != AtaDevType::SATA)
         {
-            kconsole::printf("Skipping non ATA or SATA device. Packet devices aren't supported yet.\n");
+            kernel_log("Skipping non ATA or SATA device. Packet devices aren't supported yet.\n");
             return false;
         }
 
@@ -132,14 +134,14 @@ namespace kide
 
         if (!readSuccess)
         {
-            kconsole::printf("IDENTIFY failed: pio read operation has not completed with success.\n");
+            kernel_log("IDENTIFY failed: pio read operation has not completed with success.\n");
             return false;
         }
-        kconsole::printf("IDENTIFY completed.\n");
+        kernel_log("\tIDENTIFY completed.\n");
         
         ata_analyze_identify(device, identifyData);
-        kconsole::printf("IDENTIFY Model: %s\n", device->model);
-        kconsole::printf("IDENTIFY: LBA48 supported=%d, Total addressable space=%dKB\n", (identifyData[83] & 1 << 10) != 0, device->totalAddressableSectors / 2);
+        kernel_log("\tIDENTIFY Model: %s\n", device->model);
+        kernel_log("\tIDENTIFY: LBA48 supported=%d, Addressable space=%dKB\n", (identifyData[83] & 1 << 10) != 0, device->totalAddressableSectors / 2);
 
         return true;
     }
@@ -197,7 +199,7 @@ namespace kide
                 status = port_read8(BUS_CMD_STATUS(busBase));
                 if (status & 1)
                 {
-                    kconsole::printf("[IDE] ERR flag set during reading sector number %d.\n", sectorIdx);
+                    kernel_log("[IDE] ERR flag set during reading sector number %d.\n", sectorIdx);
                     return false;
                 }
             } 

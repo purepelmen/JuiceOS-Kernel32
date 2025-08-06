@@ -23,6 +23,8 @@ static const char* bootloaderName = "__UNDEFINED";
 static char syslog_buffer[2048];
 static int syslog_length = 0;
 
+static bool syslog_printImmediately = true;
+
 static void kernel_init();
 static void kernel_analyze_multiboot_struct();
 
@@ -30,9 +32,7 @@ extern "C" void kernel_main(void* multibootDataFromBootloader)
 {
     multibootInfoStruct = multibootDataFromBootloader;
 
-    kernel_analyze_multiboot_struct();
     kernel_init();
-
     kshell::open_menu();
 }
 
@@ -40,6 +40,8 @@ void kernel_init()
 {
     kconsole::clear();
     kscreen::enable_hwcursor(0xE, 0xF);
+
+    kernel_analyze_multiboot_struct();
 
     kheap::init();
 
@@ -54,6 +56,7 @@ void kernel_init()
     kide::init();
     
     kernel_log("Kernel initialization completed.\n");
+    syslog_printImmediately = false;
 
     for (int i = 0; i < 40; i++)
     {
@@ -83,8 +86,8 @@ void kernel_analyze_multiboot_struct()
 void kernel_log(string str, ...)
 {
     va_list args;
-
     va_start(args, str);
+
     vsprintf([](void* context, const char* portionPtr, int length) 
     {
         if (syslog_length + length > sizeof(syslog_buffer) - 1)
@@ -93,9 +96,13 @@ void kernel_log(string str, ...)
         mem_copy(portionPtr, &syslog_buffer[syslog_length], length);
         syslog_length += length;
     }, nullptr, str.ptr(), args);
-    va_end(args);
-    
+
     syslog_buffer[syslog_length] = 0x0;
+    
+    if (syslog_printImmediately)
+        kconsole::vprintf(str, args);
+    
+    va_end(args);
 }
 
 bool kernel_render_logs(int pageIndex)

@@ -1,4 +1,5 @@
 #pragma once
+#include "stdarg.h"
 #include "string.h"
 
 /*
@@ -33,4 +34,5 @@ namespace kconsole
 
     /* Print a formated string. */
     void printf(string str, ...);
+    void vprintf(string str, va_list list);
 }

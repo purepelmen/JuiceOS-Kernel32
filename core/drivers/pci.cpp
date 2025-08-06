@@ -53,8 +53,6 @@ namespace kpci
         const int MAX_DEVICES = 100;
 
         devices = kheap::create_new_array<pci_device>(MAX_DEVICES);
-        // TODO: Probably it's not needed anymore. Delete it later.
-        // mem_fill((uint8*) devices, 0, sizeof(pci_device) * MAX_DEVICES);
 
         int device_index = 0;
         for(int bus = 0; bus < 256; bus++)
@@ -97,20 +95,7 @@ namespace kpci
 
     static void print_dev_info(pci_device& device)
     {
-        kconsole::printf("[PCI] Saving valid device (BSF=%d,%d,%d) with cl/subcl = %d,%d\n", device.bus, device.slot, device.function, 
+        kernel_log("[PCI] Found a valid device (BSF=%d,%d,%d) with cl/subcl = %d,%d\n", device.bus, device.slot, device.function, 
             device.classid, device.subclass);
-        
-        // kscreen::print_string("[PCI] Saving valid device (BSF=");
-        // kconsole::print_decimal(device.bus);
-        // kscreen::print_string(",");
-        // kconsole::print_decimal(device.slot);
-        // kscreen::print_string(",");
-        // kconsole::print_decimal(device.function);
-        
-        // kscreen::print_string(") with cl/subcl = ");
-        // kconsole::print_decimal(device.classid);
-        // kscreen::print_string(",");
-        // kconsole::print_decimal(device.subclass);
-        // kscreen::print_string("\n");
     }
 }
