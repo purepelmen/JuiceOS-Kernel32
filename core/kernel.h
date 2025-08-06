@@ -7,4 +7,4 @@
 /* Print new string to logs */
 void kernel_log(string str, ...);
 
-string kernel_read_logs();
+bool kernel_render_logs(int pageIndex);

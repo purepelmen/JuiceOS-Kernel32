@@ -464,10 +464,27 @@ void open_memdumper(void)
 
 void open_syslogs(void)
 {
-    kconsole::clear();
-    kconsole::print(kernel_read_logs().ptr());
+    int pageIndex = 0;
+    while (true)
+    {
+        kconsole::clear();
 
-    kps2::read_ascii();
+        bool isThereAreMorePages = kernel_render_logs(pageIndex);
+
+        uint8 key = kps2::read_scancode(true);
+        if (key == 0x01)
+            break;
+
+        // Down and Up arrow respectively.
+        if (key == 0x50 && isThereAreMorePages)
+        {
+            pageIndex++;
+        }
+        else if (key == 0x48 && pageIndex > 0)
+        {
+            pageIndex--;
+        }
+    }
 }
 
 static void printf_size(size_t bytes)

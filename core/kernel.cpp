@@ -55,6 +55,11 @@ void kernel_init()
     
     kernel_log("Kernel initialization completed.\n");
 
+    for (int i = 0; i < 40; i++)
+    {
+        kernel_log("Simple text: %d.\n", i);
+    }
+
     kconsole::printf("Press any key to continue...");
     kconsole::read_string();
 }
@@ -93,7 +98,18 @@ void kernel_log(string str, ...)
     syslog_buffer[syslog_length] = 0x0;
 }
 
-string kernel_read_logs()
+bool kernel_render_logs(int pageIndex)
 {
-    return string(syslog_buffer);
+    const size_t MAX_SCREENSPACE = kscreen::width() * (kscreen::height() - 1);
+    
+    int currentOffset = 0;
+    for (int i = 0; i < pageIndex; i++)
+    {
+        currentOffset += kconsole::calc_fit_substring(syslog_buffer + currentOffset, MAX_SCREENSPACE);
+    }
+
+    int chunkLength = kconsole::calc_fit_substring(syslog_buffer + currentOffset, MAX_SCREENSPACE);
+    kconsole::print(syslog_buffer + currentOffset, chunkLength);
+
+    return currentOffset + chunkLength < syslog_length;
 }
