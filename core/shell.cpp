@@ -20,6 +20,8 @@ static void open_memdumper(void);
 static void open_syslogs(void);
 static void open_debugger(void);
 
+static void print_systemcpu(void);
+
 void kshell::open_console(void)
 {
     kconsole::clear();
@@ -73,6 +75,14 @@ void console_handle(string command, bool* shouldContinue)
     if(command == "system")
     {
         kconsole::print("JuiceOS Kernel32 v" KERNEL_VERSION "\n");
+        print_systemcpu();
+
+        return;
+    }
+
+    if(command == "systemcpu")
+    {
+        print_systemcpu();
         return;
     }
 
@@ -438,13 +448,13 @@ void open_memdumper(void)
         if(key == 0x4D)
             // Right arrow
             memPtr += 0x100;
-        if(key == 0x4B)
+        if(key == 0x4B && (int) memPtr - 0x100 >= 0x00)
             // Left arrow
             memPtr -= 0x100;
         if(key == 0x50)
             // Down arrow
             memPtr += 0x1000;
-        if(key == 0x48)
+        if(key == 0x48 && (int) memPtr - 0x1000 >= 0x00)
             // Up arrow
             memPtr -= 0x1000;
         if(key == 0x2A)
@@ -597,4 +607,31 @@ void open_debugger(void)
     screen_printf("Heap located at: 0x%x", kheap::get_location_ptr());
 
     while (kps2::read_scancode(true) != 0x01);
+}
+
+void print_systemcpu(void) 
+{
+    char cpuinfo_buffer[49];
+    
+	// registers[0] -> eax
+	// registers[1] -> ebx
+	// registers[2] -> ecx
+	// registers[3] -> edx
+	int registers[4];
+
+	int cpuid_addr = 0x80000002;
+	
+    for(int i = 0; i < 3; i++) 
+    {
+    	cpuid_addr += i;
+        __asm__("cpuid" : "=a"(registers[0]), "=b"(registers[1]), "=c"(registers[2]), "=d"(registers[3]) : "a"(cpuid_addr));
+        
+        for(int j = 0; j < 4; j++)
+            ((int*)(cpuinfo_buffer + i * 16))[j] = registers[j];
+    }
+
+    cpuinfo_buffer[48] = '\0';
+    
+    kconsole::print(cpuinfo_buffer);
+    kconsole::print("\n");
 }
