@@ -50,6 +50,45 @@ namespace kconsole
         kscreen::outargs.print_color = cursor.color;
     }
 
+    int calc_fit_substring(const char* text, size_t screenSpaceLimit)
+    {
+        const size_t screenSpaceSize = kscreen::width() * kscreen::height();
+        unsigned screenPos = cursor.posY * kscreen::width() + cursor.posX;
+        
+        int actualSpaceLeft = screenSpaceSize - screenPos;
+        if (screenSpaceLimit > actualSpaceLeft)
+        {
+            screenSpaceLimit = actualSpaceLeft;
+        }
+        
+        const int maxScreenSpace = screenPos + screenSpaceLimit;
+
+        int i;
+        for (i = 0; text[i] != 0x0; i++)
+        {
+            char ch = text[i];
+
+            if (ch == '\n')
+            {
+                int decomposedCursorX = screenPos % kscreen::width();
+                screenPos += kscreen::width() - decomposedCursorX;
+            }
+            else if (ch == '\t')
+            {
+                screenPos += TAB_SIZE;
+            }
+            else
+            {
+                screenPos++;
+            }
+
+            if (screenPos > maxScreenSpace)
+                return i;
+        }
+
+        return i;
+    }
+
     string read_string()
     {
         if (input_buffer == 0)
