@@ -1,0 +1,23 @@
+What's the difference? Both are drivers. 
+
+kscreen is handling... the screen. It's more low-level than kconsole. 
+It mainly cares about framebuffer management and some useful utils like hardware cursor.
+In almost all cases it's better to use kconsole to print strings, and use kscreen when only necessary.
+Using it may be needed when *rendering* some data on the screen like tables, raw text or other. It also works faster.
+
+kconsole emulates console I/O. It allows to get input, or output a (possibly formatted) string, and it cares about
+special characters handling, what kscreen doesn't do as it simply copies string data to the framebuffer.
+kconsole analyzes strings before passing it to kscreen. It handles new lines, TABs and BACKSPACEs.
+
+----
+
+hwcursor? kscreen cursor coordinates? kconsole's cursor?
+
+Hardware cursor is the cursor you can see when you're running the kernel. You can control it via kscreen.
+
+kscreen itself maintains it own "screen cursor" in its `outargs`. This is simply to tell where to render chars or strings you'll print next.
+It's optional though, as you may directly specify the render position when calling putc/printc/print functions.
+
+Finally, kconsole maintains its `cursor_state` where it stores high-level cursor position which you probably want to control when you want to change
+where your next print/printf/print_hex/read_string and other high-level IO functions will write. It's convenient that it has separate coords,
+especially if you have interleaving rendering calls (which talk directly to kscreen) where you constantly move screen cursor to other areas of the screen.
