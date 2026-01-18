@@ -145,7 +145,7 @@ isr_handlers_start:
     IRQ           36     ; IRQ 4
     IRQ           37     ; IRQ 5
     IRQ           38     ; IRQ 6
-    IRQ           39     ; IRQ 7
+    IRQ           39     ; IRQ 7 (Spurious Interrupt!)
     IRQ           40     ; IRQ 8
     IRQ           41     ; IRQ 9
     IRQ           42     ; IRQ 10
