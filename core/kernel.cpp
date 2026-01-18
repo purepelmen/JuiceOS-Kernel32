@@ -20,8 +20,11 @@ static multiboot_tag* firstMutlibootTag;
 
 static const char* bootloaderName = "__UNDEFINED";
 
-static char syslog_buffer[2048];
-static int syslog_length = 0;
+const int SYSLOG_LENGTH = 2048;
+
+static char syslog_buffer[SYSLOG_LENGTH];
+static int syslog_writePtr = 0;
+static bool syslog_isWrapped = false;
 
 static bool syslog_printImmediately = true;
 
@@ -83,40 +86,81 @@ void kernel_analyze_multiboot_struct()
     }
 }
 
+static int min(int a, int b)
+{
+    return a < b ? a : b;
+}
+
+static int max(int a, int b)
+{
+    return a > b ? a : b;
+}
+
 void kernel_log(string str, ...)
 {
-    va_list args;
+    va_list args, args2;
     va_start(args, str);
+    va_copy(args2, args);
 
     vsprintf([](void* context, const char* portionPtr, int length) 
     {
-        if (syslog_length + length > sizeof(syslog_buffer) - 1)
-            return;
+        // Clamp, as the code below can't handle such very large log portions at once.
+        length = min(length, SYSLOG_LENGTH);
 
-        mem_copy(portionPtr, &syslog_buffer[syslog_length], length);
-        syslog_length += length;
+        int excess = max(0, syslog_writePtr + length - SYSLOG_LENGTH);
+        int firstPortionLength = length - excess;
+
+        mem_copy(portionPtr, &syslog_buffer[syslog_writePtr], firstPortionLength);
+        syslog_writePtr += firstPortionLength;
+        
+        if (excess > 0)
+        {
+            mem_copy(portionPtr + firstPortionLength, &syslog_buffer[0], excess);
+            syslog_writePtr = excess;
+            
+            syslog_isWrapped = true;
+        }
     }, nullptr, str.ptr(), args);
+    va_end(args);
 
-    syslog_buffer[syslog_length] = 0x0;
-    
     if (syslog_printImmediately)
         kconsole::vprintf(str, args);
-    
-    va_end(args);
+        
+    va_end(args2);
+}
+
+static char flatBuffer[SYSLOG_LENGTH + 1];
+static const char* flatten_logs()
+{
+    int destIndex = 0;
+    if (syslog_isWrapped)
+    {
+        int oldPortionLength = SYSLOG_LENGTH - syslog_writePtr;
+        mem_copy(&syslog_buffer[syslog_writePtr], &flatBuffer[0], oldPortionLength);
+        
+        destIndex += oldPortionLength;
+    }
+
+    mem_copy(&syslog_buffer[0], &flatBuffer[destIndex], syslog_writePtr);
+    destIndex += syslog_writePtr;
+
+    flatBuffer[destIndex] = 0x0;
+    return flatBuffer;
 }
 
 bool kernel_render_logs(int pageIndex)
 {
     const size_t MAX_SCREENSPACE = kscreen::width() * (kscreen::height() - 1);
     
+    const char* flattenLogs = flatten_logs();
     int currentOffset = 0;
     for (int i = 0; i < pageIndex; i++)
     {
-        currentOffset += kconsole::calc_fit_substring(syslog_buffer + currentOffset, MAX_SCREENSPACE);
+        currentOffset += kconsole::calc_fit_substring(flattenLogs + currentOffset, MAX_SCREENSPACE);
     }
 
-    int chunkLength = kconsole::calc_fit_substring(syslog_buffer + currentOffset, MAX_SCREENSPACE);
-    kconsole::print(syslog_buffer + currentOffset, chunkLength);
+    int chunkLength = kconsole::calc_fit_substring(flattenLogs + currentOffset, MAX_SCREENSPACE);
+    kconsole::print(flattenLogs + currentOffset, chunkLength);
 
-    return currentOffset + chunkLength < syslog_length;
+    return currentOffset + chunkLength < (syslog_isWrapped ? SYSLOG_LENGTH : syslog_writePtr);
 }
