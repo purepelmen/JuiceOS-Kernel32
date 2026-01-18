@@ -104,8 +104,12 @@ void kernel_log(string str, ...)
 
     vsprintf([](void* context, const char* portionPtr, int length) 
     {
-        // Clamp, as the code below can't handle such very large log portions at once.
-        length = min(length, SYSLOG_LENGTH);
+        // Clamp, as the code below can't handle such very large log portions.
+        if (length > SYSLOG_LENGTH)
+        {
+            portionPtr += length - SYSLOG_LENGTH;
+            length = SYSLOG_LENGTH;
+        }
 
         int excess = max(0, syslog_writePtr + length - SYSLOG_LENGTH);
         int firstPortionLength = length - excess;
