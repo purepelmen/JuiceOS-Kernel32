@@ -11,10 +11,10 @@ void mem_copy(const void* source, void* destination, uint32 bytes_amount)
         ((uint8*)destination)[i] = ((uint8*)source)[i];
 }
 
-bool mem_compare(uint8* first, uint8* seconds, uint32 bytes_amount)
+bool mem_compare(const void* first, const void* seconds, uint32 bytes_amount)
 {
     for(int i = 0; i < bytes_amount; i++)
-        if(first[i] != seconds[i]) return false;
+        if(((uint8*)first)[i] != ((uint8*)seconds)[i]) return false;
 
     return true;
 }
