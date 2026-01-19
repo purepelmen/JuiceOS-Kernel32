@@ -4,6 +4,7 @@
 
 #include <kernel.h>
 #include <console.h>
+#include <heap.h>
 
 #define CONTROL_PORT_OFFSET 0x206
 
@@ -41,6 +42,22 @@ namespace kide
     static void ata_softreset(uint16 busBase);
     static AtaDevType ata_read_dev_type(uint16 busBase);
 
+    class IDEDeviceImpl : public kstorage::BlockDevice
+    {
+    private:
+        AtaDevice& ataDev;
+
+    public:
+        IDEDeviceImpl(AtaDevice& ataDev) : ataDev(ataDev) {}
+
+        void read(uint32 start, uint8 count, uint16* outBuffer) override
+        {
+            ata_read_sector(ataDev.bus, ataDev.isSlave, start, count, outBuffer);
+        }
+
+        uint32 get_total_sectors() override { return ataDev.totalAddressableSectors; }
+    };
+
     void init()
     {
         kpci::pci_device* ide = kpci::find_device(0x01, 0x01);
@@ -70,6 +87,12 @@ namespace kide
         {
             ata_register_device("SECONDARY MASTER", SECONDARY_CMD_IDE, false);
             ata_register_device("SECONDARY SLAVE", SECONDARY_CMD_IDE, true);
+        }
+
+        for (int i = 0; i < deviceCount; i++)
+        {
+            AtaDevice& device = kide::devices[i];
+            kstorage::register_device(kheap::create_new<IDEDeviceImpl>(device));
         }
 
         kernel_log("IDE driver init completed. Registered %d ATA device(s).\n", deviceCount);

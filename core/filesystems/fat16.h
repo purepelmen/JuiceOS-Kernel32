@@ -1,6 +1,8 @@
 #pragma once
 #include "../stdlib.h"
 
+#include <drivers/storage.h>
+
 #define FATTR_READONLY     0x01
 #define FATTR_HIDDEN       0x02
 #define FATTR_SYSTEM       0x04
@@ -102,4 +104,6 @@ namespace kfat
         uint8 calc_checksum(const uint8* shortname);
         uint8* read(uint32 lba);
     };
+
+    kstorage::FileSystem* probe(kstorage::BlockDevice* drive);
 }

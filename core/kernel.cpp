@@ -14,6 +14,7 @@
 #include "drivers/ps2.h"
 #include "drivers/pci.h"
 #include "drivers/ide.h"
+#include "drivers/storage.h"
 
 static void* multibootInfoStruct;
 static multiboot_tag* firstMutlibootTag;
@@ -57,6 +58,9 @@ void kernel_init()
     
     kpci::init();
     kide::init();
+
+    // This should be the last step as this is the only place where automount is perfomed AFTER disk drivers registered all found drives.
+    kstorage::init();
     
     kernel_log("Kernel initialization completed.\n");
     syslog_printImmediately = false;

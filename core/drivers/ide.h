@@ -1,5 +1,7 @@
 #pragma once
+
 #include <stdint.h>
+#include "storage.h"
 
 namespace kide
 {

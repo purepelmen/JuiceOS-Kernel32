@@ -248,4 +248,9 @@ namespace kfat
 
         return buffer;
     }
+    
+    kstorage::FileSystem *probe(kstorage::BlockDevice *drive)
+    {
+        return nullptr;
+    }
 }
