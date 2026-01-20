@@ -203,7 +203,7 @@ namespace kcd
 
     public:
         ISO9660(const VolumeInfo& info) : volumeInfo(info) {}
-        void read_dir(const char* path, kstorage::ReadDirCallback callback) override;
+        void read_dir(const char* path, kstorage::ReadDirCallback callback, void* context) override;
 
     private:
         iso9660_direntry* resolve_path_part(uint32 parentLocationLBA, uint32 parentDataLength, const char* part);

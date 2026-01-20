@@ -44,7 +44,7 @@ namespace kstorage
         size_t size;
     };
 
-    typedef bool (*ReadDirCallback)(DirEntry& entry);
+    typedef bool (*ReadDirCallback)(void* context, DirEntry& entry);
 
     class FileSystem
     {
@@ -60,7 +60,7 @@ namespace kstorage
 
         BlockDevice* get_device() const { return device; }
 
-        virtual void read_dir(const char* path, ReadDirCallback callback) = 0;
+        virtual void read_dir(const char* path, ReadDirCallback callback, void* context) = 0;
 
     protected:
         virtual void on_init() = 0;

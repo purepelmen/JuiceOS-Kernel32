@@ -68,7 +68,7 @@ namespace kcd
     {
     }
 
-    void ISO9660::read_dir(const char* path, kstorage::ReadDirCallback callback)
+    void ISO9660::read_dir(const char* path, kstorage::ReadDirCallback callback, void* context)
     {
         auto rootDirEntry = volumeInfo.getRootDirEntry();
         char filename[kstorage::MAX_FILENAME_SIZE];
@@ -124,7 +124,7 @@ namespace kcd
                 currentEntry.type = dirEntry->flags & 0x02 ? kstorage::DirEntryType::DIRECTORY : kstorage::DirEntryType::FILE;
                 currentEntry.size = dirEntry->dataLength;
 
-                if (!callback(currentEntry))
+                if (!callback(context, currentEntry))
                     return;
             }
 

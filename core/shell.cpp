@@ -317,7 +317,7 @@ void console_handle(string command, bool* shouldContinue)
         const char* path = kconsole::read_string().ptr();
 
         kstorage::FileSystem* fileSystem = kstorage::volumes[selectedVolume];
-        fileSystem->read_dir(path, [](kstorage::DirEntry& entry)
+        fileSystem->read_dir(path, [](void* context, kstorage::DirEntry& entry)
         {
             string typeStr = entry.type == kstorage::DirEntryType::DIRECTORY ? "[DIR]" : "     ";
 
@@ -325,7 +325,7 @@ void console_handle(string command, bool* shouldContinue)
             kconsole::cursor.posX = 45;
             kconsole::printf("%db\n", entry.size);
             return true;
-        });
+        }, nullptr);
 
         return;
     }
