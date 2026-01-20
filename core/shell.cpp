@@ -9,6 +9,7 @@
 #include "drivers/ps2.h"
 #include "drivers/pci.h"
 #include "drivers/ide.h"
+#include "drivers/storage.h"
 
 #include "filesystems/fat16.h"
 
@@ -282,6 +283,32 @@ void console_handle(string command, bool* shouldContinue)
     {
         kconsole::printf("K32 Partition files\n\n");
         fat_pt2->dir(0);
+
+        return;
+    }
+    
+    if (command == "isodir")
+    {
+        kconsole::printf("Volume number: ");
+        
+        unsigned volumeNumber = str_to_uint(kconsole::read_string().ptr());
+        if (volumeNumber >= kstorage::volumeCount)
+        {
+            kconsole::printf("No such volume found, there's only %d of them.\n", kstorage::volumeCount);
+            return;
+        }
+
+        kconsole::printf("Path: ");
+        const char* path = kconsole::read_string().ptr();
+
+        kstorage::FileSystem* fileSystem = kstorage::volumes[volumeNumber];
+        fileSystem->read_dir(path, [](kstorage::DirEntry& entry)
+        {
+            string typeStr = entry.type == kstorage::DirEntryType::DIRECTORY ? "[DIR]" : "     ";
+
+            kconsole::printf("%s %s (size: %db)\n", typeStr, entry.name, entry.size);
+            return true;
+        });
 
         return;
     }

@@ -82,6 +82,8 @@ namespace kstorage
 
         volume->init(device);
         volumes[volumeCount++] = volume;
+
+        kernel_log("[kstorage] Mounted new device: blk dev size = %dKB.\n", device->get_total_sectors() * 512 / 1024);
     }
 
     void analyze_partitioning(DriveInfo& drive)

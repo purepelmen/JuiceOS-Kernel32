@@ -28,10 +28,28 @@ namespace kstorage
         uint32 get_total_sectors() override { return size; }
     };
 
+    const size_t MAX_FILENAME_SIZE = 256;
+
+    enum class DirEntryType
+    {
+        DIRECTORY,
+        FILE
+    };
+
+    struct DirEntry
+    {
+        DirEntryType type;
+        
+        char name[MAX_FILENAME_SIZE];
+        size_t size;
+    };
+
+    typedef bool (*ReadDirCallback)(DirEntry& entry);
+
     class FileSystem
     {
     protected:
-        BlockDevice* device;
+        BlockDevice* device = nullptr;
     
     public:
         void init(BlockDevice* device)
@@ -40,7 +58,9 @@ namespace kstorage
             on_init();
         }
 
-        virtual void read_dir() = 0;
+        BlockDevice* get_device() const { return device; }
+
+        virtual void read_dir(const char* path, ReadDirCallback callback) = 0;
 
     protected:
         virtual void on_init() = 0;
