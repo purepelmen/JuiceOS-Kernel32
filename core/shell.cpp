@@ -321,7 +321,9 @@ void console_handle(string command, bool* shouldContinue)
         {
             string typeStr = entry.type == kstorage::DirEntryType::DIRECTORY ? "[DIR]" : "     ";
 
-            kconsole::printf("%s %s (size: %db)\n", typeStr, entry.name, entry.size);
+            kconsole::printf("%s %s", typeStr, entry.name);
+            kconsole::cursor.posX = 45;
+            kconsole::printf("%db\n", entry.size);
             return true;
         });
 

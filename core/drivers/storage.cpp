@@ -43,6 +43,7 @@ namespace kstorage
     void init()
     {
         // Analyze the partitioning
+        kernel_log("[kstorage] Analyzing partitiong for %d registered drive(s)...\n", drivesCount);
         for (int i = 0; i < drivesCount; i++)
         {
             DriveInfo& drive = drives[i];
@@ -50,6 +51,7 @@ namespace kstorage
         }
 
         // Auto-mount everything.
+        kernel_log("[kstorage] Trying to automount all found drives and partitions...\n", drivesCount);
         for (int i = 0; i < drivesCount; i++)
         {
             DriveInfo& drive = drives[i];
@@ -75,10 +77,7 @@ namespace kstorage
         
         FileSystem* volume = probe_device(device);
         if (volume == nullptr)
-        {
-            kernel_log("kstorage: Failed to mount a block device (total size = %dKB). No suitable FS handler is found.\n", device->get_total_sectors() * 512 / 1024);
             return;
-        }
 
         volume->init(device);
         volumes[volumeCount++] = volume;

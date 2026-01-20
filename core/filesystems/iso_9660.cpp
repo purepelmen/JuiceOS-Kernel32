@@ -36,7 +36,6 @@ namespace kcd
                 break;
             }
 
-            kernel_log("kcd: found volume desc = 0x%x.\n", volumeDesc->type);
             if (volumeDesc->type == iso9660_volumedesctype::PRIMARY_DESC_VOLUME)
             {
                 if (volumeInfo.hasPVD)
