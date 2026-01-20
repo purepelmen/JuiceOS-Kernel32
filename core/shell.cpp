@@ -14,6 +14,7 @@
 #include "filesystems/fat16.h"
 
 kfat::FAT16* fat_pt2;
+static unsigned selectedVolume = 0;
 
 static void console_handle(string command, bool* shouldContinue);
 
@@ -131,6 +132,8 @@ void console_handle(string command, bool* shouldContinue)
         // kconsole::print("AHCIRD - Read first sector from AHCI port #0.\n");
         kconsole::print("IDEDEV - Print all ATA devices from IDE driver.\n");
         kconsole::print("IDERD - Read first sector from the first IDE device.\n");
+        kconsole::print("SETVOLUME - Set current volume for the shell.\n");
+        kconsole::print("DIR - Print directory contents at path.\n");
 
         return;
     }
@@ -286,8 +289,8 @@ void console_handle(string command, bool* shouldContinue)
 
         return;
     }
-    
-    if (command == "isodir")
+
+    if (command == "setvolume")
     {
         kconsole::printf("Volume number: ");
         
@@ -298,10 +301,22 @@ void console_handle(string command, bool* shouldContinue)
             return;
         }
 
+        selectedVolume = volumeNumber;
+        return;
+    }
+    
+    if (command == "dir")
+    {
+        if (selectedVolume >= kstorage::volumeCount)
+        {
+            kconsole::printf("Currently selected volume (#%d) is not mounted.\n", selectedVolume);
+            return;
+        }
+
         kconsole::printf("Path: ");
         const char* path = kconsole::read_string().ptr();
 
-        kstorage::FileSystem* fileSystem = kstorage::volumes[volumeNumber];
+        kstorage::FileSystem* fileSystem = kstorage::volumes[selectedVolume];
         fileSystem->read_dir(path, [](kstorage::DirEntry& entry)
         {
             string typeStr = entry.type == kstorage::DirEntryType::DIRECTORY ? "[DIR]" : "     ";
