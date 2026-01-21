@@ -16,13 +16,58 @@
 kfat::FAT16* fat_pt2;
 static unsigned selectedVolume = 0;
 
-static void console_handle(string command, bool* shouldContinue);
+static void console_handle(string command, int argc, char** argv, bool* shouldContinue);
 
 static void open_memdumper(void);
 static void open_syslogs(void);
 static void open_debugger(void);
 
 static void print_systemcpu(void);
+
+static void parse_args(const char* source, char* outContent, int maxOutArgv, char** outArgv, int& outArgc)
+{
+    char* curArg = nullptr;
+
+    outArgc = 0;
+    int destIdx = 0;
+    for (int i = 0; source[i] != 0x0; i++)
+    {
+        char ch = source[i];
+        if (ch == ' ')
+        {
+            if (curArg != nullptr)
+            {
+                outContent[destIdx++] = 0x0;
+                outArgv[outArgc++] = curArg;
+
+                curArg = nullptr;
+
+                if (outArgc >= maxOutArgv)
+                    break;
+            }
+
+            continue;
+        }
+
+        if (curArg == nullptr)
+            curArg = outContent + i;
+
+        outContent[destIdx++] = ch;
+    }
+
+    if (curArg != nullptr && outArgc < maxOutArgv)
+    {
+        outContent[destIdx++] = 0x0;
+        outArgv[outArgc++] = curArg;
+
+        curArg = nullptr;
+    }
+}
+
+static char consoleParsedArgvContent[kconsole::INPUT_MAXCHARS + 1]; 
+
+const int MAX_CONSOLE_PARSED_ARGV = 60;
+static char* consoleParsedArgv[MAX_CONSOLE_PARSED_ARGV];
 
 void kshell::open_console(void)
 {
@@ -35,7 +80,15 @@ void kshell::open_console(void)
         kconsole::print("PC:>>");
         kconsole::cursor.color = KSCREEN_STDCOLOR;
 
-        string command = kconsole::read_string();
+        string input = kconsole::read_string();
+        
+        int argc;
+        parse_args(input.ptr(), consoleParsedArgvContent, MAX_CONSOLE_PARSED_ARGV, consoleParsedArgv, argc);
+
+        if (argc == 0)
+            continue;
+
+        string command = consoleParsedArgv[0];
         command.to_lower(command);
 
         if(command.length() == 0)
@@ -47,12 +100,12 @@ void kshell::open_console(void)
         if(command == "\x1B")
             return;
 
-        console_handle(command, &shouldContinue);
+        console_handle(command, argc - 1, ((char**)consoleParsedArgv) + 1, &shouldContinue);
         kconsole::printc('\n');
     }
 }
 
-void console_handle(string command, bool* shouldContinue)
+void console_handle(string command, int argc, char** argv, bool* shouldContinue)
 {
     if(command == "hello")
     {
@@ -292,9 +345,14 @@ void console_handle(string command, bool* shouldContinue)
 
     if (command == "setvolume")
     {
-        kconsole::printf("Volume number: ");
+        const char* input = argv[0];
+        if (argc < 1)
+        {
+            kconsole::printf("Volume number: ");
+            input = kconsole::read_string().ptr();
+        }
         
-        unsigned volumeNumber = str_to_uint(kconsole::read_string().ptr());
+        unsigned volumeNumber = str_to_uint(input);
         if (volumeNumber >= kstorage::volumeCount)
         {
             kconsole::printf("No such volume found, there's only %d of them.\n", kstorage::volumeCount);
@@ -313,13 +371,17 @@ void console_handle(string command, bool* shouldContinue)
             return;
         }
 
-        kconsole::printf("Path: ");
-        const char* path = kconsole::read_string().ptr();
+        const char* path = argv[0];
+        if (argc < 1)
+        {
+            kconsole::printf("Path: ");
+            path = kconsole::read_string().ptr();
+        }
 
         kstorage::FileSystem* fileSystem = kstorage::volumes[selectedVolume];
         fileSystem->read_dir(path, [](void* context, kstorage::DirEntry& entry)
         {
-            string typeStr = entry.type == kstorage::DirEntryType::DIRECTORY ? "[DIR]" : "     ";
+            const char* typeStr = entry.type == kstorage::DirEntryType::DIRECTORY ? "[DIR]" : "     ";
 
             kconsole::printf("%s %s", typeStr, entry.name);
             kconsole::cursor.posX = 45;
