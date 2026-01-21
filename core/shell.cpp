@@ -26,9 +26,15 @@ static void print_systemcpu(void);
 
 static void parse_args(const char* source, char* outContent, int maxOutArgv, char** outArgv, int& outArgc)
 {
+    if (maxOutArgv < 1)
+        return;
+    
     char* curArg = nullptr;
-
     outArgc = 0;
+
+    // Allocating space for nullptr at outArgv[maxOutArgv].
+    maxOutArgv -= 1;
+    
     int destIdx = 0;
     for (int i = 0; source[i] != 0x0; i++)
     {
@@ -37,13 +43,13 @@ static void parse_args(const char* source, char* outContent, int maxOutArgv, cha
         {
             if (curArg != nullptr)
             {
+                if (outArgc >= maxOutArgv)
+                    break;
+                
                 outContent[destIdx++] = 0x0;
                 outArgv[outArgc++] = curArg;
 
                 curArg = nullptr;
-
-                if (outArgc >= maxOutArgv)
-                    break;
             }
 
             continue;
@@ -62,6 +68,8 @@ static void parse_args(const char* source, char* outContent, int maxOutArgv, cha
 
         curArg = nullptr;
     }
+
+    outArgv[outArgc] = nullptr;
 }
 
 static char consoleParsedArgvContent[kconsole::INPUT_MAXCHARS + 1]; 
