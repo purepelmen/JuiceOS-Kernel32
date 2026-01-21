@@ -7,11 +7,9 @@
 namespace kconsole
 {
     const size_t TAB_SIZE = 4;
-
-    const size_t INPUT_MAXCHARS = 100;
-    static char* input_buffer = nullptr;
-
     struct cursor_state cursor;
+
+    static char* input_buffer = nullptr;
 
     void clear()
     {
@@ -91,20 +89,25 @@ namespace kconsole
 
     string read_string()
     {
-        if (input_buffer == 0)
+        if (input_buffer == nullptr)
             input_buffer = kheap::alloc_casted<char>(INPUT_MAXCHARS + 1);
 
+        read_string(input_buffer, INPUT_MAXCHARS);
+        return string(input_buffer);
+    }
+
+    void read_string(char* outInput, size_t maxInputLength)
+    {
         update_scursor();
-        for (int i = 0; true; )
+
+        int i = 0;
+        while (true)
         {
             uint8 key = kps2::read_ascii();
             if (key == 0x0) continue;
             
             if (key == 0xA)
-            {
-                input_buffer[i] = 0x0;
                 break;
-            }
 
             if (key == 0x08)
             {
@@ -130,14 +133,14 @@ namespace kconsole
                 continue;
             }
             
-            if (i >= INPUT_MAXCHARS) continue;
+            if (i >= maxInputLength) continue;
             
             printc(key);
             input_buffer[i++] = key;
         }
+        input_buffer[i] = 0x0;
 
         printc(0xA);
-        return string(input_buffer);
     }
 
     void print(const char* text, size_t maxLength)

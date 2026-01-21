@@ -14,6 +14,7 @@ namespace kconsole
         uint8 color;
     };
 
+    const size_t INPUT_MAXCHARS = 100;
     extern struct cursor_state cursor;
 
     void clear();
@@ -26,6 +27,7 @@ namespace kconsole
     /* Read input until the Escape or Enter key is pressed, then returns the input as a string. Copy the result after calling,
         the output string is reused every time this function is called! */
     string read_string();
+    void read_string(char* outInput, size_t maxInputLength);
 
     void print(const char* text, size_t maxLength = 0xFFFF);
     void printc(char ch);
