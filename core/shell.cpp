@@ -35,11 +35,12 @@ static void parse_args(const char* source, char* outContent, int maxOutArgv, cha
     // Allocating space for nullptr at outArgv[maxOutArgv].
     maxOutArgv -= 1;
     
+    bool hasOpenedQuotes = false;
     int destIdx = 0;
     for (int i = 0; source[i] != 0x0; i++)
     {
         char ch = source[i];
-        if (ch == ' ')
+        if (ch == ' ' && !hasOpenedQuotes)
         {
             if (curArg != nullptr)
             {
@@ -54,9 +55,27 @@ static void parse_args(const char* source, char* outContent, int maxOutArgv, cha
 
             continue;
         }
+        else if (ch == '"')
+        {
+            hasOpenedQuotes = !hasOpenedQuotes;
+            continue;
+        }
 
         if (curArg == nullptr)
-            curArg = outContent + i;
+            curArg = outContent + destIdx;
+
+        if (ch == '\\')
+        {
+            i += 1;
+            ch = source[i];
+
+            if (ch == '"' || ch == '\\')
+                outContent[destIdx++] = ch;
+            else if (ch == 0x0)
+                break;
+            
+            continue;
+        }
 
         outContent[destIdx++] = ch;
     }
@@ -397,6 +416,16 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
             return true;
         }, nullptr);
 
+        return;
+    }
+
+    if (command == "printargs")
+    {
+        for (char** argIter = argv; *argIter != nullptr; argIter++)
+        {
+            kconsole::printf("'%s'\n", *argIter);
+        }
+        
         return;
     }
     
