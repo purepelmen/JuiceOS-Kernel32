@@ -15,7 +15,7 @@ gen-iso: build-core
 
 build-core:
 	@echo "Configuring Kernel32-Core CMake project and building..."
-	@cmake -S core -B $(K32CORE_ARTIFACTS) -G Ninja
+	@cmake -S core -B $(K32CORE_ARTIFACTS) -G Ninja -DCMAKE_BUILD_TYPE=Debug
 	@ninja -C $(K32CORE_ARTIFACTS)
 	
 	@echo "Linking the output K32CORE executable..."
