@@ -419,6 +419,48 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         return;
     }
 
+    if (command == "readfile")
+    {
+        if (selectedVolume >= kstorage::volumeCount)
+        {
+            kconsole::printf("Currently selected volume (#%d) is not mounted.\n", selectedVolume);
+            return;
+        }
+        
+        const char* path = argv[0];
+        if (argc < 1)
+        {
+            kconsole::printf("Path: ");
+            path = kconsole::read_string().ptr();
+        }
+
+        kstorage::FileSystem* fileSystem = kstorage::volumes[selectedVolume];
+
+        kstorage::FileState fileState;
+        if (!fileSystem->resolve_path(path, fileState))
+        {
+            kconsole::printf("No such file found.\n");
+            return;
+        }
+
+        char buff[256];
+        while (true)
+        {
+            size_t actuallyRead = fileSystem->read(fileState, buff, 256);
+            kconsole::print(buff, actuallyRead);
+
+            if (fileState.is_eof())
+                break;
+
+            uint8 key = kps2::read_ascii();
+            if (key == '\x1B')
+                break;
+        }
+
+        kconsole::printc('\n');
+        return;
+    }
+
     if (command == "printargs")
     {
         for (char** argIter = argv; *argIter != nullptr; argIter++)
