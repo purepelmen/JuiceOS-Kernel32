@@ -46,6 +46,17 @@ namespace kstorage
 
     typedef bool (*ReadDirCallback)(void* context, DirEntry& entry);
 
+    struct FileState
+    {
+        uint32 inode;
+        uint32 size;
+        uint8 flags;
+
+        size_t position = 0;
+
+        size_t is_eof() const { return size - position <= 0; }
+    };
+
     class FileSystem
     {
     protected:
@@ -60,6 +71,8 @@ namespace kstorage
 
         BlockDevice* get_device() const { return device; }
 
+        virtual bool resolve_path(const char* path, FileState& state) = 0;
+        virtual size_t read(FileState& state, char* buffer, size_t length) = 0;
         virtual void read_dir(const char* path, ReadDirCallback callback, void* context) = 0;
 
     protected:

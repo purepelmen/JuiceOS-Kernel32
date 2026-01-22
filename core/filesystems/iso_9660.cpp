@@ -68,12 +68,13 @@ namespace kcd
     {
     }
 
-    void ISO9660::read_dir(const char* path, kstorage::ReadDirCallback callback, void* context)
+    bool ISO9660::resolve_path(const char* path, kstorage::FileState& state)
     {
         auto rootDirEntry = volumeInfo.getRootDirEntry();
         char filename[kstorage::MAX_FILENAME_SIZE];
 
         uint32 parentLocationLBA = rootDirEntry->locationLBA, parentDataLength = rootDirEntry->dataLength;
+        const iso9660_direntry* last = rootDirEntry;
 
         int pathIdx = 0;
         while (path[pathIdx] != 0x0)
@@ -90,23 +91,75 @@ namespace kcd
             if (filename[0] == 0x0)
                 continue;
 
-            kcd::iso9660_direntry* resolved = resolve_path_part(parentLocationLBA, parentDataLength, filename);
+            if (!(last->flags & 0x02))
+            {
+                kconsole::printf("Found unresolvable part: '%s' (accessing a file like a directory).\n", filename);
+                return false;
+            }
+
+            iso9660_direntry* resolved = resolve_path_part(parentLocationLBA, parentDataLength, filename);
             if (resolved == nullptr)
             {
                 kconsole::printf("Found unresolvable part: '%s'.\n", filename);
-                return;
+                return false;
             }
 
             parentLocationLBA = resolved->locationLBA;
             parentDataLength = resolved->dataLength;
+            last = resolved;
+        }
+
+        state.inode = last->locationLBA;
+        state.size = last->dataLength;
+        state.flags = last->length;
+        state.position = 0;
+        return true;
+    }
+
+    size_t ISO9660::read(kstorage::FileState& state, char* buffer, size_t length)
+    {
+        size_t initialPos = state.position;
+        while (length > 0 && (state.size - state.position) > 0)
+        {
+            device->read(CD_SECTOR(state.inode + (state.position / COMMON_LBA_SIZE)), 4, (uint16*)tempReadBuffer);
+            
+            size_t start = state.position % COMMON_LBA_SIZE;
+            size_t leftToTheEndOfSector = COMMON_LBA_SIZE - start;
+
+            size_t copyPortionSize = state.size - state.position;
+            if (copyPortionSize > leftToTheEndOfSector)
+                copyPortionSize = leftToTheEndOfSector;
+            if (copyPortionSize > length)
+                copyPortionSize = length;
+
+            mem_copy(tempReadBuffer + start, buffer, copyPortionSize);
+            buffer += copyPortionSize;
+
+            state.position += copyPortionSize;
+            length -= copyPortionSize;
+        }
+
+        return state.position - initialPos;
+    }
+
+    void ISO9660::read_dir(const char* path, kstorage::ReadDirCallback callback, void* context)
+    {
+        kstorage::FileState fileState;
+        if (!resolve_path(path, fileState))
+            return;
+
+        if (!(fileState.flags & 0x02))
+        {
+            kconsole::printf("Path '%s' is not a directory.\n", path);
+            return;
         }
 
         kstorage::DirEntry currentEntry{};
 
         int currSector = 0;
-        while (currSector * COMMON_LBA_SIZE < parentDataLength)
+        while (currSector * COMMON_LBA_SIZE < fileState.size)
         {
-            device->read(CD_SECTOR(parentLocationLBA + currSector), 4, (uint16*)tempReadBuffer);
+            device->read(CD_SECTOR(fileState.inode + currSector), 4, (uint16*)tempReadBuffer);
 
             int i = 0;
             while (i < COMMON_LBA_SIZE)
@@ -150,12 +203,9 @@ namespace kcd
                 if (dirEntry->length == 0x0)
                     break;
 
-                if (dirEntry->flags & 0x02)
-                {
-                    convert_iso9660_filename((char*) &dirEntry->filenameStartByte, dirEntry->filenameSize, resultFilename);
-                    if (string(part) == resultFilename)
-                        return dirEntry;
-                }
+                convert_iso9660_filename((char*) &dirEntry->filenameStartByte, dirEntry->filenameSize, resultFilename);
+                if (string(part) == resultFilename)
+                    return dirEntry;
 
                 i += dirEntry->length;
             }
