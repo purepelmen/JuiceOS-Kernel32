@@ -15,7 +15,7 @@ class ConfigVariant:
         self.flags: list[str] = []
 
 class RunCommandBuilder:
-    DEFAULT_QEMU_EXEC = "qemu-system-x86_64"
+    DEFAULT_QEMU_EXEC = "qemu-system-i386"
 
     def __init__(self):
         self.misc_props: dict[str, str] = {}
