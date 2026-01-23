@@ -244,7 +244,7 @@ namespace kfat
         // kahci::read(dev_port, lba, 0, 1, (uint16*) buffer);
 
         kide::AtaDevice device = kide::devices[dev_port];
-        kide::ata_read_sector(device.bus, device.isSlave, lba, 1, (uint16*)buffer);
+        kide::ata_read_sector(device.addr, device.isSlave, lba, 1, (uint16*)buffer);
 
         return buffer;
     }

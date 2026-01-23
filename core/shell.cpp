@@ -335,7 +335,7 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         kide::AtaDevice* device = &kide::devices[deviceNum];
 
         uint8 buff[512];
-        if (kide::ata_read_sector(device->bus, device->isSlave, 0, 1, (uint16*)buff))
+        if (kide::ata_read_sector(device->addr, device->isSlave, 0, 1, (uint16*)buff))
         {
             for(int i = 0; i < 256; i++)
             {

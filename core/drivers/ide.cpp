@@ -22,25 +22,25 @@
 #define BUS_CMD_STATUS(base) base + 7
 #define BUS_CMD_COMMAND(base) base + 7
 
-#define BUS_CTRL_DEVCONTROL(base) base + CONTROL_PORT_OFFSET + 0
+#define BUS_CTL_DEVCONTROL(base) base + 0
 
 namespace kide
 {
     AtaDevice devices[4];
     int deviceCount = 0;
 
-    static void ata_register_device(const char* name, uint16 busBase, bool isSlave);
+    static void ata_register_device(const char* name, AtaBusAddr busAddr, bool isSlave);
 
     static bool ata_identify(AtaDevice* outDevice);
     static void ata_analyze_identify(AtaDevice* device, uint16* identifyData);
-    static bool ata_pio_read_poll(uint16 busBase, uint16* buffer, uint8 sectorCount = 1);
+    static bool ata_pio_read_poll(AtaBusAddr busAddr, uint16* buffer, uint8 sectorCount = 1);
 
     // Selects the specified drive on the specified bus and waits for it to switch. Optionally sets the head number or the highest last 4 bits of LBA.
-    static void ata_select_drive(uint16 busBase, bool isSlave, uint8 headOrLBA24_27_bits = 0);
+    static void ata_select_drive(AtaBusAddr busAddr, bool isSlave, uint8 headOrLBA24_27_bits = 0);
 
     // Resets both the Master and Slave drive on the bus.
-    static void ata_softreset(uint16 busBase);
-    static AtaDevType ata_read_dev_type(uint16 busBase);
+    static void ata_softreset(AtaBusAddr busAddr);
+    static AtaDevType ata_read_dev_type(AtaBusAddr busAddr);
 
     class IDEDeviceImpl : public kstorage::BlockDevice
     {
@@ -52,7 +52,7 @@ namespace kide
 
         void read(uint32 start, uint8 count, uint16* outBuffer) override
         {
-            ata_read_sector(ataDev.bus, ataDev.isSlave, start, count, outBuffer);
+            ata_read_sector(ataDev.addr, ataDev.isSlave, start, count, outBuffer);
         }
 
         uint32 get_total_sectors() override { return ataDev.totalAddressableSectors; }
@@ -74,8 +74,8 @@ namespace kide
         }
         else
         {
-            ata_register_device("PRIMARY MASTER", PRIMARY_CMD_IDE, false);
-            ata_register_device("PRIMARY SLAVE", PRIMARY_CMD_IDE, true);
+            ata_register_device("PRIMARY MASTER", { PRIMARY_CMD_IDE, PRIMARY_CONTRL_IDE }, false);
+            ata_register_device("PRIMARY SLAVE", { PRIMARY_CMD_IDE, PRIMARY_CONTRL_IDE }, true);
         }
 
         // Check the secondary bus for floating.
@@ -85,8 +85,8 @@ namespace kide
         }
         else
         {
-            ata_register_device("SECONDARY MASTER", SECONDARY_CMD_IDE, false);
-            ata_register_device("SECONDARY SLAVE", SECONDARY_CMD_IDE, true);
+            ata_register_device("SECONDARY MASTER", { SECONDARY_CMD_IDE, SECONDARY_CONTRL_IDE }, false);
+            ata_register_device("SECONDARY SLAVE", { SECONDARY_CMD_IDE, SECONDARY_CONTRL_IDE }, true);
         }
 
         for (int i = 0; i < deviceCount; i++)
@@ -98,7 +98,7 @@ namespace kide
         kernel_log("IDE driver init completed. Registered %d ATA device(s).\n", deviceCount);
     }
 
-    void ata_register_device(const char* name, uint16 busBase, bool isSlave)
+    void ata_register_device(const char* name, AtaBusAddr busAddr, bool isSlave)
     {
         if (deviceCount >= MAX_DEVICES)
         {
@@ -109,7 +109,7 @@ namespace kide
         AtaDevice newDevice;
         mem_fill(&newDevice, 0, sizeof(AtaDevice));
 
-        newDevice.bus = busBase;
+        newDevice.addr = busAddr;
         newDevice.isSlave = isSlave;
         strcpy(name, newDevice.name);
         
@@ -123,28 +123,28 @@ namespace kide
 
     bool ata_identify(AtaDevice* device) 
     {
-        uint32 busBase = device->bus; bool isSlave = device->isSlave;
-        ata_select_drive(busBase, isSlave);
+        AtaBusAddr bus = device->addr; bool isSlave = device->isSlave;
+        ata_select_drive(bus, isSlave);
 
-        port_write8(BUS_CMD_SECTOR_COUNT(busBase), 0);
-        port_write8(BUS_CMD_SECTOR_NUMBER(busBase), 0);
-        port_write8(BUS_CMD_CYLINDER_LOW(busBase), 0);
-        port_write8(BUS_CMD_CYLINDER_HIGH(busBase), 0);
+        port_write8(BUS_CMD_SECTOR_COUNT(bus.base), 0);
+        port_write8(BUS_CMD_SECTOR_NUMBER(bus.base), 0);
+        port_write8(BUS_CMD_CYLINDER_LOW(bus.base), 0);
+        port_write8(BUS_CMD_CYLINDER_HIGH(bus.base), 0);
 
         // Finally send the IDENTIFY command.
-        port_write8(BUS_CMD_COMMAND(busBase), 0xEC);
+        port_write8(BUS_CMD_COMMAND(bus.base), 0xEC);
 
-        if (port_read8(BUS_CMD_STATUS(busBase)) == 0)
+        if (port_read8(BUS_CMD_STATUS(bus.base)) == 0)
         {
-            kernel_log("[IDE] ATA Device (BUS=%x SLAVE=%d): drive is not connected.\n", busBase, isSlave);
+            kernel_log("[IDE] ATA Device (BUS=%x SLAVE=%d): drive is not connected.\n", bus.base, isSlave);
             return false;
         }
 
         // Wait until BSY is cleared.
-        while (port_read8(BUS_CMD_STATUS(busBase)) & 1 << 7);
+        while (port_read8(BUS_CMD_STATUS(bus.base)) & 1 << 7);
 
-        device->type = ata_read_dev_type(busBase);
-        kernel_log("[IDE] ATA Device (BUS=%x SLAVE=%d) is detected as %s.\n", busBase, isSlave, ata_devtype_as_string(device->type));
+        device->type = ata_read_dev_type(bus);
+        kernel_log("[IDE] ATA Device (BUS=%x SLAVE=%d) is detected as %s.\n", bus.base, isSlave, ata_devtype_as_string(device->type));
         
         if (device->type != AtaDevType::PATA && device->type != AtaDevType::SATA)
         {
@@ -153,7 +153,7 @@ namespace kide
         }
 
         uint16 identifyData[256];
-        bool readSuccess = ata_pio_read_poll(busBase, identifyData, 1);
+        bool readSuccess = ata_pio_read_poll(bus, identifyData, 1);
 
         if (!readSuccess)
         {
@@ -192,25 +192,25 @@ namespace kide
         device->totalAddressableSectors = *((int*)&identifyData[60]);
     }
 
-    bool ata_read_sector(uint16 busBase, bool isSlave, uint32 startLba, uint8 sectorCount, uint16* buffer) 
+    bool ata_read_sector(AtaBusAddr bus, bool isSlave, uint32 startLba, uint8 sectorCount, uint16* buffer) 
     {
-        ata_select_drive(busBase, isSlave, startLba >> 24);
+        ata_select_drive(bus, isSlave, startLba >> 24);
 
         // Wait until BSY is clear.
-        while (port_read8(BUS_CMD_STATUS(busBase)) & (1 << 7));
+        while (port_read8(BUS_CMD_STATUS(bus.base)) & (1 << 7));
 
-        port_write8(BUS_CMD_SECTOR_COUNT(busBase), sectorCount);
-        port_write8(BUS_CMD_SECTOR_NUMBER(busBase), startLba & 0xFF);
-        port_write8(BUS_CMD_CYLINDER_LOW(busBase), (startLba >> 8) & 0xFF);
-        port_write8(BUS_CMD_CYLINDER_HIGH(busBase), (startLba >> 16) & 0xFF);
+        port_write8(BUS_CMD_SECTOR_COUNT(bus.base), sectorCount);
+        port_write8(BUS_CMD_SECTOR_NUMBER(bus.base), startLba & 0xFF);
+        port_write8(BUS_CMD_CYLINDER_LOW(bus.base), (startLba >> 8) & 0xFF);
+        port_write8(BUS_CMD_CYLINDER_HIGH(bus.base), (startLba >> 16) & 0xFF);
 
         // Issue READ SECTORS command.
-        port_write8(BUS_CMD_COMMAND(busBase), 0x20);
+        port_write8(BUS_CMD_COMMAND(bus.base), 0x20);
         
-        return ata_pio_read_poll(busBase, buffer, sectorCount);
+        return ata_pio_read_poll(bus, buffer, sectorCount);
     }
 
-    bool ata_pio_read_poll(uint16 busBase, uint16* buffer, uint8 sectorCount)
+    bool ata_pio_read_poll(AtaBusAddr busAddr, uint16* buffer, uint8 sectorCount)
     {
         for (int sectorIdx = 0; sectorIdx < sectorCount; sectorIdx++)
         {
@@ -219,7 +219,7 @@ namespace kide
             // Wait until DRQ is set meaning it has PIO data to transfer. Additionally checking if an error occured.
             do 
             {
-                status = port_read8(BUS_CMD_STATUS(busBase));
+                status = port_read8(BUS_CMD_STATUS(busAddr.base));
                 if (status & 1)
                 {
                     kernel_log("[IDE] ERR flag set during reading sector number %d.\n", sectorIdx);
@@ -231,13 +231,13 @@ namespace kide
             // Read next 256 words to the buffer.
             for (int j = 0; j < 256; j++)
             {
-                buffer[sectorIdx * 256 + j] = port_read16(BUS_CMD_DATA(busBase));
+                buffer[sectorIdx * 256 + j] = port_read16(BUS_CMD_DATA(busAddr.base));
             }
             
             // 400ns delay to ensure DRQ is cleared, possibly BSY may be set.
             for (int i = 0; i < 4; i++)
             {
-                port_read8(BUS_CTRL_DEVCONTROL(busBase));
+                port_read8(BUS_CTL_DEVCONTROL(busAddr.ctl));
             }
         }
 
@@ -258,36 +258,36 @@ namespace kide
         }
     }
 
-    void ata_select_drive(uint16 busBase, bool isSlave, uint8 headOrLBA24_27_bits)
+    void ata_select_drive(AtaBusAddr busAddr, bool isSlave, uint8 headOrLBA24_27_bits)
     {
-        port_write8(BUS_CMD_DRIVEHEAD(busBase), 0xE0 | isSlave << 4 | (headOrLBA24_27_bits & 0x0F));
+        port_write8(BUS_CMD_DRIVEHEAD(busAddr.base), 0xE0 | isSlave << 4 | (headOrLBA24_27_bits & 0x0F));
 
         // Wait until the device is switched.
         for (int i = 0; i < 4; i++)
         {
-            port_read8(BUS_CTRL_DEVCONTROL(busBase));
+            port_read8(BUS_CTL_DEVCONTROL(busAddr.ctl));
         }
     }
 
-    void ata_softreset(uint16 busBase)
+    void ata_softreset(AtaBusAddr busAddr)
     {
         // NOTE: Does this may reset something important we needn't change?
-        port_write8(BUS_CTRL_DEVCONTROL(busBase), 1 << 2);
+        port_write8(BUS_CTL_DEVCONTROL(busAddr.ctl), 1 << 2);
 
         // Delay must be at least 5 microseconds (the code may execute a little longer).
         for (int i = 0; i < 256; i++)
         {
-            port_read8(BUS_CTRL_DEVCONTROL(busBase));
+            port_read8(BUS_CTL_DEVCONTROL(busAddr.ctl));
         } 
 
         // Must set it back to zero.
-        port_write8(BUS_CTRL_DEVCONTROL(busBase), 0);
+        port_write8(BUS_CTL_DEVCONTROL(busAddr.ctl), 0);
     }
 
-    AtaDevType ata_read_dev_type(uint16 busBase)
+    AtaDevType ata_read_dev_type(AtaBusAddr busAddr)
     {
-        uint8 cl = port_read8(BUS_CMD_CYLINDER_LOW(busBase));
-	    uint8 ch = port_read8(BUS_CMD_CYLINDER_HIGH(busBase));
+        uint8 cl = port_read8(BUS_CMD_CYLINDER_LOW(busAddr.base));
+	    uint8 ch = port_read8(BUS_CMD_CYLINDER_HIGH(busAddr.base));
 
         if (cl==0x14 && ch==0xEB)
             return AtaDevType::PATAPI;

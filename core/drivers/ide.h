@@ -14,11 +14,17 @@ namespace kide
         SATAPI
     };
 
+    struct AtaBusAddr
+    {
+        uint16 base;
+        uint16 ctl;
+    };
+
     struct AtaDevice
     {
         AtaDevType type;
 
-        uint32 bus;
+        AtaBusAddr addr;
         bool isSlave;
 
         char name[20];
@@ -33,7 +39,7 @@ namespace kide
     extern int deviceCount;
 
     void init();
-    bool ata_read_sector(uint16 busBase, bool isSlave, uint32 startLba, uint8 sectorCount, uint16* buffer);
+    bool ata_read_sector(AtaBusAddr bus, bool isSlave, uint32 startLba, uint8 sectorCount, uint16* buffer);
 
     const char* ata_devtype_as_string(AtaDevType devType);
 }
