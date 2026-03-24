@@ -6,6 +6,7 @@
 #include "heap.h"
 #include "paging.h"
 
+#include "math.h"
 #include "shell.h"
 #include "console.h"
 
@@ -88,16 +89,6 @@ void kernel_analyze_multiboot_struct()
     {
         kernel_log("multiboot: Failed to get the bootloader name. The tag is not present.\n");
     }
-}
-
-static int min(int a, int b)
-{
-    return a < b ? a : b;
-}
-
-static int max(int a, int b)
-{
-    return a > b ? a : b;
 }
 
 void kernel_log(string str, ...)
