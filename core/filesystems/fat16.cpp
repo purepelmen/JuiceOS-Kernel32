@@ -12,6 +12,33 @@ using namespace kpart;
 
 namespace kfat
 {
+    static char tempReadBuffer[512];
+
+    kstorage::FileSystem* probe(kstorage::BlockDevice* device)
+    {
+        device->read(0, 1, (uint16*)tempReadBuffer);
+        fat16_bpb* bpb = (fat16_bpb*) tempReadBuffer;
+
+        if(bpb->boot_sig != 0xAA55)
+        {
+            kconsole::printf("[FAT16] Invalid boot signature\n");
+            return nullptr;
+        }
+        if(bpb->signature != 0x28 && bpb->signature != 0x29)
+        {
+            kconsole::printf("[FAT16] Invalid FAT16 signature\n");
+            return nullptr;
+        }
+
+        if(bpb->bytes_per_sector != 512)
+        {
+            kconsole::printf("[FAT16] Allowed 512 bytes per sector FSes only\n");
+            return nullptr;
+        }
+
+        return nullptr;
+    }
+
     FAT16::FAT16(uint8 dev_port)
     {
         // Now it's IDE and not AHCI. Here we don't have devport, but we can reuse it as a device index.
@@ -247,10 +274,5 @@ namespace kfat
         kide::ata_read_sector(device.addr, device.isSlave, lba, 1, (uint16*)buffer);
 
         return buffer;
-    }
-    
-    kstorage::FileSystem *probe(kstorage::BlockDevice *drive)
-    {
-        return nullptr;
     }
 }

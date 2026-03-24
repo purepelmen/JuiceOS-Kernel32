@@ -1,6 +1,4 @@
 #pragma once
-#include "../stdlib.h"
-
 #include <drivers/storage.h>
 
 #define FATTR_READONLY     0x01
@@ -74,6 +72,19 @@ namespace kfat
         uint16 name_chars3[2];
     } __attribute__((packed));
 
+    enum class FatType
+    {
+        FAT12,
+        FAT16,
+        FAT32,
+        ExFAT
+    };
+
+    struct VolumeInfo
+    {
+        FatType type;
+    };
+
     class FAT16
     {
     public:
@@ -105,5 +116,5 @@ namespace kfat
         uint8* read(uint32 lba);
     };
 
-    kstorage::FileSystem* probe(kstorage::BlockDevice* drive);
+    kstorage::FileSystem* probe(kstorage::BlockDevice* device);
 }

@@ -79,6 +79,22 @@ namespace kcd
 
         // Has one byte of 0x0 padding in the end if the filename size is even.
         uint8 filenameStartByte;
+
+        /// @brief Returns the pointer to System Used Area accounting the padding.
+        uint8* getSua()
+        {
+            uint8* ptr = &filenameStartByte + filenameSize;
+            if (filenameSize % 2 == 0)
+                ptr += 1;
+
+            return ptr;
+        }
+
+        /// @brief Returns the pointer past the end of System Used Area.
+        uint8* getSuaEnd()
+        {
+            return (uint8*)this + length;
+        }
     } __attribute__((packed));
 
     struct iso9660_volumedesc
@@ -169,6 +185,34 @@ namespace kcd
         } __attribute__((packed)) data;
     } __attribute__((packed));
 
+    struct susp_tag
+    {
+        char name[2];
+        uint8 length;
+        uint8 version;
+
+        union
+        {
+            uint8 nextByte;
+
+            struct
+            {
+                long long continuationLBA;
+                long long offset;
+                long long length;
+
+                static_assert(sizeof(long long) == 8);
+            } __attribute__((packed)) tag_CE;
+
+            struct
+            {
+                uint8 flags;
+                uint8 firstContentByte;
+            } __attribute__((packed)) tag_NM;
+
+        } __attribute__((packed)) content;
+    } __attribute__((packed));
+
     struct VolumeInfo
     {
         bool hasPVD;
@@ -197,7 +241,8 @@ namespace kcd
     {
     private:
         VolumeInfo volumeInfo;
-    
+        bool supportsSusp = false;
+
     protected:
         void on_init() override;
 
@@ -209,6 +254,7 @@ namespace kcd
         void read_dir(const char* path, kstorage::ReadDirCallback callback, void* context) override;
     
     private:
+        void check_susp_support();
         iso9660_direntry* resolve_path_part(uint32 parentLocationLBA, uint32 parentDataLength, const char* part);
     };
 

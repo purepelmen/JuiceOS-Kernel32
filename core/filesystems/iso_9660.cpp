@@ -4,6 +4,7 @@
 
 #include <kernel.h>
 #include <heap.h>
+#include <math.h>
 
 #define PRIMARY_VOLUME_DESC_SECTOR 16
 #define COMMON_LBA_SIZE 2048
@@ -13,7 +14,12 @@
 namespace kcd
 {
     static char tempReadBuffer[2048];
+
     static void convert_iso9660_filename(const char* source, size_t sourceLength, char* outCString);
+    static void retrive_rock_filename(ISO9660* driver, iso9660_direntry* entry, char* filenameBuff, size_t outBuffMaxLength);
+
+    typedef bool (*SUSPTraverser)(void* context, susp_tag* tag);
+    static void traverse_susp_tags(ISO9660* driver, uint8* currentSuspTag, uint8* suaEnd, void* context, SUSPTraverser traverser);
 
     kstorage::FileSystem* probe(kstorage::BlockDevice* device)
     {
@@ -66,6 +72,39 @@ namespace kcd
 
     void ISO9660::on_init()
     {
+        check_susp_support();
+
+        if (supportsSusp)
+            kconsole::print("SUSP support detected.\n");
+
+        // This is just an example for now.
+        {
+            auto rootDirEntry = volumeInfo.getRootDirEntry();
+
+            kconsole::print("Reading main file...\n");
+            iso9660_direntry* osFile = resolve_path_part(rootDirEntry->locationLBA, rootDirEntry->dataLength, "juiceos_.elf");
+
+            char filenameBuff[kstorage::MAX_FILENAME_SIZE];
+            retrive_rock_filename(this, osFile, filenameBuff, 256);
+
+            kconsole::printf("The fullname: %s\n", filenameBuff);
+        }
+    }
+
+    void ISO9660::check_susp_support()
+    {
+        auto rootDirEntry = volumeInfo.getRootDirEntry();
+        iso9660_direntry* thisDir = resolve_path_part(rootDirEntry->locationLBA, rootDirEntry->dataLength, ".");
+   
+        // Check only for the first tag.
+        traverse_susp_tags(this, thisDir->getSua(), thisDir->getSuaEnd(), this, [](void* context, susp_tag* tag) 
+        {
+            ISO9660* driver = (ISO9660*)context;
+            if (mem_compare(tag->name, "SP", 2) && mem_compare(&tag->content.nextByte, "\xBE\xEF", 2))
+                driver->supportsSusp = true;
+
+            return false;
+        });
     }
 
     bool ISO9660::resolve_path(const char* path, kstorage::FileState& state)
@@ -189,7 +228,7 @@ namespace kcd
     {
         kconsole::printf("resolve_path_part() resolves '%s'...\n", part);
 
-        char resultFilename[kstorage::MAX_FILENAME_SIZE];
+        char filenameBuff[kstorage::MAX_FILENAME_SIZE];
 
         int currSector = 0;
         while (currSector * COMMON_LBA_SIZE < parentDataLength)
@@ -203,8 +242,8 @@ namespace kcd
                 if (dirEntry->length == 0x0)
                     break;
 
-                convert_iso9660_filename((char*) &dirEntry->filenameStartByte, dirEntry->filenameSize, resultFilename);
-                if (string(part) == resultFilename)
+                convert_iso9660_filename((char*) &dirEntry->filenameStartByte, dirEntry->filenameSize, filenameBuff);
+                if (string(part) == filenameBuff)
                     return dirEntry;
 
                 i += dirEntry->length;
@@ -218,6 +257,12 @@ namespace kcd
     
     void convert_iso9660_filename(const char* source, size_t sourceLength, char* outCString)
     {
+        if (source[0] == 0x00 || source[0] == 0x01)
+        {
+            strcpy(source[0] ? ".." : ".", outCString);
+            return;
+        }
+
         int limit = sourceLength - 1;
         for (; limit >= 0; limit--)
         {
@@ -237,5 +282,71 @@ namespace kcd
         }
         
         outCString[i] = 0x0;
+    }
+
+    void retrive_rock_filename(ISO9660* driver, iso9660_direntry* entry, char* filenameBuff, size_t outBuffMaxLength)
+    {
+        struct cback_data
+        {
+            char* filenameBuff;
+            size_t written = 0;
+
+            size_t maxLimit = 0;
+        } tempData;
+
+        tempData.filenameBuff = filenameBuff;
+        tempData.maxLimit = min(outBuffMaxLength, kstorage::MAX_FILENAME_SIZE);
+        tempData.maxLimit--;  // For null-terminator.
+
+        if (tempData.maxLimit < 1)
+            return;
+
+        traverse_susp_tags(driver, entry->getSua(), entry->getSuaEnd(), &tempData, [](void* context, susp_tag* tag) 
+        {
+            cback_data* data = (cback_data*)context;
+            if (!mem_compare(tag->name, "NM", 2))
+                return true;
+
+            auto& tagNM = tag->content.tag_NM;
+            size_t strPortionLen = tag->length - 5;
+
+            if (data->written + strPortionLen > data->maxLimit)
+            {
+                kernel_log("[kcd] ERROR: During reading a direntry (w/ Rockridge support) detected too big str: accumulated len=%d\n");
+                return false;
+            }
+
+            mem_copy(&tagNM.firstContentByte, &data->filenameBuff[data->written], strPortionLen);
+            data->written += strPortionLen;
+
+            return false;
+        });
+
+        filenameBuff[tempData.written++] = 0x0;
+    }
+    
+    void traverse_susp_tags(ISO9660* driver, uint8* currentSuspTag, uint8* suaEnd, void* context, SUSPTraverser traverser)
+    {
+        while (currentSuspTag + ((uint32)currentSuspTag % 2) < suaEnd)
+        {
+            susp_tag* tag = (susp_tag*)currentSuspTag;
+
+            if (mem_compare(tag->name, "CE", 2))
+            {
+                auto tagCE = tag->content.tag_CE;
+                driver->get_device()->read(CD_SECTOR(tagCE.continuationLBA), 4, (uint16*)tempReadBuffer);
+
+                auto start = (uint8*) &tempReadBuffer[tagCE.offset];
+                traverse_susp_tags(driver, start, start + tagCE.length, context, traverser);
+
+                // No more data here. Moreover `tag` is not more valid (we previously called .get_device()->read(...)).
+                break;
+            }
+
+            if (!traverser(context, tag))
+                return;
+
+            currentSuspTag += tag->length;
+        }
     }
 }
