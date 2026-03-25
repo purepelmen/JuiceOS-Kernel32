@@ -13,7 +13,8 @@
 
 namespace kcd
 {
-    static char tempReadBuffer[2048];
+    static char tempReadBuffer[COMMON_LBA_SIZE * 1];
+    static char tempSuspTraverserReadBuffer[COMMON_LBA_SIZE * 1];
 
     static void convert_iso9660_filename(const char* source, size_t sourceLength, char* outCString);
     static int retrieve_rockridge_filename(ISO9660* driver, iso9660_direntry* entry, char* filenameBuff, size_t outBuffMaxLength);
@@ -383,9 +384,9 @@ namespace kcd
             if (mem_compare(tag->name, "CE", 2))
             {
                 auto tagCE = tag->content.tag_CE;
-                driver->get_device()->read(CD_SECTOR(tagCE.continuationLBA), 4, (uint16*)tempReadBuffer);
+                driver->get_device()->read(CD_SECTOR(tagCE.continuationLBA), 4, (uint16*)tempSuspTraverserReadBuffer);
 
-                auto start = (uint8*) &tempReadBuffer[tagCE.offset];
+                auto start = (uint8*) &tempSuspTraverserReadBuffer[tagCE.offset];
                 traverse_susp_tags(driver, start, start + tagCE.length, context, traverser);
 
                 // No more data here. Moreover `tag` is not more valid (we previously called .get_device()->read(...)).

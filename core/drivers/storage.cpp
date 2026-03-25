@@ -55,11 +55,11 @@ namespace kstorage
         for (int i = 0; i < drivesCount; i++)
         {
             DriveInfo& drive = drives[i];
-            mount(&drive);
+            mountDrive(&drive);
         }
     }
 
-    void mount(DriveInfo* drive)
+    void mountDrive(DriveInfo* drive)
     {
         mount(drive->device);
         

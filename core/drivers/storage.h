@@ -98,6 +98,6 @@ namespace kstorage
     void register_device(BlockDevice* dev);
     void init();
 
-    void mount(DriveInfo* drive);
+    void mountDrive(DriveInfo* drive);
     void mount(BlockDevice* device);
 }
