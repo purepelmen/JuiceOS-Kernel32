@@ -16,7 +16,7 @@ namespace kcd
     static char tempReadBuffer[2048];
 
     static void convert_iso9660_filename(const char* source, size_t sourceLength, char* outCString);
-    static void retrive_rock_filename(ISO9660* driver, iso9660_direntry* entry, char* filenameBuff, size_t outBuffMaxLength);
+    static int retrieve_rockridge_filename(ISO9660* driver, iso9660_direntry* entry, char* filenameBuff, size_t outBuffMaxLength);
 
     typedef bool (*SUSPTraverser)(void* context, susp_tag* tag);
     static void traverse_susp_tags(ISO9660* driver, uint8* currentSuspTag, uint8* suaEnd, void* context, SUSPTraverser traverser);
@@ -73,22 +73,25 @@ namespace kcd
     void ISO9660::on_init()
     {
         check_susp_support();
+        check_rockridge_support();
 
         if (supportsSusp)
-            kconsole::print("SUSP support detected.\n");
+            kernel_log("SUSP support detected.\n");
+        if (supportsSusp)
+            kernel_log("RockRidge support detected.\n");
 
         // This is just an example for now.
-        {
-            auto rootDirEntry = volumeInfo.getRootDirEntry();
+        // {
+        //     auto rootDirEntry = volumeInfo.getRootDirEntry();
 
-            kconsole::print("Reading main file...\n");
-            iso9660_direntry* osFile = resolve_path_part(rootDirEntry->locationLBA, rootDirEntry->dataLength, "juiceos_.elf");
+        //     kconsole::print("Reading main file...\n");
+        //     iso9660_direntry* osFile = resolve_path_part(rootDirEntry->locationLBA, rootDirEntry->dataLength, "juiceos_.elf");
 
-            char filenameBuff[kstorage::MAX_FILENAME_SIZE];
-            retrive_rock_filename(this, osFile, filenameBuff, 256);
+        //     char filenameBuff[kstorage::MAX_FILENAME_SIZE];
+        //     retrieve_rockridge_filename(this, osFile, filenameBuff, 256);
 
-            kconsole::printf("The fullname: %s\n", filenameBuff);
-        }
+        //     kconsole::printf("The fullname: %s\n", filenameBuff);
+        // }
     }
 
     void ISO9660::check_susp_support()
@@ -100,10 +103,52 @@ namespace kcd
         traverse_susp_tags(this, thisDir->getSua(), thisDir->getSuaEnd(), this, [](void* context, susp_tag* tag) 
         {
             ISO9660* driver = (ISO9660*)context;
-            if (mem_compare(tag->name, "SP", 2) && mem_compare(&tag->content.nextByte, "\xBE\xEF", 2))
+            if (mem_compare(tag->name, "SP", 2) && mem_compare(&tag->content.nextByte, "\xBE\xEF", 2) && tag->version == 1)
                 driver->supportsSusp = true;
 
             return false;
+        });
+    }
+
+    void ISO9660::check_rockridge_support()
+    {
+        if (!supportsSusp)
+            return;
+        
+        auto rootDirEntry = volumeInfo.getRootDirEntry();
+        iso9660_direntry* thisDir = resolve_path_part(rootDirEntry->locationLBA, rootDirEntry->dataLength, ".");
+   
+        // Check only for the first tag.
+        traverse_susp_tags(this, thisDir->getSua(), thisDir->getSuaEnd(), this, [](void* context, susp_tag* tag) 
+        {
+            ISO9660* driver = (ISO9660*)context;
+            if (mem_compare(tag->name, "ER", 2))
+            {
+                auto& tagER = tag->content.tag_ER;
+            
+                char extID[16+1];
+                int clampedSize = min<uint8>(16, tagER.extIDLength);
+                mem_copy(tag->content.tag_ER.restStrings, extID, clampedSize);
+                extID[clampedSize] = 0x0;
+
+                kernel_log("[kcd] (SUSP) Found ER field: '%s'\n", extID);
+
+                // Check for Rock Ridge 1.12, Rock Ridge 1.09-1.10, and unknown RockRidge version respectively.
+                string compared{ extID };
+                if (compared == "IEEE_P1282" || compared == "RRIP 1991A" || compared == "IEEE_1282")
+                    driver->supportsRockRidge = true;
+
+                return false;
+            }
+            else if (mem_compare(tag->name, "RR", 2))
+            {
+                // 'RR' may be used by older versions of RockRidge.
+                // Not sure if it has some paramaters.
+                driver->supportsRockRidge = true;
+                return false;
+            }
+
+            return true;
         });
     }
 
@@ -284,7 +329,7 @@ namespace kcd
         outCString[i] = 0x0;
     }
 
-    void retrive_rock_filename(ISO9660* driver, iso9660_direntry* entry, char* filenameBuff, size_t outBuffMaxLength)
+    int retrieve_rockridge_filename(ISO9660* driver, iso9660_direntry* entry, char* filenameBuff, size_t outBuffMaxLength)
     {
         struct cback_data
         {
@@ -292,6 +337,7 @@ namespace kcd
             size_t written = 0;
 
             size_t maxLimit = 0;
+            bool isFailed = false;
         } tempData;
 
         tempData.filenameBuff = filenameBuff;
@@ -299,7 +345,7 @@ namespace kcd
         tempData.maxLimit--;  // For null-terminator.
 
         if (tempData.maxLimit < 1)
-            return;
+            return 0;
 
         traverse_susp_tags(driver, entry->getSua(), entry->getSuaEnd(), &tempData, [](void* context, susp_tag* tag) 
         {
@@ -313,16 +359,19 @@ namespace kcd
             if (data->written + strPortionLen > data->maxLimit)
             {
                 kernel_log("[kcd] ERROR: During reading a direntry (w/ Rockridge support) detected too big str: accumulated len=%d\n");
+                data->isFailed = true;
                 return false;
             }
 
-            mem_copy(&tagNM.firstContentByte, &data->filenameBuff[data->written], strPortionLen);
+            mem_copy(tagNM.content, &data->filenameBuff[data->written], strPortionLen);
             data->written += strPortionLen;
-
-            return false;
+            
+            // Continue only if the field has such flag.
+            return (tagNM.flags & susp_NM_flags_CONTINUE) != 0;
         });
 
         filenameBuff[tempData.written++] = 0x0;
+        return tempData.isFailed ? -1 : tempData.written;
     }
     
     void traverse_susp_tags(ISO9660* driver, uint8* currentSuspTag, uint8* suaEnd, void* context, SUSPTraverser traverser)
@@ -340,6 +389,11 @@ namespace kcd
                 traverse_susp_tags(driver, start, start + tagCE.length, context, traverser);
 
                 // No more data here. Moreover `tag` is not more valid (we previously called .get_device()->read(...)).
+                break;
+            }
+            else if (mem_compare(tag->name, "ST", 2))
+            {
+                // This is just "terminate" field.
                 break;
             }
 

@@ -185,6 +185,16 @@ namespace kcd
         } __attribute__((packed)) data;
     } __attribute__((packed));
 
+    enum susp_NM_flags : uint8
+    {
+        /// @brief If set, the filename continues in the next NM field of SUA.
+        susp_NM_flags_CONTINUE = 1 << 0,
+        /// @brief If set, it's "." directory.
+        susp_NM_flags_CURRENT = 1 << 1,
+        /// @brief If set, it's ".." directory.
+        susp_NM_flags_PARENT = 1 << 2
+    };
+
     struct susp_tag
     {
         char name[2];
@@ -197,6 +207,17 @@ namespace kcd
 
             struct
             {
+                uint8 extIDLength;
+                uint8 extDescLength;
+                uint8 extSourceLength;
+                uint8 extVersion;
+
+                // Consists of ID, description and source ext strings.
+                char restStrings[];
+            } __attribute__((packed)) tag_ER;
+
+            struct
+            {
                 long long continuationLBA;
                 long long offset;
                 long long length;
@@ -206,8 +227,8 @@ namespace kcd
 
             struct
             {
-                uint8 flags;
-                uint8 firstContentByte;
+                susp_NM_flags flags;
+                char content[];
             } __attribute__((packed)) tag_NM;
 
         } __attribute__((packed)) content;
@@ -242,6 +263,7 @@ namespace kcd
     private:
         VolumeInfo volumeInfo;
         bool supportsSusp = false;
+        bool supportsRockRidge = false;
 
     protected:
         void on_init() override;
@@ -255,6 +277,7 @@ namespace kcd
     
     private:
         void check_susp_support();
+        void check_rockridge_support();
         iso9660_direntry* resolve_path_part(uint32 parentLocationLBA, uint32 parentDataLength, const char* part);
     };
 
