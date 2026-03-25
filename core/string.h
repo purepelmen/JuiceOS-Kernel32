@@ -20,6 +20,7 @@ public:
 
     char operator[](int element);
     bool operator==(string str);
+    bool operator!=(string str);
 
 private:
     char* pointer;

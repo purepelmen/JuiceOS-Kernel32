@@ -195,7 +195,7 @@ namespace kcd
 
         state.inode = last->locationLBA;
         state.size = last->dataLength;
-        state.flags = last->length;
+        state.flags = last->flags;
         state.position = 0;
         return true;
     }

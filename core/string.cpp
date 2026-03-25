@@ -93,3 +93,8 @@ bool string::operator==(string str)
 {
     return compare(str);
 }
+
+bool string::operator!=(string str)
+{
+    return !compare(str);
+}
