@@ -22,6 +22,9 @@ namespace kcd
     typedef bool (*SUSPTraverser)(void* context, susp_tag* tag);
     static void traverse_susp_tags(ISO9660* driver, uint8* currentSuspTag, uint8* suaEnd, void* context, SUSPTraverser traverser);
 
+    /// @return Pointer to the inserted null terminator.
+    static char* spaced_string_to_cstr(char* target, size_t length);
+
     kstorage::FileSystem* probe(kstorage::BlockDevice* device)
     {
         iso9660_volumedesc* volumeDesc = (iso9660_volumedesc*) tempReadBuffer;
@@ -60,6 +63,15 @@ namespace kcd
 
                 volumeInfo.setPrimaryVolumeDescLBA(PRIMARY_VOLUME_DESC_SECTOR + i);
                 volumeInfo.setRootDirEntry((iso9660_direntry*)volumeDesc->data.primary_volume_desc.rootDirectoryEntry);
+                volumeInfo.spaceSize = volumeDesc->data.primary_volume_desc.volumeSpaceSize;
+                volumeInfo.logicalBlockSize = volumeDesc->data.primary_volume_desc.logicalBlockSize;
+
+                mem_copy(volumeDesc->data.primary_volume_desc.volumeId, volumeInfo.volumeId, 32);
+                spaced_string_to_cstr(volumeInfo.volumeId, 32);
+
+                kconsole::print("VolumeID: ");
+                kconsole::print(volumeDesc->data.primary_volume_desc.volumeId, 32);
+                kconsole::print("\n");
             }
             
             i++;
@@ -140,7 +152,17 @@ namespace kcd
         });
     }
 
-    bool ISO9660::resolve_path(const char* path, kstorage::FileState& state)
+    const char* ISO9660::get_name()
+    {
+        return volumeInfo.volumeId;
+    }
+
+    size_t ISO9660::get_size()
+    {
+        return volumeInfo.spaceSize * volumeInfo.logicalBlockSize;
+    }
+
+    bool ISO9660::resolve_path(const char *path, kstorage::FileState &state)
     {
         auto rootDirEntry = volumeInfo.getRootDirEntry();
         char filename[kstorage::MAX_FILENAME_SIZE];
@@ -398,5 +420,20 @@ namespace kcd
 
             currentSuspTag += tag->length;
         }
+    }
+
+    static char* spaced_string_to_cstr(char* target, size_t length)
+    {
+        char* ptr = target + length - 1;
+        for (; ptr >= target && *ptr == ' '; ptr--);
+
+        ptr++;
+        if (ptr < target + length && *ptr == ' ')
+        {
+            *ptr = 0x0;
+            return ptr;
+        }
+
+        return nullptr;
     }
 }

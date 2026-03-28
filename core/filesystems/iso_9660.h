@@ -238,6 +238,10 @@ namespace kcd
     {
         bool hasPVD;
         uint32 primaryVolumeDescLBA;
+        
+        char volumeId[32];  // Now null terminated.
+        uint32 spaceSize;
+        uint32 logicalBlockSize;
 
         uint8 rootDir[34];
 
@@ -270,6 +274,9 @@ namespace kcd
 
     public:
         ISO9660(const VolumeInfo& info) : volumeInfo(info) {}
+
+        const char* get_name() override;
+        size_t get_size() override;
 
         bool resolve_path(const char* path, kstorage::FileState& state) override;
         size_t read(kstorage::FileState& state, char* buffer, size_t length) override;
