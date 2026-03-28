@@ -8,7 +8,7 @@ namespace kstorage
     public:
         /// @brief Read the specified `count` of sectors, starting from `start` sector index.
         /// @param outBuffer Where to put, currently with no alignment requirements.
-        virtual void read(uint32 start, uint8 count, uint16* outBuffer) = 0;
+        virtual void read(uint32 start, uint32 count, uint16* outBuffer) = 0;
 
         /// @brief Returns the amount of sectors (always 512-byte sized).
         virtual uint32 get_total_sectors() = 0;
@@ -24,7 +24,7 @@ namespace kstorage
     public:
         Partition(BlockDevice* dev, uint32 offset, uint32 size) : dev(dev), offset(offset), size(size) {}
 
-        void read(uint32 start, uint8 count, uint16* outBuffer) override
+        void read(uint32 start, uint32 count, uint16* outBuffer) override
         {
             dev->read(offset + start, count, outBuffer);
         }

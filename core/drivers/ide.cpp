@@ -6,6 +6,7 @@
 #include <console.h>
 #include <heap.h>
 
+#define ATA_LOGICAL_BLOCK_SIZE 512
 #define CONTROL_PORT_OFFSET 0x206
 
 #define PRIMARY_CMD_IDE 0x1F0
@@ -50,9 +51,18 @@ namespace kide
     public:
         IDEDeviceImpl(AtaDevice& ataDev) : ataDev(ataDev) {}
 
-        void read(uint32 start, uint8 count, uint16* outBuffer) override
+        void read(uint32 start, uint32 count, uint16* outBuffer) override
         {
-            ata_read_sector(ataDev.addr, ataDev.isSlave, start, count, outBuffer);
+            uint16 totalRead = 0;
+            while (totalRead < count)
+            {
+                uint8 portion = count > 0xFF ? 0xFF : count;
+                uint32 offset = start + totalRead;
+                ata_read_sector(ataDev.addr, ataDev.isSlave, offset, portion, outBuffer);
+
+                outBuffer += portion * ATA_LOGICAL_BLOCK_SIZE;
+                totalRead += portion;
+            }
         }
 
         uint32 get_total_sectors() override { return ataDev.totalAddressableSectors; }
