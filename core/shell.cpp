@@ -15,6 +15,7 @@
 
 kfat::FAT16* fat_pt2;
 static unsigned selectedVolume = 0;
+static char cwd[kstorage::MAX_FILENAME_SIZE] = "";
 
 static void console_handle(string command, int argc, char** argv, bool* shouldContinue);
 
@@ -96,6 +97,57 @@ static char consoleParsedArgvContent[kconsole::INPUT_MAXCHARS + 1];
 const int MAX_CONSOLE_PARSED_ARGV = 60;
 static char* consoleParsedArgv[MAX_CONSOLE_PARSED_ARGV];
 
+static void set_cwd(const char* newCwd)
+{
+    char tempFallback[kstorage::MAX_FILENAME_SIZE];
+    if (newCwd[0] == '/')
+    {
+        kstorage::normalize_path(newCwd, tempFallback, sizeof(tempFallback));
+    }
+    else
+    {
+        char pathBuildBuff[kstorage::MAX_FILENAME_SIZE];
+    
+        int i = 0;
+        i += strlcpy(cwd, pathBuildBuff, sizeof(pathBuildBuff));
+        i += strlcpy("/", pathBuildBuff + i, sizeof(pathBuildBuff) - i);
+        i += strlcpy(newCwd, pathBuildBuff + i, sizeof(pathBuildBuff) - i);
+    
+        kstorage::normalize_path(pathBuildBuff, tempFallback, sizeof(tempFallback));
+    }
+    
+    kstorage::FileState state;
+    bool exists = kstorage::volumes[selectedVolume]->resolve_path(tempFallback, state);
+
+    if (!exists)
+    {
+        kconsole::printf("No such directory.\n");
+        return;
+    }
+
+    strcpy(tempFallback, cwd);
+}
+
+static const char* get_fullpath(const char* relPath)
+{
+    char concatPath[kstorage::MAX_FILENAME_SIZE];
+    static char internal[kstorage::MAX_FILENAME_SIZE];
+    
+    int i = 0;
+    if (relPath[0] == '/')
+    {
+        i += kstorage::normalize_path(relPath, internal + i, kstorage::MAX_FILENAME_SIZE - i);
+        return internal;
+    }
+    
+    i += strlcpy(cwd, concatPath, kstorage::MAX_FILENAME_SIZE);
+    i += strlcpy("/", concatPath + i, kstorage::MAX_FILENAME_SIZE - i);
+    i += strlcpy(relPath, concatPath + i, kstorage::MAX_FILENAME_SIZE - i);
+
+    kstorage::normalize_path(concatPath, internal, kstorage::MAX_FILENAME_SIZE);
+    return internal;
+}
+
 void kshell::open_console(void)
 {
     kconsole::clear();
@@ -104,7 +156,7 @@ void kshell::open_console(void)
     while (shouldContinue)
     {
         kconsole::cursor.color = 0x02;
-        kconsole::print("PC:>>");
+        kconsole::printf("PC:%s>>", cwd);
         kconsole::cursor.color = KSCREEN_STDCOLOR;
 
         string input = kconsole::read_string();
@@ -370,6 +422,17 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         return;
     }
 
+    if (command == "volumelist")
+    {
+        for (int i = 0; i < kstorage::volumeCount; i++)
+        {
+            kstorage::FileSystem* volume = kstorage::volumes[i];
+            kconsole::printf("[Volume #%d] '%s', size=%dKB\n", i, volume->get_name(), volume->get_size() / 1024);
+        }
+
+        return;
+    }
+
     if (command == "setvolume")
     {
         const char* input = argv[0];
@@ -389,8 +452,17 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         selectedVolume = volumeNumber;
         return;
     }
+
+    if (command == "cd")
+    {
+        if (argc < 1)
+            return;
+
+        set_cwd(argv[0]);
+        return;
+    }
     
-    if (command == "dir")
+    if (command == "dir" || command == "ls")
     {
         if (selectedVolume >= kstorage::volumeCount)
         {
@@ -398,21 +470,31 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
             return;
         }
 
-        const char* path = argv[0];
-        if (argc < 1)
+        const char* path = cwd;
+        if (argc >= 1)
         {
-            kconsole::printf("Path: ");
-            path = kconsole::read_string().ptr();
+            path = get_fullpath(argv[0]);
         }
 
         kstorage::FileSystem* fileSystem = kstorage::volumes[selectedVolume];
         fileSystem->read_dir(path, [](void* context, kstorage::DirEntry& entry)
         {
-            const char* typeStr = entry.type == kstorage::DirEntryType::DIRECTORY ? "[DIR]" : "     ";
+            const char* typeStr = entry.type == kstorage::DirEntryType::DIRECTORY ? "<D>  " : "     ";
+            kconsole::print(typeStr);
+            kconsole::print(" ");
 
-            kconsole::printf("%s %s", typeStr, entry.name);
-            kconsole::cursor.posX = 45;
-            kconsole::printf("%db\n", entry.size);
+            if (entry.type == kstorage::DirEntryType::DIRECTORY)
+                kconsole::cursor.color = 0x09;
+            kconsole::print(entry.name);
+            kconsole::cursor.color = KSCREEN_STDCOLOR;
+
+            if (entry.type == kstorage::DirEntryType::FILE)
+            {
+                kconsole::cursor.posX = 45;
+                kconsole::printf("%db", entry.size);
+            }
+
+            kconsole::printc('\n');
             return true;
         }, nullptr);
 
@@ -426,14 +508,13 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
             kconsole::printf("Currently selected volume (#%d) is not mounted.\n", selectedVolume);
             return;
         }
-        
-        const char* path = argv[0];
-        if (argc < 1)
-        {
-            kconsole::printf("Path: ");
-            path = kconsole::read_string().ptr();
-        }
 
+        const char* path = cwd;
+        if (argc >= 1)
+        {
+            path = get_fullpath(argv[0]);
+        }
+        
         kstorage::FileSystem* fileSystem = kstorage::volumes[selectedVolume];
 
         kstorage::FileState fileState;

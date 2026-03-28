@@ -2,6 +2,7 @@
 #include "ide.h"
 
 #include <heap.h>
+#include <math.h>
 #include <kernel.h>
 
 #include <filesystems/iso_9660.h>
@@ -117,5 +118,52 @@ namespace kstorage
             return selected;
         
         return nullptr;
+    }
+
+    size_t normalize_path(const char* path, char* outPath, size_t maxOutPathLen)
+    {
+        int outIdx = 0;
+        int pathIdx = 0;
+
+        while (path[pathIdx] != 0x0)
+        {
+            if (path[pathIdx] == '/' && (outIdx == 0 || outPath[outIdx - 1] != '/'))
+            {
+                outIdx += strlcpy("/", outPath + outIdx, maxOutPathLen - outIdx);
+                pathIdx++;
+            }
+
+            for (; path[pathIdx] == '/'; pathIdx++);
+
+            int i = pathIdx;
+            for (; path[i] != '/' && path[i] != 0x0; i++);
+
+            const char* segment = path + pathIdx;
+            size_t segmentSize = i - pathIdx;
+            pathIdx += segmentSize;
+
+            if (segmentSize == 1 && *segment == '.')
+                continue;
+
+            if (segmentSize == 2 && mem_compare(segment, "..", 2))
+            {
+                if (outPath[outIdx] == '/')
+                    outIdx--;
+                while (outIdx > 0 && outPath[outIdx] != '/')
+                    outIdx--;
+
+                if (outPath[outIdx] == '/')
+                    outIdx--;
+                while (outIdx > 0 && outPath[outIdx] != '/')
+                    outIdx--;
+
+                outPath[outIdx] = 0x0;
+                continue;
+            }
+
+            outIdx += strlcpy(segment, outPath + outIdx, min(segmentSize + 1, maxOutPathLen - outIdx));
+        }
+
+        return outIdx;
     }
 }

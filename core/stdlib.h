@@ -23,6 +23,8 @@ void mem_fill(void* ptr, uint8 byte, uint32 amount);
 void utf16_to_ascii(uint8* buffer, uint16* utf16_str);
 
 void strcpy(const char* source, char* dest);
+/* Performs a safe sting copy, and returns the actual string length copied in `dest`. */
+size_t strlcpy(const char* source, char* dest, size_t maxSize);
 
 void vsprintf(vsprintf_consumer callback, void* context, const char* source, va_list list);
 void sprintf(char* outBuff, int maxOutLength, const char* source, ...);

@@ -68,10 +68,6 @@ namespace kcd
 
                 mem_copy(volumeDesc->data.primary_volume_desc.volumeId, volumeInfo.volumeId, 32);
                 spaced_string_to_cstr(volumeInfo.volumeId, 32);
-
-                kconsole::print("VolumeID: ");
-                kconsole::print(volumeDesc->data.primary_volume_desc.volumeId, 32);
-                kconsole::print("\n");
             }
             
             i++;

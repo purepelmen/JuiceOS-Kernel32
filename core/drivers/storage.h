@@ -110,4 +110,6 @@ namespace kstorage
 
     void mountDrive(DriveInfo* drive);
     void mount(BlockDevice* device);
+
+    size_t normalize_path(const char* path, char* outPath, size_t maxOutPathLen);
 }

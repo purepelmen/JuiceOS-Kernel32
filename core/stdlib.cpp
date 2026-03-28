@@ -49,6 +49,25 @@ void strcpy(const char *source, char *dest)
     dest[i] = 0x0;
 }
 
+size_t strlcpy(const char* source, char* dest, size_t maxSize)
+{
+    if (maxSize < 1)
+        return 0;
+    
+    int i = 0;
+    while(source[i] != 0x0 && i < maxSize)
+    {
+        dest[i] = source[i];
+        i++;
+    }
+
+    // If reached the limit, null terminator should be at maxSize-1.
+    if (i == maxSize) i--;
+
+    dest[i] = 0x0;
+    return i;
+}
+
 void vsprintf(vsprintf_consumer callback, void* context, const char* source, va_list list)
 {
     char temp[20];
