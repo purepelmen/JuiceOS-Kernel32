@@ -78,12 +78,12 @@ namespace kcd
         uint8 filenameSize;
 
         // Has one byte of 0x0 padding in the end if the filename size is even.
-        uint8 filenameStartByte;
+        char filenameStartByte[];
 
         /// @brief Returns the pointer to System Used Area accounting the padding.
         uint8* getSua()
         {
-            uint8* ptr = &filenameStartByte + filenameSize;
+            uint8* ptr = (uint8*)filenameStartByte + filenameSize;
             if (filenameSize % 2 == 0)
                 ptr += 1;
 
@@ -278,7 +278,9 @@ namespace kcd
     private:
         void check_susp_support();
         void check_rockridge_support();
+
         iso9660_direntry* resolve_path_part(uint32 parentLocationLBA, uint32 parentDataLength, const char* part);
+        void extract_filename(iso9660_direntry* entry, char* outCString, size_t outCStringMaxLength);
     };
 
     kstorage::FileSystem* probe(kstorage::BlockDevice* device);

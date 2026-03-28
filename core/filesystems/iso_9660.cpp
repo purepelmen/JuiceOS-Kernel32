@@ -78,21 +78,8 @@ namespace kcd
 
         if (supportsSusp)
             kernel_log("SUSP support detected.\n");
-        if (supportsSusp)
+        if (supportsRockRidge)
             kernel_log("RockRidge support detected.\n");
-
-        // This is just an example for now.
-        // {
-        //     auto rootDirEntry = volumeInfo.getRootDirEntry();
-
-        //     kconsole::print("Reading main file...\n");
-        //     iso9660_direntry* osFile = resolve_path_part(rootDirEntry->locationLBA, rootDirEntry->dataLength, "juiceos_.elf");
-
-        //     char filenameBuff[kstorage::MAX_FILENAME_SIZE];
-        //     retrieve_rockridge_filename(this, osFile, filenameBuff, 256);
-
-        //     kconsole::printf("The fullname: %s\n", filenameBuff);
-        // }
     }
 
     void ISO9660::check_susp_support()
@@ -136,7 +123,7 @@ namespace kcd
 
                 // Check for Rock Ridge 1.12, Rock Ridge 1.09-1.10, and unknown RockRidge version respectively.
                 string compared{ extID };
-                if (compared == "IEEE_P1282" || compared == "RRIP 1991A" || compared == "IEEE_1282")
+                if (compared == "IEEE_P1282" || compared == "RRIP_1991A" || compared == "IEEE_1282")
                     driver->supportsRockRidge = true;
 
                 return false;
@@ -164,6 +151,12 @@ namespace kcd
         int pathIdx = 0;
         while (path[pathIdx] != 0x0)
         {
+            if (!(last->flags & 0x02))
+            {
+                kconsole::printf("Found unresolvable part: '%s' (accessing a file like a directory).\n", filename);
+                return false;
+            }
+
             for (; path[pathIdx] == '/'; pathIdx++);
 
             int i = 0;
@@ -175,12 +168,6 @@ namespace kcd
 
             if (filename[0] == 0x0)
                 continue;
-
-            if (!(last->flags & 0x02))
-            {
-                kconsole::printf("Found unresolvable part: '%s' (accessing a file like a directory).\n", filename);
-                return false;
-            }
 
             iso9660_direntry* resolved = resolve_path_part(parentLocationLBA, parentDataLength, filename);
             if (resolved == nullptr)
@@ -255,10 +242,10 @@ namespace kcd
 
                 i += dirEntry->length;
 
-                if (dirEntry->filenameStartByte == 0x0 || dirEntry->filenameStartByte == 0x01)
+                if (*dirEntry->filenameStartByte == 0x0 || *dirEntry->filenameStartByte == 0x01)
                     continue;
                 
-                convert_iso9660_filename((char*) &dirEntry->filenameStartByte, dirEntry->filenameSize, currentEntry.name);
+                extract_filename(dirEntry, currentEntry.name, sizeof(currentEntry.name));
                 currentEntry.type = dirEntry->flags & 0x02 ? kstorage::DirEntryType::DIRECTORY : kstorage::DirEntryType::FILE;
                 currentEntry.size = dirEntry->dataLength;
 
@@ -288,7 +275,7 @@ namespace kcd
                 if (dirEntry->length == 0x0)
                     break;
 
-                convert_iso9660_filename((char*) &dirEntry->filenameStartByte, dirEntry->filenameSize, filenameBuff);
+                extract_filename(dirEntry, filenameBuff, sizeof(filenameBuff));
                 if (string(part) == filenameBuff)
                     return dirEntry;
 
@@ -299,6 +286,14 @@ namespace kcd
         }
 
         return nullptr;
+    }
+
+    void ISO9660::extract_filename(iso9660_direntry* entry, char* outCString, size_t outCStringMaxLength)
+    {
+        if (supportsRockRidge)
+            retrieve_rockridge_filename(this, entry, outCString, outCStringMaxLength);
+        else
+            convert_iso9660_filename(entry->filenameStartByte, entry->filenameSize, outCString);
     }
     
     void convert_iso9660_filename(const char* source, size_t sourceLength, char* outCString)
