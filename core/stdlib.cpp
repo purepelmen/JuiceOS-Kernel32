@@ -68,6 +68,15 @@ size_t strlcpy(const char* source, char* dest, size_t maxSize)
     return i;
 }
 
+static size_t try_takestr(const char* str, size_t desiredSize)
+{
+    int i = 0;
+    while (str[i] != 0x0 && i < desiredSize)
+        i++;
+
+    return i;
+}
+
 void vsprintf(vsprintf_consumer callback, void* context, const char* source, va_list list)
 {
     char temp[20];
@@ -86,33 +95,57 @@ void vsprintf(vsprintf_consumer callback, void* context, const char* source, va_
 
         ch = source[++i];
 
-        if(ch == 'd')
+        int skip = -1;
+        if(ch == 'd' || ch == 'i')
         {
             int_to_str(va_arg(list, int), temp);
             callback(context, temp, string(temp).length());
+            skip = 1;
+        }
+        else if(ch == 'u')
+        {
+            uint_to_str(va_arg(list, unsigned), temp);
+            callback(context, temp, string(temp).length());
+            skip = 1;
         }
         else if(ch == 'x')
         {
             uint_to_hex(va_arg(list, unsigned), temp, 8);
             callback(context, temp, 8);
+            skip = 1;
+        }
+        else if(ch == 'p')
+        {
+            strcpy("0x", temp);
+            uint_to_hex((unsigned)va_arg(list, void*), temp + 2, 8);
+            callback(context, temp, 10);
+
+            skip = 1;
+        }
+        else if(ch == 'l')
+        {
+            size_t size = try_takestr(source + i, 3);
+            if (size == 3 && mem_compare(source + i, "llx", size))
+            {
+                uint64_to_hex(va_arg(list, unsigned long long), temp, 16);
+                callback(context, temp, 16);
+                skip = 3;
+            }
         }
         else if(ch == 'c')
         {
             char argChar = va_arg(list, int);
             callback(context, &argChar, 1);
+            skip = 1;
         }
         else if(ch == 's')
         {
             const char* argString = va_arg(list, const char*);
             callback(context, argString, string(argString).length());
-        }
-        else
-        {
-            callback(context, "%", 1);
-            i--;
+            skip = 1;
         }
 
-        start = &source[i + 1];
+        start = &source[i + skip];
     }
 
     const char* currPtr = &source[i];
@@ -216,6 +249,18 @@ void int_to_str(int value, char *outBuffer, int base)
     }
 
     uint_to_str((unsigned)value, outBuffer, base);
+}
+
+void uint64_to_hex(unsigned long long value, char *outBuffer, uint8 width)
+{
+    const char* HEX_CHARS = "0123456789ABCDEF";
+
+    for (int i = width - 1; i >= 0; i--)
+    {
+        outBuffer[i] = HEX_CHARS[value & 0xF];
+        value >>= 4;
+    }
+    outBuffer[width] = '\0';
 }
 
 unsigned str_to_uint(const char *source, int base)

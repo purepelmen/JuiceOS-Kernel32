@@ -33,6 +33,8 @@ void uint_to_hex(unsigned value, char* outBuffer, uint8 width);
 void uint_to_str(unsigned value, char* outBuffer, int base = 10);
 void int_to_str(int value, char* outBuffer, int base = 10);
 
+void uint64_to_hex(unsigned long long value, char* outBuffer, uint8 width);
+
 unsigned str_to_uint(const char* source, int base = 10);
 int str_to_int(const char* source, int base = 10);
 

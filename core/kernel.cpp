@@ -66,11 +66,6 @@ void kernel_init()
     kernel_log("Kernel initialization completed.\n");
     syslog_printImmediately = false;
 
-    for (int i = 0; i < 40; i++)
-    {
-        kernel_log("Simple text: %d.\n", i);
-    }
-
     kconsole::printf("Press any key to continue...");
     kconsole::read_string();
 }
@@ -82,12 +77,49 @@ void kernel_analyze_multiboot_struct()
     multiboot_tag* blNameTag = multiboot_find_tag(firstMutlibootTag, multiboot_tagtype::BOOTLOADER_NAME);
     if (!blNameTag->is_end())
     {
-        bootloaderName = (char*)&blNameTag->data;
+        bootloaderName = (char*)&blNameTag->data.ptr;
         kernel_log("Booted by: %s.\n", bootloaderName);
     }
     else
     {
         kernel_log("multiboot: Failed to get the bootloader name. The tag is not present.\n");
+    }
+
+    multiboot_tag* basicMemInfo = multiboot_find_tag(firstMutlibootTag, multiboot_tagtype::BASIC_MEMORY_INFO);
+    if (!basicMemInfo->is_end())
+    {
+        uint32 memory = basicMemInfo->data.basicMemInfo.memUpper + basicMemInfo->data.basicMemInfo.memLower + 1024;
+        kernel_log("Available RAM: %dMB.\n", memory / 1024 );
+    }
+
+    multiboot_tag* mmapTag = multiboot_find_tag(firstMutlibootTag, multiboot_tagtype::MEMORY_MAP);
+    if (!mmapTag->is_end())
+    {
+        kernel_log("Memory map table --------------------\n");
+
+        size_t entrySize = mmapTag->data.memoryMap.entrySize;
+        size_t i = 0;
+        while (i < mmapTag->size)
+        {
+            auto& entry = mmapTag->data.memoryMap.entries[i / entrySize];
+            
+            auto base = entry.baseAddr;
+            auto end = entry.baseAddr + entry.length - 1ULL;
+            
+            if (base > 0xFFFFFFFF || end > 0xFFFFFFFF)
+                kernel_log("0x%llx-0x%llx -> ", base, end);
+            else
+                kernel_log("%p-%p -> ", (uint32)base, (uint32)end);
+
+            const char* type = mb2_mmap_type_to_str(entry.type);
+            if (type != nullptr)
+                kernel_log(type);
+            else
+                kernel_log("UNKNOWN/RESERVED (%d)", entry.type);
+
+            kernel_log("\n");
+            i += entrySize;
+        }
     }
 }
 
