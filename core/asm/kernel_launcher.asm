@@ -16,6 +16,7 @@ section .text
 
 extern kernel_main
 global start
+global stack_top
 
 start:
     cli

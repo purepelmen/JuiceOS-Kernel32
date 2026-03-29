@@ -19,8 +19,9 @@ namespace kheap
     /* Allocate a 4K aligned block of memory. */
     void* alloc_pg_aligned(uint32 size);
 
-    uint32 get_allocated_size();
+    uint32 get_stack_usage();
 
+    uint32 get_allocated_size();
     uint32 get_system_mem_size();
 
     void* get_location_ptr();

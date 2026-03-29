@@ -889,6 +889,12 @@ void open_debugger(void)
     kscreen::outargs.cursor_y = 14;
     screen_printf("Heap located at: 0x%x", kheap::get_location_ptr());
 
+    // Stack ------------------------------
+    kscreen::outargs.cursor_x = 2;
+    kscreen::outargs.cursor_y = 16;
+    screen_printf("Stack usage: ");
+    printf_size(kheap::get_stack_usage());
+
     while (kps2::read_scancode(true) != 0x01);
 }
 
