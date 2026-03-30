@@ -2,6 +2,7 @@
 #include "heap.h"
 #include "console.h"
 #include "kernel.h"
+#include "cpuid.h"
 
 #include "drivers/screen.h"
 // #include "drivers/ahci.h"
@@ -96,6 +97,56 @@ static char consoleParsedArgvContent[kconsole::INPUT_MAXCHARS + 1];
 
 const int MAX_CONSOLE_PARSED_ARGV = 60;
 static char* consoleParsedArgv[MAX_CONSOLE_PARSED_ARGV];
+
+class Paginator
+{
+private:
+    int counter = 0;
+
+public:
+    bool iterate()
+    {
+        counter++;
+        if (counter >= kscreen::height() - 2)
+        {
+            kscreen::outargs.print_color = 0x08;
+            kscreen::print("Any key to get more, ESC - exit.");
+
+            uint8 ch = kps2::read_ascii();
+
+            kscreen::outargs.cursor_x = 0;
+            kscreen::print("                                ");
+
+            if (ch == '\x1B')
+                return false;
+
+            counter = 0;
+        }
+
+        return true;
+    }
+
+    static void viewLongText(const char* text)
+    {
+        const char* segmentStart = text;
+        char lastChar;
+
+        Paginator paginator{};
+        do
+        {
+            size_t size = 0;
+            while (segmentStart[size] != '\n' && segmentStart[size] != 0x0)
+                size++;
+            
+            lastChar = segmentStart[size];
+            size++; // Include the \n or null term.
+
+            kconsole::print(segmentStart, size);
+            segmentStart += size;
+        }
+        while (paginator.iterate() && lastChar != 0x0);
+    }
+};
 
 static void set_cwd(const char* newCwd)
 {
@@ -249,24 +300,32 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
 
     if(command == "help")
     {
-        kconsole::print("ASCII - Print hex representation of a typed char.\n");
-        kconsole::print("CLS - Clear the console.\n");
-        kconsole::print("EXIT - Quit from console to OS menu.\n");
-        kconsole::print("HELP - Print this message.\n");
-        kconsole::print("HELLO - Test command that say hello to you.\n");
-        kconsole::print("MEMDUMP - Open Memory dumper.\n");
-        kconsole::print("REBOOT - Reboot your PC.\n");
-        kconsole::print("SCANTEST - Print scancode of every pressed key.\n");
-        kconsole::print("SYSTEM - Print system information.\n");
-        kconsole::print("PCI - Print all PCI devices.\n");
+        const char* helpMsg = 
+            "ASCII - Print hex representation of a typed char.\n"
+            "CLS - Clear the console.\n"
+            "EXIT - Quit from console to OS menu.\n"
+            "HELP - Print this message.\n"
+            "HELLO - Test command that say hello to you.\n"
+            "MEMDUMP - Open Memory dumper.\n"
+            "REBOOT - Reboot your PC.\n"
+            "SCANTEST - Print scancode of every pressed key.\n"
+            "SYSTEM - Print system information.\n"
+            "SYSTEMCPU - Print information about CPU.\n"
+            "PCI - Print all PCI devices.\n"
+            "IDEDEV - Print all ATA devices from IDE driver.\n"
+            "IDERD - Read first sector from the first IDE device.\n"
+            "VOLUMELIST - View all mounted volumes.\n"
+            "SETVOLUME - Set current volume for the shell.\n"
+            "DIR / LS - Print directory contents at path.\n"
+            "CD - Change current working directory.\n"
+            "READFILE - Print contents of the file.\n"
+            "PRINTARGS - Prints every argument specified to this command.\n";
+        
         // kconsole::print("AHCIVER - Print AHCI specification version.\n");
         // kconsole::print("AHCIDEV - Print all AHCI ports and connected devices.\n");
         // kconsole::print("AHCIRD - Read first sector from AHCI port #0.\n");
-        kconsole::print("IDEDEV - Print all ATA devices from IDE driver.\n");
-        kconsole::print("IDERD - Read first sector from the first IDE device.\n");
-        kconsole::print("SETVOLUME - Set current volume for the shell.\n");
-        kconsole::print("DIR - Print directory contents at path.\n");
 
+        Paginator::viewLongText(helpMsg);
         return;
     }
 
@@ -427,7 +486,7 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         for (int i = 0; i < kstorage::volumeCount; i++)
         {
             kstorage::FileSystem* volume = kstorage::volumes[i];
-            kconsole::printf("[Volume #%d] '%s', size=%dKB\n", i, volume->get_name(), volume->get_size() / 1024);
+            kconsole::printf("[Volume #%d] '%s', size=%d KB\n", i, volume->get_name(), volume->get_size() / 1024);
         }
 
         return;
@@ -470,6 +529,11 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
             return;
         }
 
+        struct ls_state
+        {
+            Paginator paginator{};
+        } state;
+
         const char* path = cwd;
         if (argc >= 1)
         {
@@ -479,6 +543,8 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         kstorage::FileSystem* fileSystem = kstorage::volumes[selectedVolume];
         fileSystem->read_dir(path, [](void* context, kstorage::DirEntry& entry)
         {
+            ls_state* state = (ls_state*)context;
+
             const char* typeStr = entry.type == kstorage::DirEntryType::DIRECTORY ? "<D>  " : "     ";
             kconsole::print(typeStr);
             kconsole::print(" ");
@@ -493,10 +559,10 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
                 kconsole::cursor.posX = 45;
                 kconsole::printf("%db", entry.size);
             }
-
             kconsole::printc('\n');
-            return true;
-        }, nullptr);
+
+            return state->paginator.iterate();
+        }, &state);
 
         return;
     }
@@ -900,27 +966,23 @@ void open_debugger(void)
 
 void print_systemcpu(void) 
 {
-    char cpuinfo_buffer[49];
-    
-	// registers[0] -> eax
-	// registers[1] -> ebx
-	// registers[2] -> ecx
-	// registers[3] -> edx
-	int registers[4];
-
-	int cpuid_addr = 0x80000002;
-	
-    for(int i = 0; i < 3; i++) 
+    if (!is_cpuid_supported())
     {
-    	cpuid_addr += i;
-        __asm__("cpuid" : "=a"(registers[0]), "=b"(registers[1]), "=c"(registers[2]), "=d"(registers[3]) : "a"(cpuid_addr));
-        
-        for(int j = 0; j < 4; j++)
-            ((int*)(cpuinfo_buffer + i * 16))[j] = registers[j];
+        kconsole::print("No CPUID support, can't provide more info.\n");
+        return;
     }
 
-    cpuinfo_buffer[48] = '\0';
+    char cpuinfo_buffer[49];
+	cpuid_80000002h(cpuinfo_buffer);
     
     kconsole::print(cpuinfo_buffer);
     kconsole::print("\n");
+
+    char vendor[13];
+    kconsole::printf("The CPUID result: %d, Vendor: %s.\n", cpuid(vendor), vendor);
+
+    cpuid_q1edx ext = cpuid_eax1().ext;
+
+    kconsole::printf("Extensions: FPU = %d, TSC = %d, MMX = %d, MMX2 = %d, SSE = %d, V86 = %d, CR4.PGE Support = %d, PSE (4MB Page) = %d\n", 
+        ext.FPU, ext.TSC, ext.MMX, ext.FXSR, ext.SSE, ext.VME, ext.PGE, ext.PSE);
 }
