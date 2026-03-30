@@ -22,6 +22,8 @@ namespace kconsole
     void sync_hwcursor();
     void sync_scursor_coords();
 
+    void update_scursor();
+
     int calc_fit_substring(const char* text, size_t screenSpaceLimit);
 
     /* Read input until the Escape or Enter key is pressed, then returns the input as a string. Copy the result after calling,

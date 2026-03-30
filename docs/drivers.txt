@@ -24,4 +24,9 @@ devices for now.
 AHCI.HPP / AHCI.CPP - AHCI driver (moved to 'non_ready') ------------------------------------
 This is an AHCI controller driver. It has functions for working with SATA/ATAPI devices.
 Now it can only read data from drives.
+
+Why it didn't worked back in 2022 when I was developing it? I tried so many things but it
+worked strangely, especially badly on a real machine. Now I think this is because of not
+correctly set-up MMIO. Cache and other stuff. I wrote this text to not forget what should
+I do in the first place when I return to developing AHCI again.
 ---------------------------------------------------------------------------------------------

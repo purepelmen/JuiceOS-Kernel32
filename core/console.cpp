@@ -42,7 +42,7 @@ namespace kconsole
         kscreen::outargs.cursor_x--;
     }
 
-    static void update_scursor()
+    void update_scursor()
     {
         kscreen::outargs.set_cursorXY(cursor.posX, cursor.posY);
         kscreen::outargs.print_color = cursor.color;
