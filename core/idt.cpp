@@ -1,7 +1,9 @@
 #include "drivers/ports.h"
+#include "drivers/pic.h"
+
+#include "idt.h"
 #include "stdlib.h"
 #include "kernel.h"
-#include "idt.h"
 
 namespace kidt
 {
@@ -16,11 +18,10 @@ namespace kidt
     extern "C" uint8 isr_handler_size;
 
     static void idt_set_gate(int desc_number, uint32 handler_offset, uint16 segment_selector, uint8 gateType, uint8 privilegeLevel);
-    static void pic_set_irq_offsets(uint8 master_offset, uint8 slave_offset);
 
     void idt_init()
     {
-        pic_set_irq_offsets(32, 40);
+        pic_init(32, 40);
         
         for(int i = 0; i < 48; i++)
         {
@@ -50,23 +51,5 @@ namespace kidt
         idt_descriptors[desc_number].flags.dpl = privilegeLevel;
         idt_descriptors[desc_number].flags.storage_segment = 0;
         idt_descriptors[desc_number].offset_high = (handler_offset >> 16) & 0xFFFF;
-    }
-
-    static void pic_set_irq_offsets(uint8 master_offset, uint8 slave_offset)
-    {
-        port_write8(0x20, 0x11);
-        port_write8(0xA0, 0x11);
-
-        port_write8(0x21, master_offset);
-        port_write8(0xA1, slave_offset);
-
-        port_write8(0x21, 0x04);
-        port_write8(0xA1, 0x02);
-
-        port_write8(0x21, 0x01);
-        port_write8(0xA1, 0x01);
-
-        port_write8(0x21, 0x0);
-        port_write8(0xA1, 0x0);
     }
 }

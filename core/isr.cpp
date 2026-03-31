@@ -1,5 +1,6 @@
 #include "drivers/screen.h"
 #include "drivers/ports.h"
+#include "drivers/pic.h"
 #include "kernel.h"
 #include "isr.h"
 
@@ -10,7 +11,6 @@ namespace kisr
 {
     static isr_handler_t isr_handlers[256];
 
-    static void pic_send_eoi(bool send_to_slave);
     static void handle_isr(const regs_t& regs);
 
     void register_handler(uint8 int_number, isr_handler_t handler)
@@ -50,15 +50,5 @@ namespace kisr
 
             RAISE_ERROR("Unhandled exception, trap or fault");
         }
-    } 
-
-    static void pic_send_eoi(bool send_to_slave)
-    {
-        if(send_to_slave)
-        {
-            port_write8(0xA0, 0x20);
-        }
-        
-        port_write8(0x20, 0x20);
     }
 }

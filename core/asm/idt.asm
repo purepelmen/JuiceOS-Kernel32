@@ -16,7 +16,6 @@ ISR_HANDLER_SIZE_CONST equ 14
 
 %macro ISR_NOERRCODE 1
 isr_handler_%1:
-    cli
     push byte 0
     push byte %1
     jmp isr_common_stub
@@ -27,7 +26,6 @@ isr_handler_%1:
 
 %macro ISR_ERRCODE 1
 isr_handler_%1:
-    cli
     push byte %1
     jmp isr_common_stub
 
@@ -37,7 +35,6 @@ isr_handler_%1:
 
 %macro IRQ 1
 isr_handler_%1:
-    cli
     push byte 0
     push byte %1
     jmp irq_common_stub
@@ -69,7 +66,6 @@ isr_common_stub:
 
     popa
     add esp, 8
-    sti
     iret
 
 [extern irq_c_handler]
@@ -95,7 +91,6 @@ irq_common_stub:
 
     popa
     add esp, 8
-    sti
     iret
 
 [global isr_handlers_offset]
@@ -145,7 +140,7 @@ isr_handlers_start:
     IRQ           36     ; IRQ 4
     IRQ           37     ; IRQ 5
     IRQ           38     ; IRQ 6
-    IRQ           39     ; IRQ 7 (Spurious Interrupt!)
+    IRQ           39     ; IRQ 7   (Spurious Interrupt!)
     IRQ           40     ; IRQ 8
     IRQ           41     ; IRQ 9
     IRQ           42     ; IRQ 10
@@ -153,4 +148,4 @@ isr_handlers_start:
     IRQ           44     ; IRQ 12
     IRQ           45     ; IRQ 13
     IRQ           46     ; IRQ 14
-    IRQ           47     ; IRQ 15
+    IRQ           47     ; IRQ 15  (Spurious Interrupt!)
