@@ -44,9 +44,17 @@ void pic_mask(uint8 irq, bool isMasked)
     port_write8(port, newMask);
 }
 
-uint8 pic_get_mask()
+uint16 pic_get_mask()
 {
     return port_read8(PIC_MASTER_DATA) | (port_read8(PIC_SLAVE_DATA) << 8);
+}
+
+uint16 pic_get_isr()
+{
+    port_write8(PIC_MASTER_CMD, 0x0B);
+    port_write8(PIC_SLAVE_CMD, 0x0B);
+
+    return (port_read8(PIC_SLAVE_CMD) << 8) | port_read8(PIC_MASTER_CMD);
 }
 
 void pic_send_eoi(bool includingSlave)

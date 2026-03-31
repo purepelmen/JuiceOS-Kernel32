@@ -30,7 +30,23 @@ namespace kisr
 
     extern "C" void irq_c_handler(regs_t regs)
     {
-        pic_send_eoi(regs.int_number >= 40);
+        uint32 irqNumber = regs.int_number - 32;
+
+        pic_send_eoi(irqNumber >= 8);
+        if (irqNumber == 7 || irqNumber == 15)
+        {
+            uint16 isr = pic_get_isr();
+            if (isr & (1 << irqNumber))
+            {
+                // This is spurious interrupt.
+                // If from slave, send EOI to the master PIC only.
+                if (irqNumber >= 8)
+                    pic_send_eoi(false);
+
+                return;
+            }
+        }
+
         handle_isr(regs);
     }
 

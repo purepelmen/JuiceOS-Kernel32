@@ -2,9 +2,9 @@
 
 #include "stdint.h"
 
-#define IDT_TASK_GATE_TYPE          0x05
-#define IDT_INTERRUPT_GATE_TYPE     0x0E
-#define IDT_TRAP_GATE_TYPE          0x0F
+#define IDT_GATE_TYPE_TASK          0x05
+#define IDT_GATE_TYPE_INTERRUPT     0x0E
+#define IDT_GATE_TYPE_TRAP          0x0F
 
 namespace kidt
 {

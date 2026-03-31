@@ -26,7 +26,7 @@ namespace kidt
         for(int i = 0; i < 48; i++)
         {
             uint32 handler_offset = isr_handlers_offset + isr_handler_size * i;
-            idt_set_gate(i, handler_offset, 0x08, IDT_INTERRUPT_GATE_TYPE, 0);
+            idt_set_gate(i, handler_offset, 0x08, IDT_GATE_TYPE_INTERRUPT, 0);
         }
 
         idtr.table_size = sizeof(idt_desc_t) * IDT_DESCRIPTORS_COUNT - 1;
