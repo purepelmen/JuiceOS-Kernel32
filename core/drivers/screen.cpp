@@ -3,7 +3,7 @@
 
 namespace kscreen
 {
-    uint8* const VIDEO_MEMORY = (uint8*)0xB8000;
+    uint16* const VIDEO_MEMORY = (uint16*)0xB8000;
     const uint8 WIDTH = 80, HEIGHT = 25;
 
     struct out_arguments outargs;
@@ -27,10 +27,9 @@ namespace kscreen
     void clear()
     {
         outargs.print_color = KSCREEN_STDCOLOR;
-        for (int i = 0; i < WIDTH * HEIGHT * 2; i += 2)
+        for (int i = 0; i < WIDTH * HEIGHT; i += 1)
         {
-            VIDEO_MEMORY[i] = ' ';
-            VIDEO_MEMORY[i + 1] = outargs.print_color;
+            VIDEO_MEMORY[i] = (outargs.print_color << 8) | (uint8)' ';
         }
 
         outargs.set_cursorXY(0, 0);
@@ -40,18 +39,16 @@ namespace kscreen
     {
         if(*y >= HEIGHT)
         {
-            size_t hzLineInBytes = WIDTH * 2;
-
-            uint8* si = VIDEO_MEMORY + hzLineInBytes;
-            uint8* di = VIDEO_MEMORY;
+            uint16* si = VIDEO_MEMORY + WIDTH;
+            uint16* di = VIDEO_MEMORY;
             
+            size_t hzLineInBytes = WIDTH * 2;
             mem_copy(si, di, hzLineInBytes * (HEIGHT - 1));
 
-            di = VIDEO_MEMORY + (hzLineInBytes * (HEIGHT - 1));
-            for (int i = 0; i < hzLineInBytes; i += 2)
+            di = VIDEO_MEMORY + WIDTH * (HEIGHT - 1);
+            for (int i = 0; i < WIDTH; i += 1)
             {
-                di[i] = ' ';
-                di[i + 1] = outargs.print_color;
+                di[i] = (outargs.print_color << 8) | (uint8)' ';
             }
             
             *y = HEIGHT - 1;
@@ -93,9 +90,8 @@ namespace kscreen
         }
         update_scroll(posY);
 
-        uint8* addressToPrint = VIDEO_MEMORY + (*posX * 2 + *posY * WIDTH * 2);
-        addressToPrint[0] = ch;
-        addressToPrint[1] = outargs.print_color;
+        uint16* addressToPrint = VIDEO_MEMORY + ((*posX) + (*posY) * WIDTH);
+        *addressToPrint = (outargs.print_color << 8) | ch & 0xFF;
 
         *posX += 1;
     }
