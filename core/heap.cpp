@@ -4,7 +4,7 @@
 #include "heap.h"
 
 extern uint32 end;
-extern uint32 stack_top;
+extern uint32 stack_base_addr;
 
 /* The heap.h new[] template function uses it, because sometimes new[] requires the definition of this. */
 extern "C" void __cxa_throw_bad_array_new_length()
@@ -57,7 +57,7 @@ namespace kheap
         uint32 esp;
         asm volatile ("movl %%esp, %0" : "=r" (esp));
 
-        return stack_top - esp;
+        return stack_base_addr - esp;
     }
 
     uint32 get_allocated_size()

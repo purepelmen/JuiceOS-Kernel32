@@ -22,7 +22,6 @@ static void console_handle(string command, int argc, char** argv, bool* shouldCo
 
 static void open_memdumper(void);
 static void open_syslogs(void);
-static void open_debugger(void);
 
 static void print_systemcpu(void);
 
@@ -298,6 +297,13 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         return;
     }
 
+    if (command == "dbginfo")
+    {
+        kshell::open_debugger();
+        kconsole::clear();
+        return;
+    }
+
     if(command == "help")
     {
         const char* helpMsg = 
@@ -307,6 +313,7 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
             "HELP - Print this message.\n"
             "HELLO - Test command that say hello to you.\n"
             "MEMDUMP - Open Memory dumper.\n"
+            "DBGINFO - Open Debugger.\n"
             "REBOOT - Reboot your PC.\n"
             "SCANTEST - Print scancode of every pressed key.\n"
             "SYSTEM - Print system information.\n"
@@ -838,14 +845,12 @@ static void printf_size(size_t bytes)
     screen_printf("%d B.", bytes);
 }
 
-void open_debugger(void)
+void kshell::open_debugger(void)
 {
     kscreen::clear();
+    kscreen::update_hwcursor(0, 0);
 
     uint32 res;
-
-    kscreen::outargs.cursor_x = 0;
-    kscreen::outargs.cursor_y = 0;
 
     kscreen::outargs.print_color = KSCREEN_INVERTCOLOR;
     kscreen::print("                                    Debugger                                    ");

@@ -16,7 +16,7 @@ section .text
 
 extern kernel_main
 global start
-global stack_top
+global stack_base_addr
 
 start:
     cli
@@ -36,6 +36,8 @@ verify_multiboot:
 .fail:
     add esp, 4
     jmp 0xffff0
+
+stack_base_addr: dd stack_top
 
 section .bss
 stack_bottom:
