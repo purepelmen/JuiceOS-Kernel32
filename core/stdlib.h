@@ -6,7 +6,7 @@
 #include "console.h"
 
 #define RAISE_ERROR(message) { raise_error_begin(message, __FILE__, __LINE__); raise_error_end(); }
-#define RAISE_ERROR_D(message, desc, ...) { raise_error_begin(message, __FILE__, __LINE__); kconsole::printf(desc, __VA_ARGS__); raise_error_end(); }
+#define RAISE_ERROR_D(message, ...) { raise_error_begin(message, __FILE__, __LINE__); kconsole::printf("" __VA_ARGS__); raise_error_end(); }
 
 #define kernel_assert(expr, ...) if (!(expr)) {\
     raise_error_begin("Assertation failed", __FILE__, __LINE__);\

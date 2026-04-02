@@ -11,4 +11,4 @@ add_library(K32_Core STATIC ${SOURCES} ${HEADERS} ${ASMS})
 target_include_directories(K32_Core PRIVATE ".")
 
 target_compile_options(K32_Core PRIVATE $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf32>)
-target_compile_options(K32_Core PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-nostdlib -nostdinc -ffreestanding -m32 -fno-rtti -fno-stack-protector>)
+target_compile_options(K32_Core PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-nostdlib -nostdinc -ffreestanding -m32 -march=i386 -fno-rtti -fno-stack-protector --no-exceptions>)

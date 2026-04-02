@@ -304,6 +304,13 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         return;
     }
 
+    if (command == "heapdbg")
+    {
+        kconsole::printf("=== Free blocks of heap ===\n");
+        kheap::print_alloc_free_blocks();
+        return;
+    }
+
     if(command == "help")
     {
         const char* helpMsg = 
@@ -831,18 +838,18 @@ static void printf_size(size_t bytes)
     size_t conv = bytes / (1024 * 1024);
     if (conv > 0)
     {
-        screen_printf("%d MB.", conv);
+        screen_printf("%d MB", conv);
         return;
     }
 
     conv = bytes / 1024;
     if (conv > 0)
     {
-        screen_printf("%d KB.", conv);
+        screen_printf("%d KB", conv);
         return;
     }
 
-    screen_printf("%d B.", bytes);
+    screen_printf("%d B", bytes);
 }
 
 void kshell::open_debugger(void)
@@ -946,25 +953,32 @@ void kshell::open_debugger(void)
     // System memory ----------------------
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 10;
-    kscreen::print("Memory allocated for the system: ");
-    printf_size(kheap::get_system_mem_size());
+    kscreen::print("Kernel memsize: ");
+    printf_size(kheap::get_kernel_memsize());
+    kscreen::print(".");
 
     // Heap -------------------------------
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 12;
-    kscreen::print("Heap allocated: ");
-    printf_size(kheap::get_allocated_size());
+    kscreen::print("Dynamic memory size: ");
+    printf_size(kheap::get_allocated());
+    kscreen::print(".");
 
     // Heap memory location ---------------
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 14;
-    screen_printf("Heap located at: 0x%x", kheap::get_location_ptr());
+    kscreen::print("Heap free: ");
+    printf_size(kheap::get_heap_free());
+    kscreen::print(" / ");
+    printf_size(kheap::get_heap_size());
+    kscreen::print(".");
 
     // Stack ------------------------------
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 16;
     screen_printf("Stack usage: ");
     printf_size(kheap::get_stack_usage());
+    kscreen::print(".");
 
     while (kps2::read_scancode(true) != 0x01);
 }

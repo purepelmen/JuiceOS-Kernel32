@@ -7,22 +7,30 @@ inline void* operator new[](size_t size, void* p) noexcept { return p; }
 
 namespace kheap
 {
-    /* Initialize the heap system. */
+    /// @brief Initialize the dynamic memory system.
     void init();
-
-    /* Reset the heap. */
+    /// @brief Perform memory reset. It discards all allocated data with `sbrk()`.
     void reset();
 
-    /* Allocate a block of memory. */
-    void* alloc(uint32 size);
+    /// @brief Expands dynamic memory controlled by the kernel by given size and gives ptr to the allocated space.
+    void* sbrk(size_t size);
+    /// @brief Same as `sbrk()` but with 4KB alignment.
+    void* sbrk_pgaligned(size_t size);
 
-    /* Allocate a 4K aligned block of memory. */
-    void* alloc_pg_aligned(uint32 size);
+    /// @brief Allocate a memory block of given size from the heap. Must be freed with `free()`.
+    void* alloc(size_t size);
+    /// @brief Reclaim memory allocated by `alloc()`.
+    void free(void* ptr);
 
+    void print_alloc_free_blocks();
+
+    /// @brief Returns amount of bytes allocated dynamically by `sbrk()`.
+    uint32 get_allocated();
+    /// @brief Returns amount of bytes used by the kernel image (code+data), excluding any dynamic memory.
+    uint32 get_kernel_memsize();
+    uint32 get_heap_free();
+    uint32 get_heap_size();
     uint32 get_stack_usage();
-
-    uint32 get_allocated_size();
-    uint32 get_system_mem_size();
 
     void* get_location_ptr();
 
@@ -47,5 +55,12 @@ namespace kheap
     {
         void* allocPtr = alloc(sizeof(T) * count);
         return new (allocPtr) T[count];
+    }
+
+    template<typename T>
+    void destroy(T* obj)
+    {
+        obj->~T();
+        free(obj);
     }
 }
