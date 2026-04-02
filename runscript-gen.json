@@ -21,6 +21,12 @@
             }
         }
     },
+    "debug": {
+        "flags": [ 
+            "-s",
+            "-S" 
+        ]
+    },
 
     "wslPathPreprocess": [
         "-hda"

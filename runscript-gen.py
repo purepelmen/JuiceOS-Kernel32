@@ -1,6 +1,9 @@
 import copy
 import json
-from os import path, system
+from os import system
+import os
+from shutil import which
+import sys
 
 
 def parse_answer(text: str) -> bool:
@@ -32,8 +35,9 @@ class RunCommandBuilder:
             self.misc_flags.append(flag)
     
     def build(self) -> str:
-        output = RunCommandBuilder.DEFAULT_QEMU_EXEC
+        output = f"emul=\"{RunCommandBuilder.DEFAULT_QEMU_EXEC}\"\n"
 
+        output += "args=\""
         if len(self.misc_props) > 0:
             output += ' '
             output += ' '.join('{} {}'.format(key, val) for key, val in self.misc_props.items())
@@ -41,6 +45,8 @@ class RunCommandBuilder:
         if len(self.misc_flags) > 0:
             output += ' '
             output += ' '.join(self.misc_flags)
+        
+        output += "\"\n\n"
         
         return output
 
@@ -52,50 +58,57 @@ def gen_variant(base_builder: RunCommandBuilder, name: str, variant: ConfigVaria
 
     preprocess_variant(builder)
 
-    filename = f"run_{name}.gen"
-    filename += ".bat" if running_wsl else ".sh"
-
-    filepath = path.join(currdir_path, filename)
+    filename = f"run_{name}.gen.sh"
+    filepath = os.path.join(currdir_path, filename)
     with open(filepath, "w") as file:
-        if running_wsl:
-            file.write(f"@set HERE_PATH={currdir_path}\n\n")
-
         file.write(builder.build())
+        if running_wsl:
+            file.write("powershell.exe -Command Start-Process -FilePath $emul -ArgumentList \\\"$args\\\"")
+        else:
+            file.write("$emul $args")
+        
         file.write("\n")
     
-    if not running_wsl:
-        system(f"chmod +x {filepath}")
+    system(f"chmod +x {filepath}")
 
 
 def preprocess_variant(builder: RunCommandBuilder) -> None:
     if not running_wsl:
         return
     
-    for preprocess_prop in configWslPathPreprocess:
+    for preprocess_prop in config_wsl_path_preprocess:
         if preprocess_prop not in builder.misc_props:
             continue
 
         value = builder.misc_props[preprocess_prop]
-
-        value = value.replace("/", "\\")
-        value = "%HERE_PATH%\\" + value
+        value = f"$(wslpath -aw {value})"
         builder.misc_props[preprocess_prop] = value
 
 
 def gen_all() -> None:
     base_builder = RunCommandBuilder()
-    base_builder.copy_from(configBaseVariant)
+    base_builder.copy_from(config_base)
 
-    for varname, variant in configVariants.items():
+    if make_debug_variants:
+        debug_builder = RunCommandBuilder()
+        debug_builder.copy_from(config_base)
+        debug_builder.copy_from(config_base_debug)
+
+    for varname, variant in config_variants.items():
         gen_variant(base_builder, varname, variant)
+
+        if make_debug_variants:
+            gen_variant(debug_builder, f"{varname}-debug", variant)
 
 
 running_wsl = False
 currdir_path: str = ""
+make_debug_variants = False
 
-configBaseVariant = ConfigVariant()
-configVariants: dict[str, ConfigVariant] = {}
-configWslPathPreprocess: list[str] = []
+config_base = ConfigVariant()
+config_base_debug = ConfigVariant()
+config_variants: dict[str, ConfigVariant] = {}
+config_wsl_path_preprocess: list[str] = []
 
 
 def config_read_varaint(config) -> ConfigVariant:
@@ -109,41 +122,51 @@ def config_read_varaint(config) -> ConfigVariant:
     return variant
 
 def load_config() -> None:
-    global configBaseVariant
-    global configWslPathPreprocess
+    global config_base
+    global config_base_debug
+    global config_wsl_path_preprocess
 
     with open("runscript-gen.json") as file:
         config = json.load(file)
 
     if "base" in config:
-        configBaseVariant = config_read_varaint(config["base"])
+        config_base = config_read_varaint(config["base"])
+    if "debug" in config:
+        config_base_debug = config_read_varaint(config["debug"])
 
     if "variants" in config:
         for varname, vardefinition in config["variants"].items():
-            configVariants[varname] = config_read_varaint(vardefinition)
+            config_variants[varname] = config_read_varaint(vardefinition)
 
     if "wslPathPreprocess" in config:
-        configWslPathPreprocess = config["wslPathPreprocess"]
+        config_wsl_path_preprocess = config["wslPathPreprocess"]
 
 
 if __name__ == "__main__":
+    if "-h" in sys.argv or "--help" in sys.argv or "--usage" in sys.argv:
+        print(f"Usage: {sys.argv[0]} [--no-wsl] [--debug]")
+        exit(0)
+
     load_config()
-    
-    if len(configVariants) == 0:
+    if len(config_variants) == 0:
         print("No variants defined for generation in the config.")
         exit(0)
-    
-    prompt = input("Are you running WSL? (y/n): ")
-    running_wsl = parse_answer(prompt)
+
+    wslpath_path = which("wslpath")
+    running_wsl = wslpath_path is not None
+
+    if "--no-wsl" in sys.argv:
+        running_wsl = False
 
     if running_wsl:
-        currdir_path = input("Ok. Please print the full network path to the project root: ")
-        
-        if not path.exists(currdir_path + "\\runscript-gen.py"):
-            print("Sorry but seems like this is not the correct path. Exiting...")
-            exit(-1)
+        print("WSL detected. The scripts will be generated for it and Qemu in Windows.")
+        print("Use --no-wsl option to force generation of normal scripts.")
+    else:
+        print("Normal Linux scripts generation started (non-WSL).")
 
-        print("Seems like it's correct. Continuing...")
+    if "--debug" in sys.argv:
+        make_debug_variants = True
+        print("\n> Enabled Debug subvariants generation.")
 
     print()
     gen_all()

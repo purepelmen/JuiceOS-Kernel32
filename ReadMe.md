@@ -13,16 +13,15 @@ sudo apt install grub2 xorriso
 
 ## Running in an emulator
 ### Requirements
-Windows users should install **Qemu for Windows**, and add Qemu to Windows environment variables.
+Windows users can install **Qemu for Windows**, and add Qemu to Windows environment variables. The other way is to install Qemu inside the WSL as Linux users should do this.
 
 Linux users should install this:
 ```console
 sudo apt install qemu-system-x86
 ```
 
-Some presets for running Qemu are defined in `runscript-gen.json`, and you can use `runscript-gen.py` to generate them for both Linux and WSL. For this you'll need Python 3. Install it on Windows (not in WSL) if you're using WSL. 
+Some presets for running Qemu are defined in `runscript-gen.json`, and you can use `runscript-gen.py` to generate them for both Linux and WSL. For this you'll need Python 3:
 
-If you're using Linux without WSL, just install Python 3:
 ```console
 sudo apt install python3
 ```
@@ -30,7 +29,7 @@ sudo apt install python3
 ### Testing
 
 #### Generate run scripts
-For normal Linux (not WSL) either run this:
+Run this in your Linux terminal or inside the WSL shell if you use it:
 ```console
 make gen-runs
 ```
@@ -39,17 +38,19 @@ or directly run the script:
 python3 runscript-gen.py
 ```
 
-When using WSL, run the `runscript-gen.py` script in the Windows environment.
+If you're inside a WSL distribution, the script will know it and generate `.sh` scripts accordingly to use **Qemu for Windows**. If this is undesirable and you want to use Qemu installed inside the WSL distro, add a special flag to the above command so you get: `python3 runscript-gen.py --no-wsl`.
 
-Then follow the instructions, and the run scripts will be generated. Re-run the script if you make changes to the JSON config.
+After that run scripts will be generated. Re-run the script if you make changes to the JSON config.
 
 #### Run the emulator
-Use any of the generated run scripts. When using WSL you can just double-click a .bat script in the explorer. On Linux run a .sh script. They all are already marked executable.
+Redardless if you use WSL or not, the scripts are `.sh` (Bash scripts). It's not anymore Batch/PowerShell as it was before.
 
-If you don't know which run script to better use, run the default/normal variant. 
+When using WSL you must run them from the WSL terminal (inside VSCode f.i.). You can specify the script inside VSCode tasks (in WSL this will only work if VSCode is connected to your WSL distro).
+
+If you don't know which run script to better use, currently I recommend the `ide` variant as the OS disk drivers don't work on the default variant yet (where there's AHCI controller).
 
 ## My development environment
-I use VSCode. If I use WSL, it's of course installed inside Windows. I also use Qemu, and the instructions will be only for this emulator. The important point is that I don't install Qemu inside WSL. As stated above "you should install Qemu for Windows, and add it to env variables". 
+I use VSCode. If I use WSL, it's of course installed inside Windows. I also use Qemu, and the instructions will be only for this emulator. I don't install Qemu inside WSL, though you can.
 
 If I use WSL I of course open the WSL folder inside VSCode by connecting to it, because right-clicking in the Windows explorer and selecting "Open in VSCode" is not enough. For that you must have `ms-vscode-remote.remote-wsl` extension which should be suggested automatically (probably).
 
@@ -75,7 +76,13 @@ Your `make` command may build everything correctly, but IntelliSense will show e
 The NASM extension should know that we use 32-bit format (very important). C/C++ IntelliSense also must know we're compilling for x86 architecture. We also need to set `systemIncludePath` empty, so the standard library of the system won't conflict with some files in this project like `stdint.h`, `stdlib.h` and so on.
 
 ### Making everything Build&Run at F5 hotkey (+ Kernel debugging)
-After you've generated the run scripts via `runscript-gen.py` you should edit them (for all configurations) and add `-s -S`. The former flag is a shortcut for `-gdb tcp::1234`, and the latter freezes CPU at startup and waits until debugger is connected. 
+For debugging to work some special flags must be passed to the emulator. When you generate the run scripts via `runscript-gen.py` you should add an additional flag "debug" which tells to generate a debug version of every variant:
+
+```console
+python3 runscript-gen.py --debug
+```
+
+Added flags make sure the debug server will run at `tcp::1234`, freeze CPU at startup, and wait until debugger is connected. So you run debug run scripts only when you need to debug.
 
 Then create and edit `.vscode/tasks.json`:
 ```json
@@ -92,20 +99,15 @@ Then create and edit `.vscode/tasks.json`:
         {
             "label": "Run QEMU",
             "type": "shell",
-            "command": "powershell.exe",
-            "args": [
-                "-Command",
-                "Start-Process -FilePath './run_ide.gen.bat'"
-            ],
+            "command": "./run_ide-debug.gen.sh",
+            "args": [],
             "dependsOn": "Build kernel"
         }
     ]
 }
 ```
 
-First task compiles the kernel and assembles the ISO using `make`, the second one depends on the first and runs Qemu through the generated run script (I use PowerShell here because CMD.EXE doesn't support UNC paths). On pure Linux, edit this configuration so you run the shell script directly. 
-
-Also make sure to select the desired run preset (`run_ide`, `run_default`...).
+First task compiles the kernel and assembles the ISO using `make`, the second one depends on the first and runs the generated run script. Make sure to select the desired run preset (`run_ide`, `run_default`...).
 
 This is not enough. The last step would be to add a launch configuration (that you will actually launch when pressing F5). Create and edit `.vscode/launch.json`:
 ```json
