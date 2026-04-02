@@ -28,5 +28,13 @@ SECTIONS {
         *(.bss)
     }
 
+    .init_array :
+    {
+        __init_array_start = .;
+        KEEP (*(SORT(.init_array.*)))
+        KEEP (*(.init_array))
+        __init_array_end = .;
+    }
+
     end = .; _end = .; __end = .;
 }

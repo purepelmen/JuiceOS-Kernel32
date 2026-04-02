@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "multiboot.h"
+#include "langutils.h"
 
 #include "gdt.h"
 #include "idt.h"
@@ -30,23 +31,33 @@ static bool syslog_isWrapped = false;
 
 static bool syslog_printImmediately = true;
 
-static void kernel_init();
-static void kernel_analyze_multiboot_struct();
+static void init();
+static void analyze_multiboot_struct();
 
 extern "C" void kernel_main(void* multibootDataFromBootloader)
 {
     multibootInfoStruct = multibootDataFromBootloader;
+    firstMutlibootTag = (multiboot_tag*) ((uint8*)multibootInfoStruct + 8);
 
-    kernel_init();
-    kshell::open_menu();
-}
-
-void kernel_init()
-{
+    // === This is part of kernel early-init stage. Here let's prepare the most basic things.
+    // Init the screen driver very early because it's very required to see problems that may happen.
+    // kconsole is required as well (asserts, RAISE_ERRORs must work).
     kconsole::clear();
     kscreen::enable_hwcursor(0xE, 0xF);
 
-    kernel_analyze_multiboot_struct();
+    cpp_call_global_ctors();
+
+    // This is core init logic. It's goal is to prepare the kernel for a sufficient state
+    // to at least run the kernel shell.
+    init();
+
+    // Let's go.
+    kshell::open_menu();
+}
+
+void init()
+{
+    analyze_multiboot_struct();
 
     kheap::init();
 
@@ -70,10 +81,8 @@ void kernel_init()
     kconsole::read_string();
 }
 
-void kernel_analyze_multiboot_struct()
+void analyze_multiboot_struct()
 {
-    firstMutlibootTag = (multiboot_tag*) ((uint8*)multibootInfoStruct + 8);
-
     multiboot_tag* blNameTag = multiboot_find_tag(firstMutlibootTag, multiboot_tagtype::BOOTLOADER_NAME);
     if (!blNameTag->is_end())
     {
