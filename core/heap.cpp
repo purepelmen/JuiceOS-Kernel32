@@ -21,14 +21,15 @@ namespace kheap
     static uint8* dynmemStart;
     static uint8* dynmemPtr;
 
+    static fll_allocator allocator;
+
     void init()
     {
-        // heap_start_value = (uint8*)&end + (1024 * 64);
         dynmemStart = (uint8*)&end;
         dynmemPtr = dynmemStart;
 
         void* heapMemory = sbrk(HEAP_SIZE);
-        heap_free_llist_init(heapMemory, HEAP_SIZE);
+        allocator.init(heapMemory, HEAP_SIZE);
 
         kernel_log("Dynamic memory initialized (heap size: %d KB).\n", HEAP_SIZE / 1024);
     }
@@ -38,7 +39,7 @@ namespace kheap
         dynmemPtr = dynmemStart;
 
         void* heapMemory = sbrk(HEAP_SIZE);
-        heap_free_llist_init(heapMemory, HEAP_SIZE);
+        allocator.init(heapMemory, HEAP_SIZE);
 
         kernel_log("Heap resetting has been completed. This will break references.\n");
     }
@@ -66,17 +67,17 @@ namespace kheap
 
     void* alloc(size_t size)
     {
-        return heap_free_llist_alloc(size);
+        return allocator.alloc(size);
     }
 
     void free(void* ptr)
     {
-        heap_free_llist_free(ptr);
+        allocator.free(ptr);
     }
 
     void print_alloc_free_blocks()
     {
-        heap_free_llist_dump_free_blocks();
+        allocator.dump();
     }
 
     uint32 get_allocated()
@@ -91,12 +92,12 @@ namespace kheap
 
     uint32 get_heap_free()
     {
-        return heap_free_llist_get_unused();
+        return allocator.get_unused();
     }
 
     uint32 get_heap_size()
     {
-        return HEAP_SIZE;
+        return allocator.get_heap_size();
     }
 
     uint32 get_stack_usage()

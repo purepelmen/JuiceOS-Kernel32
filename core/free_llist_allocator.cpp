@@ -12,33 +12,26 @@ struct llist_free_entry
     size_t size;
 };
 
-const uint32 ALLOC_HEADER_CHECKSUM = 0xCAFE1234;
-
 struct alloc_header
 {
     uint32 checksum;
     size_t size;
 };
 
-static llist_free_entry* freeListFirst = nullptr;
+const uint32 ALLOC_HEADER_CHECKSUM = 0xCAFE1234;
 
-static void llist_insert_before(llist_free_entry* target, void* address, size_t size);
-static void llist_insert_after(llist_free_entry* target, void* address, size_t size);
-static void llist_remove(llist_free_entry* entry);
-
-static size_t llist_shrink(llist_free_entry* entry, size_t amount);
-static void llist_grow_up(llist_free_entry* entry, size_t amount);
-
-void heap_free_llist_init(void* location, size_t heapSize)
+void fll_allocator::init(void *location, size_t heapSize)
 {
     kernel_assert(heapSize >= sizeof(llist_free_entry));
 
-    freeListFirst = (llist_free_entry*)location;
-    freeListFirst->size = heapSize;
-    freeListFirst->prev = freeListFirst->next = nullptr;
+    m_first = (llist_free_entry*)location;
+    m_first->size = heapSize;
+    m_first->prev = m_first->next = nullptr;
+
+    m_heapSize = heapSize;
 }
 
-void* heap_free_llist_alloc(size_t size)
+void* fll_allocator::alloc(size_t size)
 {
     if (size == 0)
         return nullptr;
@@ -46,7 +39,7 @@ void* heap_free_llist_alloc(size_t size)
     size += sizeof(alloc_header);
     size = max(size, sizeof(llist_free_entry));
 
-    llist_free_entry* suitable = freeListFirst;
+    llist_free_entry* suitable = m_first;
     while (suitable->size < size)
     {
         suitable = suitable->next;
@@ -64,7 +57,7 @@ void* heap_free_llist_alloc(size_t size)
     return addr + sizeof(alloc_header);
 }
 
-void heap_free_llist_free(void* addr)
+void fll_allocator::free(void* addr)
 {
     addr = addr - sizeof(alloc_header);
     alloc_header* header = (alloc_header*)addr;
@@ -72,13 +65,13 @@ void heap_free_llist_free(void* addr)
     kernel_assert(header->checksum == ALLOC_HEADER_CHECKSUM && header->size > sizeof(alloc_header));
     header->checksum = 0;
 
-    llist_free_entry* entry = freeListFirst;
+    llist_free_entry* entry = m_first;
     if (entry == nullptr)
     {
         llist_free_entry* newEntry = (llist_free_entry*)addr;
         newEntry->size = header->size;
 
-        freeListFirst = newEntry;
+        m_first = newEntry;
         return;
     }
 
@@ -124,11 +117,11 @@ void heap_free_llist_free(void* addr)
     kernel_assert(entry != nullptr, "heap_free_llist_free() impossible branch reached. Failed to find a suitable method to reclaim memory.");
 }
 
-size_t heap_free_llist_get_unused()
+size_t fll_allocator::get_unused() const
 {
     size_t counter = 0;
 
-    llist_free_entry* entry = freeListFirst;
+    llist_free_entry* entry = m_first;
     do
     {
         counter += entry->size;
@@ -139,9 +132,14 @@ size_t heap_free_llist_get_unused()
     return counter;
 }
 
-void heap_free_llist_dump_free_blocks()
+size_t fll_allocator::get_heap_size() const
 {
-    llist_free_entry* entry = freeListFirst;
+    return m_heapSize;
+}
+
+void fll_allocator::dump() const
+{
+    llist_free_entry* entry = m_first;
     do
     {
         kconsole::printf("%p, sized: %d B\n", entry, entry->size);
@@ -150,15 +148,15 @@ void heap_free_llist_dump_free_blocks()
     while (entry != nullptr);
 }
 
-void llist_insert_before(llist_free_entry* target, void* address, size_t size)
+void fll_allocator::llist_insert_before(llist_free_entry* target, void* address, size_t size)
 {
     kernel_assert(size >= sizeof(llist_free_entry));
 
     llist_free_entry* newEntry = (llist_free_entry*)address;
     newEntry->size = size;
 
-    if (freeListFirst == target)
-        freeListFirst = newEntry;
+    if (m_first == target)
+        m_first = newEntry;
     else
         target->prev->next = newEntry;
     
@@ -167,7 +165,7 @@ void llist_insert_before(llist_free_entry* target, void* address, size_t size)
     target->prev = newEntry;
 }
 
-void llist_insert_after(llist_free_entry* target, void* address, size_t size)
+void fll_allocator::llist_insert_after(llist_free_entry* target, void* address, size_t size)
 {
     kernel_assert(size >= sizeof(llist_free_entry));
 
@@ -183,10 +181,10 @@ void llist_insert_after(llist_free_entry* target, void* address, size_t size)
     target->next = newEntry;
 }
 
-void llist_remove(llist_free_entry* entry)
+void fll_allocator::llist_remove(llist_free_entry* entry)
 {
-    if (freeListFirst == entry)
-        freeListFirst = entry->next;
+    if (m_first == entry)
+        m_first = entry->next;
 
     entry->prev->next = entry->next;
     entry->next->prev = entry->prev;
@@ -194,7 +192,7 @@ void llist_remove(llist_free_entry* entry)
     entry->size = 0;
 }
 
-size_t llist_shrink(llist_free_entry* block, size_t amount)
+size_t fll_allocator::llist_shrink(llist_free_entry* block, size_t amount)
 {
     kernel_assert(block->size >= amount);
 
@@ -214,12 +212,12 @@ size_t llist_shrink(llist_free_entry* block, size_t amount)
     newPlace->prev->next = newPlace;
     newPlace->next->prev = newPlace;
 
-    if (block == freeListFirst)
-        freeListFirst = newPlace;
+    if (block == m_first)
+        m_first = newPlace;
     return amount;
 }
 
-void llist_grow_up(llist_free_entry* entry, size_t amount)
+void fll_allocator::llist_grow_up(llist_free_entry* entry, size_t amount)
 {
     llist_free_entry* newPlace = (llist_free_entry*)((uint8*)entry - amount);
     *newPlace = *entry;
@@ -228,6 +226,6 @@ void llist_grow_up(llist_free_entry* entry, size_t amount)
     newPlace->prev->next = newPlace;
     newPlace->next->prev = newPlace;
 
-    if (entry == freeListFirst)
-        freeListFirst = newPlace;
+    if (entry == m_first)
+        m_first = newPlace;
 }

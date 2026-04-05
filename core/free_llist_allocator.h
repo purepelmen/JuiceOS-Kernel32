@@ -1,9 +1,30 @@
 #pragma once
 #include "stdint.h"
 
-void heap_free_llist_init(void* location, size_t heapSize);
-void* heap_free_llist_alloc(size_t size);
-void heap_free_llist_free(void* addr);
+struct llist_free_entry;
 
-size_t heap_free_llist_get_unused();
-void heap_free_llist_dump_free_blocks();
+class fll_allocator
+{
+private:
+    llist_free_entry* m_first;
+    size_t m_heapSize = 0;
+
+public:
+    void init(void* location, size_t heapSize);
+
+    void* alloc(size_t size);
+    void free(void* addr);
+
+    size_t get_unused() const;
+    size_t get_heap_size() const;
+
+    void dump() const;
+
+private:
+    void llist_insert_before(llist_free_entry* target, void* address, size_t size);
+    void llist_insert_after(llist_free_entry* target, void* address, size_t size);
+    void llist_remove(llist_free_entry* entry);
+
+    size_t llist_shrink(llist_free_entry* block, size_t amount);
+    void llist_grow_up(llist_free_entry* entry, size_t amount);
+};
