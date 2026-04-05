@@ -53,14 +53,40 @@ namespace kheap
     template<typename T>
     T* create_new_array(size_t count)
     {
-        void* allocPtr = alloc(sizeof(T) * count);
-        return new (allocPtr) T[count];
+        constexpr size_t HeaderSize = sizeof(size_t);
+
+        void* allocPtr = alloc(HeaderSize + sizeof(T) * count);
+        ((size_t*)allocPtr)[0] = count;
+
+        return new ((uint8*)allocPtr + HeaderSize) T[count];
     }
 
     template<typename T>
     void destroy(T* obj)
     {
-        obj->~T();
+        if constexpr (!__has_trivial_destructor(T))
+        {
+            obj->~T();
+        }
+
         free(obj);
+    }
+
+    template<typename T>
+    void destroy_array(T* elements)
+    {
+        constexpr size_t HeaderSize = sizeof(size_t);
+
+        T* arrayPtr = (T*)((uint8*)elements - HeaderSize);
+        if constexpr (!__has_trivial_destructor(T))
+        {
+            size_t count = ((size_t*)arrayPtr)[0];
+            for (size_t i = count - 1; i >= 0; --i)
+            {
+                elements[i].~T();
+            }
+        }
+
+        free(arrayPtr);
     }
 }
