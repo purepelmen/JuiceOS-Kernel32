@@ -3,16 +3,19 @@
 #include "../kernel.h"
 #include "../isr.h"
 
-#define PIT_FREQ_HZ 1193182
+#define PIT_FREQ_HZ 1193181.666
 
 namespace ktimer
 {
-    // We get 1 kHZ, or 1 ms per tick.
-    const int DIVISOR = PIT_FREQ_HZ / 1000;
-    const float DEFAULT_FREQ = (float)PIT_FREQ_HZ / DIVISOR;
-    const float MS_PER_TICK = 1000.0 / DEFAULT_FREQ;
+    // We get 100 HZ, or 10 ms per tick.
+    const int DIVISOR = (PIT_FREQ_HZ / 100.0);
+    const int DEFAULT_FREQ = (float)PIT_FREQ_HZ / DIVISOR;
+    const int MS_PER_TICK = 1000.0 / DEFAULT_FREQ;
 
-    static volatile uint32 remainingTicks = 0;
+    // May be because of too high frequency. Let's ensure we won't divide by zero. 
+    static_assert(MS_PER_TICK > 0);
+
+    static volatile unsigned long long ticks = 0ULL;
 
     static void timer_handler(const kisr::regs_t& regs);
     
@@ -28,8 +31,8 @@ namespace ktimer
 
     void wait(uint32 ms)
     {
-        remainingTicks = ms;
-        while(remainingTicks > 0)
+        auto goal = ticks + ms / MS_PER_TICK;
+        while(ticks < goal)
         {
             asm volatile("hlt");
         }
@@ -37,9 +40,6 @@ namespace ktimer
 
     void timer_handler(const kisr::regs_t& regs)
     {
-        if(remainingTicks != 0)
-        {
-            remainingTicks--;
-        }
+        ticks++;
     }
 }

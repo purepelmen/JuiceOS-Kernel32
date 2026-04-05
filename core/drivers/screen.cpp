@@ -48,7 +48,7 @@ namespace kscreen
             di = VIDEO_MEMORY + WIDTH * (HEIGHT - 1);
             for (int i = 0; i < WIDTH; i += 1)
             {
-                di[i] = (outargs.print_color << 8) | (uint8)' ';
+                di[i] = (KSCREEN_STDCOLOR << 8) | (uint8)' ';
             }
             
             *y = HEIGHT - 1;
