@@ -363,7 +363,7 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
 
     if(command == "pci")
     {
-        for(int i = 0; i < 100 && kpci::devices[i].address != 0; i++)
+        for(size_t i = 0; i < kpci::devicesCount; i++)
         {
             kpci::pci_device* device = &kpci::devices[i];
             kconsole::printf("PCI Device (Bus/Slot/Fun: %d,%d,%d) = Class/Subclass: %d,%d\n", 

@@ -9,6 +9,7 @@
 namespace kpci
 {
     pci_device* devices;
+    int devicesCount = 0;
 
     static void print_dev_info(pci_device& device);
 
@@ -54,7 +55,7 @@ namespace kpci
 
         devices = kheap::create_new_array<pci_device>(MAX_DEVICES);
 
-        int device_index = 0;
+        // int device_index = 0;
         for(int bus = 0; bus < 256; bus++)
         {
             for(int slot = 0; slot < 32; slot++)
@@ -63,15 +64,10 @@ namespace kpci
                 {
                     pci_device device(bus, slot, function);
                     if(device.is_present() == false) continue;
+                    
+                    kernel_assert(devicesCount < MAX_DEVICES, "PCI found more devices than allowed (need array expansion)");
 
-                    if(device_index > (MAX_DEVICES - 1))
-                    {
-                        RAISE_ERROR("PCI found more devices than allowed (need array expansion)");
-                    }
-
-                    devices[device_index] = device;
-                    device_index++;
-
+                    devices[devicesCount++] = device;
                     print_dev_info(device);
                 }
             }
