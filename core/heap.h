@@ -1,5 +1,5 @@
 #pragma once
-#include "stdlib.h"
+#include "stdint.h"
 
 /* Pre-declaration of the placement new. Without this, the placement new won't work. */
 inline void* operator new(size_t size, void* p) noexcept { return p; }
@@ -7,12 +7,8 @@ inline void* operator new[](size_t size, void* p) noexcept { return p; }
 
 namespace kheap
 {
-    /// @brief Initialize the dynamic memory system.
-    void init();
-
-    void* alloc_pages(size_t amount);
-    void free_pages(void* addr, size_t count);
-
+    void setup();
+    
     /// @brief Allocate a memory block of given size from the heap. Must be freed with `free()`.
     void* alloc(size_t size);
     /// @brief Reclaim memory allocated by `alloc()`.
@@ -20,15 +16,8 @@ namespace kheap
 
     void print_alloc_free_blocks();
 
-    /// @brief Returns amount of bytes allocated dynamically by `sbrk()`.
-    uint32 get_allocated();
-    /// @brief Returns amount of bytes used by the kernel image (code+data), excluding any dynamic memory.
-    uint32 get_kernel_memsize();
     uint32 get_heap_free();
     uint32 get_heap_size();
-    uint32 get_stack_usage();
-
-    void* get_location_ptr();
 
     // Allocate a block of memory and cast the pointer to the type.
     template<typename T>

@@ -2,11 +2,11 @@
 #include "multiboot.h"
 #include "langutils.h"
 
+#include "mmanager.h"
 #include "gdt.h"
 #include "idt.h"
-#include "heap.h"
-#include "paging.h"
 
+#include "heap.h"
 #include "math.h"
 #include "shell.h"
 #include "console.h"
@@ -59,7 +59,8 @@ void init()
 {
     analyze_multiboot_struct();
 
-    kheap::init();
+    kmmanager::init();
+    kheap::setup();
 
     kgdt::gdt_init();
     kidt::idt_init();

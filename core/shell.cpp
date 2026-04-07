@@ -3,6 +3,7 @@
 #include "console.h"
 #include "kernel.h"
 #include "cpuid.h"
+#include "mmanager.h"
 
 #include "drivers/screen.h"
 // #include "drivers/ahci.h"
@@ -954,14 +955,14 @@ void kshell::open_debugger(void)
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 10;
     kscreen::print("Kernel memsize: ");
-    printf_size(kheap::get_kernel_memsize());
+    printf_size(kmmanager::get_kernel_memsize());
     kscreen::print(".");
 
     // Heap -------------------------------
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 12;
-    kscreen::print("Dynamic memory size: ");
-    printf_size(kheap::get_allocated());
+    kscreen::print("Dynamic memory (page allocator): ");
+    printf_size(kmmanager::get_allocated());
     kscreen::print(".");
 
     // Heap memory location ---------------
@@ -977,7 +978,7 @@ void kshell::open_debugger(void)
     kscreen::outargs.cursor_x = 2;
     kscreen::outargs.cursor_y = 16;
     screen_printf("Stack usage: ");
-    printf_size(kheap::get_stack_usage());
+    printf_size(kmmanager::get_stack_usage());
     kscreen::print(".");
 
     while (kps2::read_scancode(true) != 0x01);
