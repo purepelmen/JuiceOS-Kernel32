@@ -63,7 +63,6 @@ void init()
 
     kgdt::gdt_init();
     kidt::idt_init();
-    kpaging::paging_init();
 
     ktimer::init();
     kps2::init();
@@ -130,6 +129,51 @@ void analyze_multiboot_struct()
             i += entrySize;
         }
     }
+}
+
+mmap_entry kernel_get_mmap()
+{
+    multiboot_tag* mmapTag = multiboot_find_tag(firstMutlibootTag, multiboot_tagtype::MEMORY_MAP);
+    kernel_assert(mmapTag != nullptr);
+
+    return mmap_entry{ mmapTag };
+}
+
+mmap_entry mmap_entry::next()
+{
+    return mmap_entry{ m_tag, ++m_entryIdx };
+}
+
+bool mmap_entry::is_end() const
+{
+    return m_entryIdx * m_tag->data.memoryMap.entrySize >= m_tag->size;
+}
+
+unsigned long long mmap_entry::get_addr() const
+{
+    return m_tag->data.memoryMap.entries[m_entryIdx].baseAddr;
+}
+
+size_t mmap_entry::get_length() const
+{
+    return m_tag->data.memoryMap.entries[m_entryIdx].length;
+}
+
+bool mmap_entry::is_available() const
+{
+    return m_tag->data.memoryMap.entries[m_entryIdx].type == mb2_mmap_type::AVAILABLE;
+}
+
+bool mmap_entry::is_valid_addr_ptr() const
+{
+    auto& entry = m_tag->data.memoryMap.entries[m_entryIdx];
+    return entry.baseAddr <= 0xFFFFFFFF;
+}
+
+void* mmap_entry::get_addr_ptr() const
+{
+    kernel_assert(is_valid_addr_ptr(), "Trying to get addr ptr as void* while it's bigger than 0xFFFFFFFF.");
+    return (void*)m_tag->data.memoryMap.entries[m_entryIdx].baseAddr;
 }
 
 void kernel_log(string str, ...)

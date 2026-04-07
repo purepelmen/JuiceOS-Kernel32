@@ -9,13 +9,9 @@ namespace kheap
 {
     /// @brief Initialize the dynamic memory system.
     void init();
-    /// @brief Perform memory reset. It discards all allocated data with `sbrk()`.
-    void reset();
 
-    /// @brief Expands dynamic memory controlled by the kernel by given size and gives ptr to the allocated space.
-    void* sbrk(size_t size);
-    /// @brief Same as `sbrk()` but with 4KB alignment.
-    void* sbrk_pgaligned(size_t size);
+    void* alloc_pages(size_t amount);
+    void free_pages(void* addr, size_t count);
 
     /// @brief Allocate a memory block of given size from the heap. Must be freed with `free()`.
     void* alloc(size_t size);
