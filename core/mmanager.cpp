@@ -23,24 +23,26 @@ namespace kmmanager
 
     void init()
     {
-        mmap_entry entry = kernel_get_mmap();
-        while (!entry.is_end())
+        const mmap_entry* mainEntry = nullptr;
+
+        mmap_list list = kernel_get_mmap();
+        for (const mmap_entry& entry: list)
         {
             if (!entry.is_valid_addr_ptr())
                 continue;
-            
-            if (entry.is_available() && entry.get_addr_ptr() >= (void*)IMAGE_BASE)
+
+            if (entry.isAvailable && entry.get_addr_ptr() >= (void*)IMAGE_BASE)
+            {
+                mainEntry = &entry;
                 break;
-
-            entry = entry.next();
+            }
         }
+        kernel_assert(mainEntry != nullptr);
 
-        kernel_assert(!entry.is_end());
+        dynmemStart = (uint8*)max((void*)&end, mainEntry->get_addr_ptr());
 
-        dynmemStart = (uint8*)max((void*)&end, entry.get_addr_ptr());
-
-        pageAllocator.set_bitmap_offset(dynmemStart - (uint8*)entry.get_addr_ptr());
-        pageAllocator.init(entry.get_addr_ptr(), entry.get_length());
+        pageAllocator.set_bitmap_offset(dynmemStart - (uint8*)mainEntry->get_addr_ptr());
+        pageAllocator.init(mainEntry->get_addr_ptr(), mainEntry->length);
 
         // Setting up the main paging directory for kernel.
         kernelPagingDir = (kpaging::directory*)pageAllocator.alloc(divide_round_up(sizeof(kpaging::directory), 4096U));
@@ -134,7 +136,7 @@ namespace kmmanager
                 tableEntry->present = true;
                 tableEntry->read_write = true;
                 tableEntry->user_mode = false;
-                tableEntry->address = (uint32)(addr + i * 4096) >> 12;
+                tableEntry->address = ((nptr_t)addr + i * 4096) >> 12;
 
                 tableEntry++;
             }

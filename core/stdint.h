@@ -9,4 +9,5 @@ typedef unsigned int   uint32;
 #error No 64-bit support!
 #endif
 
-typedef unsigned int   size_t;
+typedef __SIZE_TYPE__    size_t;
+typedef __UINTPTR_TYPE__ nptr_t;

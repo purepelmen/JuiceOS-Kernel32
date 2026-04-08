@@ -1,32 +1,37 @@
 #pragma once
 #include "string.h"
+#include "stdlib.h"
 
 #define KERNEL_VERSION "1.0.3"
 
-struct multiboot_tag;
-
-class mmap_entry
+struct mmap_entry
 {
-private:
-    multiboot_tag* m_tag = nullptr;
-    size_t m_entryIdx = 0;
+    unsigned long long addr;
+    unsigned long long length;
+    bool isAvailable;
 
-public:
-    mmap_entry() = default;
-    mmap_entry(multiboot_tag* current, size_t entryIdx = 0) : m_tag(current), m_entryIdx(entryIdx) {}
+    bool is_valid_addr_ptr() const { return addr <= 0xFFFFFFFF; }
 
-    mmap_entry next();
-    bool is_end() const;
-
-    unsigned long long get_addr() const;
-    size_t get_length() const;
-    bool is_available() const;
-
-    bool is_valid_addr_ptr() const;
-    void* get_addr_ptr() const;
+    void* get_addr_ptr() const
+    {
+        kernel_assert(is_valid_addr_ptr(), "Trying to get addr ptr as void* while it's bigger than 0xFFFFFFFF.");
+        return (void*)addr;
+    }
 };
 
-mmap_entry kernel_get_mmap();
+class mmap_list
+{
+    const mmap_entry* m_begin;
+    const mmap_entry* m_end;
+
+public:
+    mmap_list(const mmap_entry* begin, const mmap_entry* end) : m_begin(begin), m_end(end) {}
+
+    const mmap_entry* begin() const { return m_begin; }
+    const mmap_entry* end() const { return m_end; }
+};
+
+mmap_list kernel_get_mmap();
 
 /// @brief Print new string to logs. 
 void kernel_log(string str, ...);

@@ -21,7 +21,11 @@
 static void* multibootInfoStruct;
 static multiboot_tag* firstMutlibootTag;
 
-static const char* bootloaderName = "__UNDEFINED";
+static char bootloaderName[100];
+
+const size_t MAX_MMAP_ENTRIES = 8;
+static mmap_entry mmapEntries[MAX_MMAP_ENTRIES];
+static int mmapEntryCount = 0;
 
 const int SYSLOG_LENGTH = 2048;
 
@@ -57,6 +61,8 @@ extern "C" void kernel_main(void* multibootDataFromBootloader)
 
 void init()
 {
+    // Required to be done as early as possible as we eventually overwrite the mulitboot data which is located 
+    // somewhere below the kernel by the bootloader.
     analyze_multiboot_struct();
 
     kmmanager::init();
@@ -86,7 +92,7 @@ void analyze_multiboot_struct()
     multiboot_tag* blNameTag = multiboot_find_tag(firstMutlibootTag, multiboot_tagtype::BOOTLOADER_NAME);
     if (!blNameTag->is_end())
     {
-        bootloaderName = (char*)&blNameTag->data.ptr;
+        strlcpy((char*)&blNameTag->data.ptr, bootloaderName, sizeof(bootloaderName));
         kernel_log("Booted by: %s.\n", bootloaderName);
     }
     else
@@ -111,10 +117,15 @@ void analyze_multiboot_struct()
         while (i < mmapTag->size)
         {
             auto& entry = mmapTag->data.memoryMap.entries[i / entrySize];
+
+            // Fill mmap to internal storage. This is REQUIRED for the kernel to work.
+            kernel_assert(mmapEntryCount < MAX_MMAP_ENTRIES);
+            mmapEntries[mmapEntryCount++] = mmap_entry{ entry.baseAddr, entry.length, entry.type == mb2_mmap_type::AVAILABLE };
             
+            // And let's just log this info for debugging.
             auto base = entry.baseAddr;
             auto end = entry.baseAddr + entry.length - 1ULL;
-            
+
             if (base > 0xFFFFFFFF || end > 0xFFFFFFFF)
                 kernel_log("0x%llx-0x%llx -> ", base, end);
             else
@@ -132,49 +143,9 @@ void analyze_multiboot_struct()
     }
 }
 
-mmap_entry kernel_get_mmap()
+mmap_list kernel_get_mmap()
 {
-    multiboot_tag* mmapTag = multiboot_find_tag(firstMutlibootTag, multiboot_tagtype::MEMORY_MAP);
-    kernel_assert(mmapTag != nullptr);
-
-    return mmap_entry{ mmapTag };
-}
-
-mmap_entry mmap_entry::next()
-{
-    return mmap_entry{ m_tag, ++m_entryIdx };
-}
-
-bool mmap_entry::is_end() const
-{
-    return m_entryIdx * m_tag->data.memoryMap.entrySize >= m_tag->size;
-}
-
-unsigned long long mmap_entry::get_addr() const
-{
-    return m_tag->data.memoryMap.entries[m_entryIdx].baseAddr;
-}
-
-size_t mmap_entry::get_length() const
-{
-    return m_tag->data.memoryMap.entries[m_entryIdx].length;
-}
-
-bool mmap_entry::is_available() const
-{
-    return m_tag->data.memoryMap.entries[m_entryIdx].type == mb2_mmap_type::AVAILABLE;
-}
-
-bool mmap_entry::is_valid_addr_ptr() const
-{
-    auto& entry = m_tag->data.memoryMap.entries[m_entryIdx];
-    return entry.baseAddr <= 0xFFFFFFFF;
-}
-
-void* mmap_entry::get_addr_ptr() const
-{
-    kernel_assert(is_valid_addr_ptr(), "Trying to get addr ptr as void* while it's bigger than 0xFFFFFFFF.");
-    return (void*)m_tag->data.memoryMap.entries[m_entryIdx].baseAddr;
+    return mmap_list{ mmapEntries, mmapEntries + mmapEntryCount };
 }
 
 void kernel_log(string str, ...)
