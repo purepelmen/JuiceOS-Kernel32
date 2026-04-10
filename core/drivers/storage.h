@@ -33,6 +33,17 @@ namespace kstorage
         BlockDevice* get_base() const { return dev; }
     };
 
+    struct FileState
+    {
+        uint32 inode;
+        uint32 size;
+        uint8 flags;
+
+        size_t position = 0;
+
+        size_t is_eof() const { return size - position <= 0; }
+    };
+
     const size_t MAX_FILENAME_SIZE = 256;
 
     enum class DirEntryType
@@ -46,21 +57,10 @@ namespace kstorage
         DirEntryType type;
         
         char name[MAX_FILENAME_SIZE];
-        size_t size;
+        FileState fileState;
     };
 
     typedef bool (*ReadDirCallback)(void* context, DirEntry& entry);
-
-    struct FileState
-    {
-        uint32 inode;
-        uint32 size;
-        uint8 flags;
-
-        size_t position = 0;
-
-        size_t is_eof() const { return size - position <= 0; }
-    };
 
     class FileSystem
     {

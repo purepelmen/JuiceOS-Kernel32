@@ -265,7 +265,12 @@ namespace kcd
                 
                 extract_filename(dirEntry, currentEntry.name, sizeof(currentEntry.name));
                 currentEntry.type = dirEntry->flags & 0x02 ? kstorage::DirEntryType::DIRECTORY : kstorage::DirEntryType::FILE;
-                currentEntry.size = dirEntry->dataLength;
+                currentEntry.fileState = 
+                {
+                    .inode = dirEntry->locationLBA,
+                    .size = dirEntry->dataLength,
+                    .flags = dirEntry->flags,
+                };
 
                 if (!callback(context, currentEntry))
                     return;

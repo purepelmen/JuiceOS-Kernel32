@@ -554,7 +554,7 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
             if (entry.type == kstorage::DirEntryType::FILE)
             {
                 kconsole::cursor.posX = 45;
-                kconsole::printf("%db", entry.size);
+                kconsole::printf("%db", entry.fileState.size);
             }
             kconsole::printc('\n');
 

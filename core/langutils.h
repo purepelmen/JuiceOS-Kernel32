@@ -9,10 +9,16 @@ typedef void (*g_ctor)();
 extern "C" g_ctor __init_array_start;
 extern "C" g_ctor __init_array_end;
 
-void cpp_call_global_ctors()
+inline void cpp_call_global_ctors()
 {
     for (g_ctor* i = &__init_array_start; i != &__init_array_end; i++)
     {
         (*i)();
     }
+}
+
+template<typename Lambda, typename... Args>
+auto LambdaAdapter(void* data, Args... args)
+{
+    return (*static_cast<Lambda*>(data))(args...);
 }

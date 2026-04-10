@@ -82,8 +82,8 @@ namespace kfat
 
     struct VolumeInfo
     {
-        char volumeLabel[12];
         FatType type;
+        char bpbVolumeLabel[12];
         
         uint16 bytesPerSector;
         uint8 sectorsPerCluster;
@@ -109,8 +109,13 @@ namespace kfat
     {
     private:
         VolumeInfo volumeInfo;
+        uint32 chainEndCluster;
+        char volumeName[32];
+
         uint8* loadedFAT;
         size_t loadedFATPageCount;
+    
+        uint8* buffer = 0;
     
     protected:
         void on_init() override;
@@ -126,12 +131,9 @@ namespace kfat
         void read_dir(const char* path, kstorage::ReadDirCallback callback, void* context) override;
 
     private:
+        bool find_volumelabel(char* outLabel, size_t maxLabelSize);
         bool resolve_path_part(uint32 cluster, const char* part, kstorage::FileState& outResolved);
         uint32 next_cluster(uint32 cluster);
-
-        // uint8 dev_port;
-        // uint16* lfn_buffer = 0;
-        uint8* buffer = 0;
 
         uint8* read(uint32 lba);
     };

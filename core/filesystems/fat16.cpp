@@ -4,6 +4,7 @@
 #include <drivers/screen.h>
 #include <drivers/ide.h>
 // #include <drivers/ahci.h>
+#include <langutils.h>
 
 #include <math.h>
 #include <heap.h>
@@ -109,8 +110,8 @@ namespace kfat
         };
 
         // TODO: Simplify.
-        mem_copy(bpb->volume_label, info.volumeLabel, sizeof(bpb->volume_label));
-        spaced_string_to_cstr(info.volumeLabel, 11);
+        mem_copy(bpb->volume_label, info.bpbVolumeLabel, sizeof(bpb->volume_label));
+        spaced_string_to_cstr(info.bpbVolumeLabel, 11);
 
         return kheap::create_new<FAT>(info);
     }
@@ -122,6 +123,26 @@ namespace kfat
 
         loadedFAT = (uint8*)kmmanager::alloc_pages(loadedFATPageCount);
         device->read(volumeInfo.fatLBA, fatLength / 512, (uint16*)loadedFAT);
+
+        // Let's determine the volume name. Root dir has a FATTR_VOLUMELABEL entry, which is more prioritized than
+        // 'volume_label' from BPB.
+        if (!find_volumelabel(volumeName, sizeof(volumeName)))
+        {
+            strcpy(volumeInfo.bpbVolumeLabel, volumeName);
+        }
+
+        switch (volumeInfo.type)
+        {
+        case FatType::FAT12:
+            chainEndCluster = 0xFF7;
+            break;
+        case FatType::FAT16:
+            chainEndCluster = 0xFFF7;
+            break;
+        default:
+            RAISE_ERROR("Unsupported FAT type");
+            break;
+        }
     }
 
     // FAT16::FAT16(uint8 dev_port)
@@ -140,7 +161,7 @@ namespace kfat
 
     const char* FAT::get_name()
     {
-        return volumeInfo.volumeLabel;
+        return volumeName;
     }
 
     size_t FAT::get_size()
@@ -229,7 +250,7 @@ namespace kfat
             if (leftBytesInCluster == 0)
                 cluster = next_cluster(cluster);
         } 
-        while(cluster < 0xFFF7 && length > 0);
+        while(cluster < chainEndCluster && length > 0);
 
         return state.position - initialPos;
     }
@@ -250,7 +271,7 @@ namespace kfat
         uint32 cluster = fileState.inode;
 
         EntryParser parser{};
-        while (cluster < 0xFFF7)
+        while (cluster < chainEndCluster)
         {
             uint32 start_sector;
             uint32 sectors_read_count;
@@ -271,27 +292,32 @@ namespace kfat
             size_t entriesPerSector = volumeInfo.bytesPerSector / sizeof(dir_entry);
 
             // Parse every sector in the cluster
-            for (int sector_ind = 0; sector_ind < sectors_read_count; sector_ind++)
+            for (int sectorIdx = 0; sectorIdx < sectors_read_count; sectorIdx++)
             {
                 // Read sector
-                dir_entry* entry = (dir_entry*) read(start_sector + sector_ind);
+                dir_entry* entry = (dir_entry*) read(start_sector + sectorIdx);
 
                 // Parse every entry of the sector
-                int entry_ind = 0;
-                while (entry_ind++ < entriesPerSector)
+                int entryIdx = 0;
+                while (entryIdx++ < entriesPerSector)
                 {
                     // Empty entry? This is the end.
                     if(entry->dos_filename[0] == 0)
                         break;
 
-                    if (!parser.handle_next(entry, currentEntry.name))
+                    if (!parser.handle_next(entry, currentEntry.name) || entry->attributes & FATTR_VOLUMELABEL)
                     {
                         entry++;
                         continue;
                     }
 
                     currentEntry.type = entry->attributes & FATTR_SUBDIRECTORY ? kstorage::DirEntryType::DIRECTORY : kstorage::DirEntryType::FILE;
-                    currentEntry.size = entry->file_size;
+                    currentEntry.fileState =
+                    {
+                        .inode = entry->first_cluster,
+                        .size = entry->file_size,
+                        .flags = entry->attributes,
+                    };
 
                     if (!callback(context, currentEntry))
                         return;
@@ -308,23 +334,23 @@ namespace kfat
         }
     }
 
-    uint8* FAT::read(uint32 lba)
+    bool FAT::find_volumelabel(char* outLabel, size_t maxLabelSize)
     {
-        // Allocate buffer for one sector
-        if(buffer == nullptr)
+        bool found = false;
+        auto check = [&](kstorage::DirEntry& entry)
         {
-            buffer = (uint8*) kheap::alloc(volumeInfo.bytesPerSector);
-            // if((uint32) buffer & 1)
-            //     buffer++;
-        }
+            if (entry.fileState.flags & FATTR_VOLUMELABEL)
+            {
+                strlcpy(entry.name, outLabel, maxLabelSize);
+                found = true;
+                return false;
+            }
 
-        // kahci::read(dev_port, lba, 0, 1, (uint16*) buffer);
-
-        // kide::AtaDevice device = kide::devices[dev_port];
-        // kide::ata_read_sector(device.addr, device.isSlave, lba, 1, (uint16*)buffer);
-
-        device->read(lba * (volumeInfo.bytesPerSector / 512), volumeInfo.bytesPerSector / 512, (uint16*)buffer);
-        return buffer;
+            return true;
+        };
+        
+        read_dir("/", LambdaAdapter<decltype(check)>, &check);
+        return found;
     }
 
     bool FAT::resolve_path_part(uint32 cluster, const char* part, kstorage::FileState& outResolved)
@@ -333,7 +359,7 @@ namespace kfat
         char filenameBuff[kstorage::MAX_FILENAME_SIZE];
         
         EntryParser parser{};
-        while (cluster < 0xFFF7) // Continue until the last entry in a chain or bad cluster.
+        while (cluster < chainEndCluster) // Continue until the last entry in a chain or bad cluster.
         {
             uint32 start_sector;
             uint32 sectors_read_count;
@@ -354,13 +380,13 @@ namespace kfat
             size_t entriesPerSector = volumeInfo.bytesPerSector / sizeof(dir_entry);
 
             // Parse every sector in the cluster
-            for(int sector_ind = 0; sector_ind < sectors_read_count; sector_ind++)
+            for (int sectorIdx = 0; sectorIdx < sectors_read_count; sectorIdx++)
             {
-                dir_entry* entry = (dir_entry*) read(start_sector + sector_ind);
+                dir_entry* entry = (dir_entry*) read(start_sector + sectorIdx);
 
                 // Parse every entry of the sector
-                int entry_ind = 0;
-                while (entry_ind++ < entriesPerSector)
+                int entryIdx = 0;
+                while (entryIdx++ < entriesPerSector)
                 {
                     // Empty entry? This is the end.
                     if(entry->dos_filename[0] == 0)
@@ -409,6 +435,25 @@ namespace kfat
             uint16* fat = (uint16*)loadedFAT;
             return fat[cluster];
         }
+    }
+
+    uint8* FAT::read(uint32 lba)
+    {
+        // Allocate buffer for one sector
+        if(buffer == nullptr)
+        {
+            buffer = (uint8*) kheap::alloc(volumeInfo.bytesPerSector);
+            // if((uint32) buffer & 1)
+            //     buffer++;
+        }
+
+        // kahci::read(dev_port, lba, 0, 1, (uint16*) buffer);
+
+        // kide::AtaDevice device = kide::devices[dev_port];
+        // kide::ata_read_sector(device.addr, device.isSlave, lba, 1, (uint16*)buffer);
+
+        device->read(lba * (volumeInfo.bytesPerSector / 512), volumeInfo.bytesPerSector / 512, (uint16*)buffer);
+        return buffer;
     }
 
     uint8 calculate_checksum(const uint8* shortname)
