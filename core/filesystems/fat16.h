@@ -14,7 +14,7 @@
 
 namespace kfat
 {
-    struct fat16_bpb
+    struct fat_bpb
     {
         uint8 jmp_code[3];
         uint8 oem_id[8];
@@ -82,37 +82,57 @@ namespace kfat
 
     struct VolumeInfo
     {
+        char volumeLabel[12];
         FatType type;
+        
+        uint16 bytesPerSector;
+        uint8 sectorsPerCluster;
+        uint16 reservedSectors;
+        uint16 sectorsPerFAT;
+        uint16 rootDirEntries;
+        uint8 fatCount;
+
+        uint32 totalSectors;
+
+        uint32 fatLBA;
+        uint32 rootDirectoryLBA;
+        uint32 dataLBA;
+
+        uint32 rootDirSectors;
+        uint32 dataSectors;
+        uint32 totalClusters;
+
+        kstorage::FileState rootDirectoryFile;
     };
 
-    class FAT16
+    class FAT : public kstorage::FileSystem
     {
-    public:
-        FAT16(uint8 dev_port);
-        bool init(uint8 partition);
+    private:
+        VolumeInfo volumeInfo;
+        uint8* loadedFAT;
+        size_t loadedFATPageCount;
+    
+    protected:
+        void on_init() override;
 
-        void dir(uint16 cluster);
+    public:
+        FAT(const VolumeInfo& info) : volumeInfo(info) {}
+
+        const char* get_name() override;
+        size_t get_size() override;
+
+        bool resolve_path(const char* path, kstorage::FileState& state) override;
+        size_t read(kstorage::FileState& state, char* buffer, size_t length) override;
+        void read_dir(const char* path, kstorage::ReadDirCallback callback, void* context) override;
 
     private:
-        uint8 sec_per_cluster;
-        uint16 reserved_secs;
-        uint16 sec_per_fat;
+        bool resolve_path_part(uint32 cluster, const char* part, kstorage::FileState& outResolved);
+        uint32 next_cluster(uint32 cluster);
 
-        uint16 root_dir_entries;
-        uint8 fat_count;
-
-        uint32 partition_start;
-        uint32 total_sects;
-
-        uint32 fat_lba;
-        uint32 root_dir_lba;
-        uint32 data_lba;
-
-        uint8 dev_port;
-        uint16* lfn_buffer = 0;
+        // uint8 dev_port;
+        // uint16* lfn_buffer = 0;
         uint8* buffer = 0;
 
-        uint8 calc_checksum(const uint8* shortname);
         uint8* read(uint32 lba);
     };
 

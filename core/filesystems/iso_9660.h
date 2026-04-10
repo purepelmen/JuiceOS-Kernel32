@@ -239,7 +239,7 @@ namespace kcd
         bool hasPVD;
         uint32 primaryVolumeDescLBA;
         
-        char volumeId[32];  // Now null terminated.
+        char volumeId[33];  // Now null terminated.
         uint32 spaceSize;
         uint32 logicalBlockSize;
 

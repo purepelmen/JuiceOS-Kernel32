@@ -16,4 +16,5 @@ namespace kmmanager
     uint32 get_stack_usage();
 
     void* get_location_ptr();
+    size_t get_page_count_for(size_t sizeInBytes);
 }

@@ -27,7 +27,10 @@ bool mem_compare(const void* first, const void* seconds, uint32 bytes_amount);
 void mem_fill(void* ptr, uint8 byte, uint32 amount);
 
 /* Convert UTF-16 string to ASCII string */
-void utf16_to_ascii(uint8* buffer, uint16* utf16_str);
+void utf16_to_ascii(char* buffer, uint16* utf16_str);
+void utf16_to_ascii(char* buffer, uint16* utf16_str, size_t chatCount);
+/// @return Pointer to the inserted null terminator.
+char* spaced_string_to_cstr(char* target, size_t length);
 
 void strcpy(const char* source, char* dest);
 /* Performs a safe sting copy, and returns the actual string length copied in `dest`. */

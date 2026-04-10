@@ -105,6 +105,11 @@ namespace kmmanager
         return dynmemStart;
     }
 
+    size_t get_page_count_for(size_t sizeInBytes)
+    {
+        return divide_round_up(sizeInBytes, 4096U);
+    }
+
     void paging_map(void* addr, size_t pageCount)
     {
         auto decomposed = kpaging::addr::from(addr);

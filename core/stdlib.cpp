@@ -25,7 +25,7 @@ void mem_fill(void* ptr, uint8 byte, uint32 amount)
         ((uint8*)ptr)[i] = byte;
 }
 
-void utf16_to_ascii(uint8* buffer, uint16* utf16_str)
+void utf16_to_ascii(char* buffer, uint16* utf16_str)
 {
     int i = 0;
     while(utf16_str[i] != 0x0)
@@ -35,6 +35,31 @@ void utf16_to_ascii(uint8* buffer, uint16* utf16_str)
     }
 
     buffer[i] = 0x0;
+}
+
+void utf16_to_ascii(char* buffer, uint16* utf16_str, size_t charCount)
+{
+    int i = 0;
+    while(i < charCount)
+    {
+        buffer[i] = utf16_str[i] & 0xFF;
+        i++;
+    }
+}
+
+char* spaced_string_to_cstr(char* target, size_t length)
+{
+    char* ptr = target + length - 1;
+    for (; ptr >= target && *ptr == ' '; ptr--);
+
+    ptr++;
+    // if (ptr < target + length && *ptr == ' ')
+    // {
+        *ptr = 0x0;
+        return ptr;
+    // }
+
+    // return nullptr;
 }
 
 void strcpy(const char *source, char *dest)

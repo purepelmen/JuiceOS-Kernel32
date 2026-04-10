@@ -15,7 +15,6 @@
 
 #include "filesystems/fat16.h"
 
-kfat::FAT16* fat_pt2;
 static unsigned selectedVolume = 0;
 static char cwd[kstorage::MAX_FILENAME_SIZE] = "";
 
@@ -475,23 +474,6 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         {
             kconsole::printf("Failed to read test data from an ATA device.\n");
         }
-
-        return;
-    }
-
-    if(command == "fatinit")
-    {
-        kconsole::printf("Initializing FAT on partition #2\n");
-        fat_pt2 = kheap::create_new<kfat::FAT16>(0);
-        fat_pt2->init(1);
-
-        return;
-    }
-
-    if(command == "fatdir")
-    {
-        kconsole::printf("K32 Partition files\n\n");
-        fat_pt2->dir(0);
 
         return;
     }

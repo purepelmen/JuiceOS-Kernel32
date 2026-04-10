@@ -23,7 +23,7 @@ namespace kcd
     static void traverse_susp_tags(ISO9660* driver, uint8* currentSuspTag, uint8* suaEnd, void* context, SUSPTraverser traverser);
 
     /// @return Pointer to the inserted null terminator.
-    static char* spaced_string_to_cstr(char* target, size_t length);
+    // static char* spaced_string_to_cstr(char* target, size_t length);
 
     kstorage::FileSystem* probe(kstorage::BlockDevice* device)
     {
@@ -418,18 +418,18 @@ namespace kcd
         }
     }
 
-    static char* spaced_string_to_cstr(char* target, size_t length)
-    {
-        char* ptr = target + length - 1;
-        for (; ptr >= target && *ptr == ' '; ptr--);
+    // static char* spaced_string_to_cstr(char* target, size_t length)
+    // {
+    //     char* ptr = target + length - 1;
+    //     for (; ptr >= target && *ptr == ' '; ptr--);
 
-        ptr++;
-        if (ptr < target + length && *ptr == ' ')
-        {
-            *ptr = 0x0;
-            return ptr;
-        }
+    //     ptr++;
+    //     // if (ptr < target + length && *ptr == ' ')
+    //     // {
+    //         *ptr = 0x0;
+    //         return ptr;
+    //     // }
 
-        return nullptr;
-    }
+    //     // return nullptr;
+    // }
 }
