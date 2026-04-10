@@ -4,6 +4,7 @@
 #include "kernel.h"
 #include "cpuid.h"
 #include "mmanager.h"
+#include "langutils.h"
 
 #include "drivers/screen.h"
 // #include "drivers/ahci.h"
@@ -12,8 +13,6 @@
 #include "drivers/pci.h"
 #include "drivers/ide.h"
 #include "drivers/storage.h"
-
-#include "filesystems/fat16.h"
 
 static unsigned selectedVolume = 0;
 static char cwd[kstorage::MAX_FILENAME_SIZE] = "";
@@ -329,7 +328,7 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
             "IDEDEV - Print all ATA devices from IDE driver.\n"
             "IDERD - Read first sector from the first IDE device.\n"
             "VOLUMELIST - View all mounted volumes.\n"
-            "SETVOLUME - Set current volume for the shell.\n"
+            "SETVOL - Set current volume for the shell.\n"
             "DIR / LS - Print directory contents at path.\n"
             "CD - Change current working directory.\n"
             "READFILE - Print contents of the file.\n"
@@ -489,7 +488,7 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         return;
     }
 
-    if (command == "setvolume")
+    if (command == "setvol")
     {
         const char* input = argv[0];
         if (argc < 1)
@@ -526,22 +525,15 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
             return;
         }
 
-        struct ls_state
-        {
-            Paginator paginator{};
-        } state;
-
         const char* path = cwd;
         if (argc >= 1)
         {
             path = get_fullpath(argv[0]);
         }
 
-        kstorage::FileSystem* fileSystem = kstorage::volumes[selectedVolume];
-        fileSystem->read_dir(path, [](void* context, kstorage::DirEntry& entry)
+        Paginator paginator{};
+        auto dirReader = [&](kstorage::DirEntry& entry)
         {
-            ls_state* state = (ls_state*)context;
-
             const char* typeStr = entry.type == kstorage::DirEntryType::DIRECTORY ? "<D>  " : "     ";
             kconsole::print(typeStr);
             kconsole::print(" ");
@@ -558,8 +550,11 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
             }
             kconsole::printc('\n');
 
-            return state->paginator.iterate();
-        }, &state);
+            return paginator.iterate();
+        };
+
+        kstorage::FileSystem* fileSystem = kstorage::volumes[selectedVolume];
+        fileSystem->read_dir(path, LambdaAdapter<decltype(dirReader)>, &dirReader);
 
         return;
     }
@@ -587,10 +582,10 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
             return;
         }
 
-        char buff[256];
+        char buff[512];
         while (true)
         {
-            size_t actuallyRead = fileSystem->read(fileState, buff, 256);
+            size_t actuallyRead = fileSystem->read(fileState, buff, 512);
             kconsole::print(buff, actuallyRead);
 
             if (fileState.is_eof())

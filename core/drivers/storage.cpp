@@ -6,7 +6,7 @@
 #include <kernel.h>
 
 #include <filesystems/iso_9660.h>
-#include <filesystems/fat16.h>
+#include <filesystems/fat.h>
 #include <filesystems/mbr.h>
 
 using namespace kpart;

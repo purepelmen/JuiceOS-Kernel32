@@ -66,6 +66,9 @@ namespace kconsole
         {
             char ch = text[i];
 
+            if (ch == 0x0D)
+                continue;
+
             if (ch == '\n')
             {
                 int decomposedCursorX = screenPos % kscreen::width();
@@ -155,6 +158,16 @@ namespace kconsole
             // Is a control ASCII char?
             if (ch < 0x20)
             {
+                if (ch == 0x0D)
+                {
+                    int len = i - start; 
+                    if (len > 0)
+                        kscreen::print(text + start, len);
+
+                    start = i + 1;
+                    continue;
+                }
+
                 if (ch == 0x0A)
                 {
                     int len = i - start; 
