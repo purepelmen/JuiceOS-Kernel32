@@ -32,15 +32,52 @@ namespace kfat
         uint32 hidden_sectors_count;
         uint32 large_sector_count;
 
-        uint8 drive_num;
-        uint8 winnt_flags;
-        uint8 signature;
-        uint32 volume_id;
-        uint8 volume_label[11];
-        uint8 system_id_str[8];
+        union
+        {
+            struct
+            {
+                uint8 drive_num;
+                uint8 winnt_flags;
+                uint8 signature;
+                uint32 volume_id;
+                uint8 volume_label[11];
+                uint8 system_id_str[8];
 
-        uint8 boot_code[448];
+                uint8 boot_code[448];
+            } __attribute__((packed)) ebpb;
+            
+            struct
+            {
+                uint32 sectors_per_fat;
+                uint16 flags;
+                uint16 fat_version;
+                uint32 root_dir_cluster;
+                uint16 fsinfo_sector;
+                uint16 backup_boot_sector;
+                uint8 reserved[12];
+                uint8 drive_num;
+                uint8 winnt_flags;
+                uint8 signature;
+                uint32 volume_id;
+                uint8 volume_label[11];
+                uint8 system_id_str[8];
+                uint8 boot_code[420];
+            } __attribute__((packed)) ebpb_fat32;
+            
+        } __attribute__((packed));
+
         uint16 boot_sig;
+    } __attribute__((packed));
+
+    struct fat_fsinfo
+    {
+        uint32 lead_signature;
+        uint8 __reserved[480];
+        uint32 signature;
+        uint32 free_cluster_count;
+        uint32 free_clusters_start;
+        uint8 __reserved2[12];
+        uint32 trail_signature;
     } __attribute__((packed));
 
     struct dir_entry
@@ -103,19 +140,20 @@ namespace kfat
         uint32 totalClusters;
 
         kstorage::FileState rootDirectoryFile;
+        uint32 chainEndCluster;
     };
 
     class FAT : public kstorage::FileSystem
     {
-    private:
+    private:        
         VolumeInfo volumeInfo;
-        uint32 chainEndCluster;
         char volumeName[32];
 
         uint8* loadedFAT;
         size_t loadedFATPageCount;
-    
-        uint8* buffer = 0;
+
+        void* buffer = nullptr;
+        size_t lastAllocBufferSize = 0;
     
     protected:
         void on_init() override;
@@ -129,13 +167,37 @@ namespace kfat
         bool resolve_path(const char* path, kstorage::FileState& state) override;
         size_t read(kstorage::FileState& state, char* buffer, size_t length) override;
         void read_dir(const char* path, kstorage::ReadDirCallback callback, void* context) override;
+        
+        uint32 next_cluster(uint32 cluster);
+        void* load_sectors(uint32 lba, size_t sectors = 1);
+
+        const VolumeInfo& get_volume_info() const { return volumeInfo; } 
 
     private:
         bool find_volumelabel(char* outLabel, size_t maxLabelSize);
         bool resolve_path_part(uint32 cluster, const char* part, kstorage::FileState& outResolved);
-        uint32 next_cluster(uint32 cluster);
+    };
 
-        uint8* read(uint32 lba);
+    class ClusterReader
+    {
+        FAT* driver;
+        uint32 cluster = 0;
+
+        void* buffer = nullptr;
+        size_t readBytes = 0;
+        bool hasMoreData = false;
+    
+    public:
+        ClusterReader(FAT* driver, uint32 cluster) : driver(driver), cluster(cluster) {}
+        bool read_next();
+
+        dir_entry* as_dir() { return (dir_entry*)buffer; }
+        size_t as_dir_count() { return readBytes / sizeof(dir_entry); }
+
+        uint8* as_buffer() { return (uint8*)buffer; }
+
+        size_t get_size() const { return readBytes; }
+        bool has_more() const { return hasMoreData; }
     };
 
     kstorage::FileSystem* probe(kstorage::BlockDevice* device);

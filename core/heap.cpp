@@ -13,7 +13,7 @@ extern "C" void __cxa_throw_bad_array_new_length()
 
 namespace kheap
 {
-    const size_t HEAP_SIZE = 4;
+    const size_t HEAP_SIZE = 12;
     static fll_allocator allocator;
 
     void setup()

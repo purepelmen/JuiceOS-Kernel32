@@ -40,39 +40,27 @@ namespace kfat
         fat_bpb* bpb = (fat_bpb*) tempReadBuffer;
 
         if(bpb->boot_sig != 0xAA55)
-        {
-            kconsole::printf("[FAT] Invalid boot signature\n");
             return nullptr;
-        }
-        if(bpb->signature != 0x28 && bpb->signature != 0x29) // Maybe should be removed.
-        {
-            kconsole::printf("[FAT] Invalid FAT16 signature\n");
-            return nullptr;
-        }
-        
+
         if (mem_compare(bpb->oem_id, "EXFAT", 5) || mem_compare(bpb->oem_id, "NTFS", 4))
             return nullptr;
 
         if (!is_valid_sector_size(bpb->bytes_per_sector))
-        {
-            kconsole::printf("[FAT] Unsupported bytes per sector\n");
             return nullptr;
-        }
         if (!is_power_of_two(bpb->sectors_per_cluster))
-        {
-            kconsole::printf("[FAT] Sectors per cluster not POT\n");
             return nullptr;
-        }
 
         VolumeInfo info;
         info.bytesPerSector = bpb->bytes_per_sector;
         info.sectorsPerCluster = bpb->sectors_per_cluster;
         info.reservedSectors = bpb->reserved_sectors;
         info.sectorsPerFAT = bpb->sectors_per_fat;
+        if (info.sectorsPerFAT == 0)
+            info.sectorsPerFAT = bpb->ebpb_fat32.sectors_per_fat;
         info.rootDirEntries = bpb->root_dir_entries;
         info.fatCount = bpb->fat_count;
 
-        if (info.reservedSectors == 0 || info.fatCount == 0)
+        if (info.reservedSectors == 0 || info.fatCount == 0 || info.sectorsPerFAT == 0)
             return nullptr;
 
         info.totalSectors = bpb->total_sectors;
@@ -93,24 +81,52 @@ namespace kfat
             info.type = FatType::FAT12;
         else if (totalClusters < 65525)
             info.type = FatType::FAT16;
-        else
+        else if (info.rootDirSectors == 0)
             info.type = FatType::FAT32;
+        else
+            return nullptr;
 
-        if (info.type != FatType::FAT12 && info.type != FatType::FAT16)
+        if (info.type != FatType::FAT12 && info.type != FatType::FAT16 && info.type != FatType::FAT32)
         {
-            kconsole::printf("[FAT] Non-FAT 12 or 16 FS not supported\n");
+            kconsole::printf("[FAT] Non-FAT 12, 16 or 32 FS not supported\n");
             return nullptr;
         }
 
-        info.rootDirectoryFile = 
-        { 
-            .inode = 0, 
-            .size = info.rootDirSectors,
-            .flags = FATTR_SUBDIRECTORY
-        };
+        uint8 signature = info.type == FatType::FAT32 ? bpb->ebpb_fat32.signature : bpb->ebpb.signature;
+        if (signature != 0x28 && signature != 0x29)
+            return nullptr;
+            
+        if (info.type == FatType::FAT32)
+        {
+            fat_fsinfo fsinfo;
+            device->read(bpb->ebpb_fat32.fsinfo_sector, 1, (uint16*)&fsinfo);
 
-        // TODO: Simplify.
-        mem_copy(bpb->volume_label, info.bpbVolumeLabel, sizeof(bpb->volume_label));
+            if (fsinfo.lead_signature != 0x41615252 || fsinfo.signature != 0x61417272 || fsinfo.trail_signature != 0xAA550000)
+                return nullptr;
+            
+            info.rootDirectoryFile = 
+            { 
+                .inode = bpb->ebpb_fat32.root_dir_cluster, 
+                .size = 0,
+                .flags = FATTR_SUBDIRECTORY
+            };
+            info.chainEndCluster = 0x0FFFFFF7;
+
+            mem_copy(bpb->ebpb_fat32.volume_label, info.bpbVolumeLabel, sizeof(bpb->ebpb_fat32.volume_label));
+        }
+        else
+        {
+            info.rootDirectoryFile = 
+            { 
+                .inode = 0, 
+                .size = info.rootDirSectors,
+                .flags = FATTR_SUBDIRECTORY
+            };
+            info.chainEndCluster = info.type == FatType::FAT12 ? 0xFF7 : 0xFFF7;
+            
+            mem_copy(bpb->ebpb.volume_label, info.bpbVolumeLabel, sizeof(bpb->ebpb.volume_label));
+        }
+
         spaced_string_to_cstr(info.bpbVolumeLabel, 11);
 
         return kheap::create_new<FAT>(info);
@@ -130,34 +146,7 @@ namespace kfat
         {
             strcpy(volumeInfo.bpbVolumeLabel, volumeName);
         }
-
-        switch (volumeInfo.type)
-        {
-        case FatType::FAT12:
-            chainEndCluster = 0xFF7;
-            break;
-        case FatType::FAT16:
-            chainEndCluster = 0xFFF7;
-            break;
-        default:
-            RAISE_ERROR("Unsupported FAT type");
-            break;
-        }
     }
-
-    // FAT16::FAT16(uint8 dev_port)
-    // {
-    //     // Now it's IDE and not AHCI. Here we don't have devport, but we can reuse it as a device index.
-    //     if (dev_port >= kide::deviceCount)
-    //         RAISE_ERROR_D("FAT16::FAT16() invalid dev_port", "Can't use device number %d, when the maximum is %d.", dev_port, kide::deviceCount - 1);
-        
-    //     this->dev_port = dev_port;
-    // }
-
-    // bool FAT16::init(uint8 partition)
-    // {
-
-    // }
 
     const char* FAT::get_name()
     {
@@ -220,37 +209,23 @@ namespace kfat
     size_t FAT::read(kstorage::FileState& state, char* buffer, size_t length)
     {
         size_t initialPos = state.position;
-        uint32 bytesInCluster = volumeInfo.bytesPerSector * volumeInfo.sectorsPerCluster;
-        
-        length = min(length, state.size - state.position);
 
-        uint32 cluster;
+        uint32 cluster = state.inode + (state.position / volumeInfo.bytesPerSector) / volumeInfo.sectorsPerCluster;
+        ClusterReader reader{ this, cluster };
         do
         {
-            cluster = state.inode + (state.position / volumeInfo.bytesPerSector) / volumeInfo.sectorsPerCluster;
+            reader.read_next();
 
-            uint32 startSector = volumeInfo.dataLBA + (cluster - 2) * volumeInfo.sectorsPerCluster + (state.position / volumeInfo.bytesPerSector) % volumeInfo.sectorsPerCluster;
-            
-            size_t totalLeftBytes = state.size - state.position;
-            uint32 startByteInCluster = state.position % bytesInCluster;
-            uint32 leftBytesInCluster = min(bytesInCluster - startByteInCluster, totalLeftBytes);
+            uint32 offset = state.position % reader.get_size();
+            uint32 leftInCluster = min(reader.get_size() - offset, state.size - state.position);
 
-            // Read a FAT-sized sector.
-            uint8* sector = read(startSector);
-
-            uint32 startFromSector = startByteInCluster % volumeInfo.bytesPerSector;
-            uint32 leftInSector = volumeInfo.bytesPerSector - startFromSector;
-
-            size_t copyPortion = min(leftInSector, length);
-            mem_copy(sector + startFromSector, buffer, copyPortion);
+            size_t copyPortion = min(leftInCluster, length);
+            mem_copy(reader.as_buffer() + offset, buffer, copyPortion);
 
             state.position += copyPortion;
             length -= copyPortion;
-
-            if (leftBytesInCluster == 0)
-                cluster = next_cluster(cluster);
         } 
-        while(cluster < chainEndCluster && length > 0);
+        while(reader.has_more() && length > 0);
 
         return state.position - initialPos;
     }
@@ -268,70 +243,41 @@ namespace kfat
         }
         
         kstorage::DirEntry currentEntry{};
-        uint32 cluster = fileState.inode;
 
+        ClusterReader reader{ this, fileState.inode };
         EntryParser parser{};
-        while (cluster < chainEndCluster)
+        do
         {
-            uint32 start_sector;
-            uint32 sectors_read_count;
+            reader.read_next();
 
-            if (cluster == 0)
+            // Parse every entry in the cluster
+            for (int i = 0; i < reader.as_dir_count(); i++)
             {
-                // Parse root dir
-                start_sector = volumeInfo.rootDirectoryLBA;
-                sectors_read_count = volumeInfo.rootDirSectors;
-            }
-            else
-            {
-                // Parse desired cluster
-                start_sector = volumeInfo.dataLBA + ((cluster - 2) * volumeInfo.sectorsPerCluster);
-                sectors_read_count = volumeInfo.sectorsPerCluster;
-            }
+                dir_entry* entry = reader.as_dir() + i;
 
-            size_t entriesPerSector = volumeInfo.bytesPerSector / sizeof(dir_entry);
+                // Empty entry? This is the end.
+                if (entry->dos_filename[0] == 0)
+                    break;
 
-            // Parse every sector in the cluster
-            for (int sectorIdx = 0; sectorIdx < sectors_read_count; sectorIdx++)
-            {
-                // Read sector
-                dir_entry* entry = (dir_entry*) read(start_sector + sectorIdx);
+                if (!parser.handle_next(entry, currentEntry.name))
+                    continue;
 
-                // Parse every entry of the sector
-                int entryIdx = 0;
-                while (entryIdx++ < entriesPerSector)
+                currentEntry.type = entry->attributes & FATTR_SUBDIRECTORY ? kstorage::DirEntryType::DIRECTORY : kstorage::DirEntryType::FILE;
+                if (entry->attributes & FATTR_VOLUMELABEL)
+                    currentEntry.type = kstorage::DirEntryType::SPECIAL;
+
+                currentEntry.fileState =
                 {
-                    // Empty entry? This is the end.
-                    if(entry->dos_filename[0] == 0)
-                        break;
+                    .inode = entry->first_cluster,
+                    .size = entry->file_size,
+                    .flags = entry->attributes,
+                };
 
-                    if (!parser.handle_next(entry, currentEntry.name) || entry->attributes & FATTR_VOLUMELABEL)
-                    {
-                        entry++;
-                        continue;
-                    }
-
-                    currentEntry.type = entry->attributes & FATTR_SUBDIRECTORY ? kstorage::DirEntryType::DIRECTORY : kstorage::DirEntryType::FILE;
-                    currentEntry.fileState =
-                    {
-                        .inode = entry->first_cluster,
-                        .size = entry->file_size,
-                        .flags = entry->attributes,
-                    };
-
-                    if (!callback(context, currentEntry))
-                        return;
-
-                    entry++;
-                }
+                if (!callback(context, currentEntry))
+                    return;
             }
-
-            // It was root dir parsing? Stop
-            if (cluster == 0)
-                break;
-
-            cluster = next_cluster(cluster);
         }
+        while (reader.has_more());
     }
 
     bool FAT::find_volumelabel(char* outLabel, size_t maxLabelSize)
@@ -358,65 +304,36 @@ namespace kfat
         kconsole::printf("resolve_path_part() resolves '%s'...\n", part);
         char filenameBuff[kstorage::MAX_FILENAME_SIZE];
         
+        ClusterReader reader{ this, cluster };
         EntryParser parser{};
-        while (cluster < chainEndCluster) // Continue until the last entry in a chain or bad cluster.
+        do
         {
-            uint32 start_sector;
-            uint32 sectors_read_count;
+            reader.read_next();
 
-            if(cluster == 0)
+            // Parse every entry in the cluster
+            for (int i = 0; i < reader.as_dir_count(); i++)
             {
-                // Parse root dir
-                start_sector = volumeInfo.rootDirectoryLBA;
-                sectors_read_count = volumeInfo.rootDirSectors;
-            }
-            else
-            {
-                // Parse desired cluster
-                start_sector = volumeInfo.dataLBA + ((cluster - 2) * volumeInfo.sectorsPerCluster);
-                sectors_read_count = volumeInfo.sectorsPerCluster;
-            }
+                dir_entry* entry = reader.as_dir() + i;
 
-            size_t entriesPerSector = volumeInfo.bytesPerSector / sizeof(dir_entry);
+                // Empty entry? This is the end.
+                if (entry->dos_filename[0] == 0)
+                    break;
 
-            // Parse every sector in the cluster
-            for (int sectorIdx = 0; sectorIdx < sectors_read_count; sectorIdx++)
-            {
-                dir_entry* entry = (dir_entry*) read(start_sector + sectorIdx);
+                if (!parser.handle_next(entry, filenameBuff))
+                    continue;
 
-                // Parse every entry of the sector
-                int entryIdx = 0;
-                while (entryIdx++ < entriesPerSector)
+                if (string(part) == filenameBuff)
                 {
-                    // Empty entry? This is the end.
-                    if(entry->dos_filename[0] == 0)
-                        break;
+                    outResolved.flags = entry->attributes;
+                    outResolved.size = entry->file_size;
+                    outResolved.inode = entry->first_cluster;
+                    outResolved.position = 0;
 
-                    if (!parser.handle_next(entry, filenameBuff))
-                    {
-                        entry++;
-                        continue;
-                    }
-
-                    if (string(part) == filenameBuff)
-                    {
-                        outResolved.flags = entry->attributes;
-                        outResolved.size = entry->file_size;
-                        outResolved.inode = entry->first_cluster;
-                        outResolved.position = 0;
-                        return true;
-                    }
-
-                    entry++;
+                    return true;
                 }
             }
-
-            // It was root dir parsing? Stop
-            if (cluster == 0)
-                break;
-
-            cluster = next_cluster(cluster);
         }
+        while (reader.has_more());
 
         return false;
     }
@@ -430,21 +347,30 @@ namespace kfat
             uint16 value = *(uint16*)&loadedFAT[index];
             return cluster & 1 ? value >> 4 : value & 0xFFF;
         }
-        else
+        else if (volumeInfo.type == FatType::FAT16)
         {
             uint16* fat = (uint16*)loadedFAT;
             return fat[cluster];
         }
+        else
+        {
+            uint32* fat = (uint32*)loadedFAT;
+            return fat[cluster] & 0x0FFFFFFF;
+        }
     }
 
-    uint8* FAT::read(uint32 lba)
+    void* FAT::load_sectors(uint32 lba, size_t sectors)
     {
-        // Allocate buffer for one sector
-        if(buffer == nullptr)
+        if (buffer != nullptr && sectors > lastAllocBufferSize)
         {
-            buffer = (uint8*) kheap::alloc(volumeInfo.bytesPerSector);
-            // if((uint32) buffer & 1)
-            //     buffer++;
+            kheap::free(buffer);
+            buffer = nullptr;
+        }
+        
+        if (buffer == nullptr)
+        {
+            buffer = kheap::alloc(sectors * volumeInfo.bytesPerSector);
+            lastAllocBufferSize = sectors;
         }
 
         // kahci::read(dev_port, lba, 0, 1, (uint16*) buffer);
@@ -452,7 +378,8 @@ namespace kfat
         // kide::AtaDevice device = kide::devices[dev_port];
         // kide::ata_read_sector(device.addr, device.isSlave, lba, 1, (uint16*)buffer);
 
-        device->read(lba * (volumeInfo.bytesPerSector / 512), volumeInfo.bytesPerSector / 512, (uint16*)buffer);
+        size_t sectorConverter = volumeInfo.bytesPerSector / 512;
+        device->read(lba * sectorConverter, sectors * sectorConverter, (uint16*)buffer);
         return buffer;
     }
 
@@ -538,5 +465,33 @@ namespace kfat
         }
 
         return true;
+    }
+
+    bool ClusterReader::read_next()
+    {
+        uint32 startSector;
+        uint32 readCount;
+
+        auto& volumeInfo = driver->get_volume_info();
+        // Is this a root directory?
+        if (cluster == 0)
+        {
+            startSector = volumeInfo.rootDirectoryLBA;
+            readCount = volumeInfo.rootDirSectors;
+        }
+        else
+        {
+            startSector = volumeInfo.dataLBA + ((cluster - 2) * volumeInfo.sectorsPerCluster);
+            readCount = volumeInfo.sectorsPerCluster;
+        }
+
+        buffer = driver->load_sectors(startSector, readCount);
+        readBytes = readCount * volumeInfo.bytesPerSector;
+
+        if (cluster == 0)
+            return (hasMoreData = false);
+
+        cluster = driver->next_cluster(cluster);
+        return (hasMoreData = cluster < volumeInfo.chainEndCluster);
     }
 }

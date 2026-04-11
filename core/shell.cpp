@@ -534,6 +534,9 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         Paginator paginator{};
         auto dirReader = [&](kstorage::DirEntry& entry)
         {
+            if (entry.type == kstorage::DirEntryType::SPECIAL)
+                return true;
+            
             const char* typeStr = entry.type == kstorage::DirEntryType::DIRECTORY ? "<D>  " : "     ";
             kconsole::print(typeStr);
             kconsole::print(" ");

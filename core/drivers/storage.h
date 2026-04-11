@@ -49,7 +49,8 @@ namespace kstorage
     enum class DirEntryType
     {
         DIRECTORY,
-        FILE
+        FILE,
+        SPECIAL
     };
 
     struct DirEntry
