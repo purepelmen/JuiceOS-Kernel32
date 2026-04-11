@@ -72,14 +72,14 @@ namespace kfat
         info.rootDirSectors = divide_round_up<uint32>(info.rootDirEntries * sizeof(dir_entry), info.bytesPerSector);
         info.dataLBA = info.rootDirectoryLBA + info.rootDirSectors;
 
-        uint32 dataSectors = info.totalSectors - (info.reservedSectors + info.sectorsPerFAT * info.fatCount + info.rootDirSectors);
-        uint32 totalClusters = dataSectors / info.sectorsPerCluster;
+        info.dataSectors = info.totalSectors - (info.reservedSectors + info.sectorsPerFAT * info.fatCount + info.rootDirSectors);
+        info.totalClusters = info.dataSectors / info.sectorsPerCluster;
 
-        if (totalClusters == 0)
+        if (info.totalClusters == 0)
             info.type = FatType::ExFAT;
-        else if (totalClusters < 4085)
+        else if (info.totalClusters < 4085)
             info.type = FatType::FAT12;
-        else if (totalClusters < 65525)
+        else if (info.totalClusters < 65525)
             info.type = FatType::FAT16;
         else if (info.rootDirSectors == 0)
             info.type = FatType::FAT32;
@@ -146,6 +146,27 @@ namespace kfat
         {
             strcpy(volumeInfo.bpbVolumeLabel, volumeName);
         }
+
+        switch (volumeInfo.type)
+        {
+        case FatType::FAT12:
+            strlcpy("FAT12", fsTypeName, sizeof(fsTypeName));
+            break;
+        case FatType::FAT16:
+            strlcpy("FAT16", fsTypeName, sizeof(fsTypeName));
+            break;
+        case FatType::FAT32:
+            strlcpy("FAT32", fsTypeName, sizeof(fsTypeName));
+            break;
+
+        default:
+            RAISE_ERROR("Unexpected FAT type");
+        }
+    }
+
+    const char* FAT::get_name()
+    {
+        return fsTypeName;
     }
 
     const char* FAT::get_label()
@@ -156,6 +177,11 @@ namespace kfat
     size_t FAT::get_size()
     {
         return volumeInfo.totalSectors * volumeInfo.bytesPerSector;
+    }
+
+    size_t FAT::get_usable_size()
+    {
+        return volumeInfo.dataSectors * volumeInfo.bytesPerSector;
     }
 
     bool FAT::resolve_path(const char* path, kstorage::FileState& state)

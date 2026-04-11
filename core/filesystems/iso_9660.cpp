@@ -148,6 +148,11 @@ namespace kcd
         });
     }
 
+    const char* ISO9660::get_name()
+    {
+        return "ISO 9660";
+    }
+
     const char* ISO9660::get_label()
     {
         return volumeInfo.volumeId;

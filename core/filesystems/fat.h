@@ -148,6 +148,7 @@ namespace kfat
     private:        
         VolumeInfo volumeInfo;
         char volumeName[32];
+        char fsTypeName[12];
 
         uint8* loadedFAT;
         size_t loadedFATPageCount;
@@ -160,9 +161,11 @@ namespace kfat
 
     public:
         FAT(const VolumeInfo& info) : volumeInfo(info) {}
-
+        
+        const char* get_name() override;
         const char* get_label() override;
         size_t get_size() override;
+        size_t get_usable_size() override;
 
         bool resolve_path(const char* path, kstorage::FileState& state) override;
         size_t read_file(kstorage::FileState& state, char* buffer, size_t length) override;

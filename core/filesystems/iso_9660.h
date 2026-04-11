@@ -275,6 +275,7 @@ namespace kcd
     public:
         ISO9660(const VolumeInfo& info) : volumeInfo(info) {}
 
+        const char* get_name() override;
         const char* get_label() override;
         size_t get_size() override;
 
