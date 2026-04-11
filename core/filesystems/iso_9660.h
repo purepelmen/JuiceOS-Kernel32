@@ -275,11 +275,11 @@ namespace kcd
     public:
         ISO9660(const VolumeInfo& info) : volumeInfo(info) {}
 
-        const char* get_name() override;
+        const char* get_label() override;
         size_t get_size() override;
 
         bool resolve_path(const char* path, kstorage::FileState& state) override;
-        size_t read(kstorage::FileState& state, char* buffer, size_t length) override;
+        size_t read_file(kstorage::FileState& state, char* buffer, size_t length) override;
         void read_dir(const char* path, kstorage::ReadDirCallback callback, void* context) override;
     
     private:

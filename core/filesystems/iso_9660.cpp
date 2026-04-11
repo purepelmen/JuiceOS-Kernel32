@@ -148,7 +148,7 @@ namespace kcd
         });
     }
 
-    const char* ISO9660::get_name()
+    const char* ISO9660::get_label()
     {
         return volumeInfo.volumeId;
     }
@@ -206,7 +206,7 @@ namespace kcd
         return true;
     }
 
-    size_t ISO9660::read(kstorage::FileState& state, char* buffer, size_t length)
+    size_t ISO9660::read_file(kstorage::FileState& state, char* buffer, size_t length)
     {
         size_t initialPos = state.position;
         while (length > 0 && (state.size - state.position) > 0)

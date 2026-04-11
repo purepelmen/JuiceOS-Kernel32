@@ -148,7 +148,7 @@ namespace kfat
         }
     }
 
-    const char* FAT::get_name()
+    const char* FAT::get_label()
     {
         return volumeName;
     }
@@ -206,7 +206,7 @@ namespace kfat
         return true;
     }
 
-    size_t FAT::read(kstorage::FileState& state, char* buffer, size_t length)
+    size_t FAT::read_file(kstorage::FileState& state, char* buffer, size_t length)
     {
         size_t initialPos = state.position;
 

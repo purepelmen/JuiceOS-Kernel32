@@ -482,7 +482,7 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         for (int i = 0; i < kstorage::volumeCount; i++)
         {
             kstorage::FileSystem* volume = kstorage::volumes[i];
-            kconsole::printf("[Volume #%d] '%s', size=%d KB\n", i, volume->get_name(), volume->get_size() / 1024);
+            kconsole::printf("[Volume #%d] '%s', size=%d KB\n", i, volume->get_label(), volume->get_size() / 1024);
         }
 
         return;
@@ -588,7 +588,7 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         char buff[512];
         while (true)
         {
-            size_t actuallyRead = fileSystem->read(fileState, buff, 512);
+            size_t actuallyRead = fileSystem->read_file(fileState, buff, 512);
             kconsole::print(buff, actuallyRead);
 
             if (fileState.is_eof())

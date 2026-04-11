@@ -77,11 +77,11 @@ namespace kstorage
 
         BlockDevice* get_device() const { return device; }
 
-        virtual const char* get_name() = 0;
+        virtual const char* get_label() = 0;
         virtual size_t get_size() = 0;
 
         virtual bool resolve_path(const char* path, FileState& state) = 0;
-        virtual size_t read(FileState& state, char* buffer, size_t length) = 0;
+        virtual size_t read_file(FileState& state, char* buffer, size_t length) = 0;
         virtual void read_dir(const char* path, ReadDirCallback callback, void* context) = 0;
 
     protected:
