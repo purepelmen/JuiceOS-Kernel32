@@ -6,7 +6,8 @@
             "-vga": "std",
             "-name": "JuiceOS",
 
-            "-hda": "build/artifacts/JuiceOS.iso"
+            "-hda": "build/artifacts/JuiceOS.iso",
+            "-hdb": "build/fs/partition.img"
         }
     },
     "variants": {
@@ -29,6 +30,7 @@
     },
 
     "wslPathPreprocess": [
-        "-hda"
+        "-hda",
+        "-hdb"
     ]
 }

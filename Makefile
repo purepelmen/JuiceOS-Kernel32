@@ -6,11 +6,8 @@ K32CORE_LINKERSCRIPT = build/kernel.ld
 ISOBUILD_DIR = build/iso
 K32CORE_LINKED_EXECUTABLE = $(ISOBUILD_DIR)/juiceos_k32.elf
 
-FS_DIR = build/fs
-MAIN_PARTITION_FILE = $(FS_DIR)/partition.img
-
 gen-iso: build-core
-	@grub-mkrescue -V "JuiceOS" -d /usr/lib/grub/i386-pc -o $(BUILT_ISO) $(ISOBUILD_DIR) -append_partition 2 0x00 $(MAIN_PARTITION_FILE)
+	@grub-mkrescue -V "JuiceOS" -d /usr/lib/grub/i386-pc -o $(BUILT_ISO) $(ISOBUILD_DIR)
 	@echo ".ISO Generated!"
 
 build-core:

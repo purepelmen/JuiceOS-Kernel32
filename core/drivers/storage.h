@@ -111,8 +111,8 @@ namespace kstorage
     void register_device(BlockDevice* dev);
     void init();
 
-    void mountDrive(DriveInfo* drive);
-    void mount(BlockDevice* device);
+    void mount_drive(DriveInfo* drive);
+    bool mount(BlockDevice* device);
 
     size_t normalize_path(const char* path, char* outPath, size_t maxOutPathLen);
 }

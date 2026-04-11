@@ -56,13 +56,14 @@ namespace kstorage
         for (int i = 0; i < drivesCount; i++)
         {
             DriveInfo& drive = drives[i];
-            mountDrive(&drive);
+            mount_drive(&drive);
         }
     }
 
-    void mountDrive(DriveInfo* drive)
+    void mount_drive(DriveInfo* drive)
     {
-        mount(drive->device);
+        if (mount(drive->device))
+            return;
         
         for (int i = 0; i < drive->childCount; i++)
         {
@@ -71,19 +72,20 @@ namespace kstorage
         }
     }
 
-    void mount(BlockDevice* device)
+    bool mount(BlockDevice* device)
     {
         if (volumeCount >= MAX_DEVICES)
             RAISE_ERROR_D("kstorage::mount() failed", "Attempt to mount another device, while the maxiumum of %d volumes is registered.", MAX_DEVICES);
         
         FileSystem* volume = probe_device(device);
         if (volume == nullptr)
-            return;
+            return false;
 
         volume->init(device);
         volumes[volumeCount++] = volume;
 
         kernel_log("[kstorage] Mounted new device: blk dev size = %dKB.\n", device->get_total_sectors() * 512 / 1024);
+        return true;
     }
 
     void analyze_partitioning(DriveInfo& drive)

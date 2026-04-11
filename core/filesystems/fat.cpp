@@ -479,15 +479,21 @@ namespace kfat
         if (useShortName)
         {
             char* resultPtr = filenameBuff;
+            resultPtr += strlcpy((char*)entry->dos_filename, resultPtr, 9);
 
-            strlcpy((char*)entry->dos_filename, resultPtr, 9);
-            resultPtr = spaced_string_to_cstr(resultPtr, 8);
-            
             if (!(entry->attributes & (FATTR_SUBDIRECTORY | FATTR_VOLUMELABEL)))
+            {
+                resultPtr = spaced_string_to_cstr(filenameBuff, 8);
                 resultPtr += strlcpy(".", resultPtr, 2);
-            
-            strlcpy((char*)entry->dos_fileext, resultPtr, 4);
-            spaced_string_to_cstr(resultPtr, 3);
+
+                strlcpy((char*)entry->dos_fileext, resultPtr, 4);
+                spaced_string_to_cstr(resultPtr, 3);
+            }
+            else
+            {
+                strlcpy((char*)entry->dos_fileext, resultPtr, 4);
+                spaced_string_to_cstr(filenameBuff, 11);
+            }
         }
 
         return true;
