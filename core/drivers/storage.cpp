@@ -9,8 +9,6 @@
 #include <filesystems/fat.h>
 #include <filesystems/mbr.h>
 
-using namespace kpart;
-
 namespace kstorage
 {
     static void analyze_partitioning(DriveInfo& drive);
@@ -43,16 +41,8 @@ namespace kstorage
 
     void init()
     {
-        // Analyze the partitioning
-        kernel_log("[kstorage] Analyzing partitiong for %d registered drive(s)...\n", drivesCount);
-        for (int i = 0; i < drivesCount; i++)
-        {
-            DriveInfo& drive = drives[i];
-            analyze_partitioning(drive);
-        }
-
         // Auto-mount everything.
-        kernel_log("[kstorage] Trying to automount all found drives and partitions...\n", drivesCount);
+        kernel_log("[kstorage] Trying to automount all %d found drives...\n", drivesCount);
         for (int i = 0; i < drivesCount; i++)
         {
             DriveInfo& drive = drives[i];
@@ -65,6 +55,7 @@ namespace kstorage
         if (mount(drive->device))
             return;
         
+        analyze_partitioning(*drive);
         for (int i = 0; i < drive->childCount; i++)
         {
             Partition* partDevice = drive->childs[i];
@@ -92,14 +83,14 @@ namespace kstorage
     {
         drive.device->read(0, 1, (uint16*)tempReadBuffer);
 
-        mbr* mbr_s = (mbr*)tempReadBuffer;
+        kpart::mbr* mbr_s = (kpart::mbr*)tempReadBuffer;
         if(mbr_s->boot_sig != 0xAA55)
             return;
 
         for (int i = 0; i < 4; i++)
         {
-            mbr_partition* part = &mbr_s->partitions[i];
-            if (part->lba_size == 0x0)
+            kpart::mbr_partition* part = &mbr_s->partitions[i];
+            if (part->system_id == 0x0 || part->lba_size == 0x0)
                 continue;
 
             uint32 startLba = part->start_lba;
