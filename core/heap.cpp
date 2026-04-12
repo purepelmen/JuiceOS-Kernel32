@@ -11,6 +11,18 @@ extern "C" void __cxa_throw_bad_array_new_length()
     RAISE_ERROR("__cxa_throw_bad_array_new_length happened")
 }
 
+/* Sized delete needed because without it we have undefined linker reference to this WHEN having
+    virtual destructors. So this must be predefined, but should never be called. */
+void operator delete(void* ptr, size_t size) noexcept
+{
+    RAISE_ERROR_D("Operator delete call", "This is just a stub. Don't call C++'s delete!");
+}
+
+void operator delete[](void* ptr, size_t size) noexcept
+{
+    RAISE_ERROR_D("Operator delete[] call", "This is just a stub. Don't call C++'s delete[]!");
+}
+
 namespace kheap
 {
     const size_t HEAP_SIZE = 12;

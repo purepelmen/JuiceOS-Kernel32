@@ -69,11 +69,10 @@ namespace kstorage
         BlockDevice* device = nullptr;
     
     public:
-        void init(BlockDevice* device)
-        {
-            this->device = device;
-            on_init();
-        }
+        virtual ~FileSystem();
+        
+        void init(BlockDevice* device);
+        void deinit();
 
         BlockDevice* get_device() const { return device; }
         
@@ -88,6 +87,7 @@ namespace kstorage
 
     protected:
         virtual void on_init() = 0;
+        virtual void on_deinit() {}
     };
 
     const int MAX_DEVICES = 16;

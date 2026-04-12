@@ -22,6 +22,28 @@ namespace kstorage
     FileSystem* volumes[MAX_DEVICES];
     int volumeCount = 0;
 
+    FileSystem::~FileSystem()
+    {
+        kernel_assert(this->device == nullptr, "The FileSystem not properly unmounted before releasing the object.");
+    }
+
+    void FileSystem::init(BlockDevice* device)
+    {
+        kernel_assert(this->device == nullptr, "The FileSystem already inited.");
+        kernel_assert(device != nullptr, "FileSystem::init() on a null device.");
+
+        this->device = device;
+        on_init();
+    }
+
+    void FileSystem::deinit()
+    {
+        kernel_assert(this->device != nullptr, "The FileSystem not inited.");
+
+        on_deinit();
+        device = nullptr;
+    }
+
     void register_device(BlockDevice* dev)
     {
         if (drivesCount >= MAX_DEVICES)

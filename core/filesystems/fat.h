@@ -148,7 +148,6 @@ namespace kfat
     private:        
         VolumeInfo volumeInfo;
         char volumeName[32];
-        char fsTypeName[12];
 
         uint8* loadedFAT;
         size_t loadedFATPageCount;
@@ -158,6 +157,7 @@ namespace kfat
     
     protected:
         void on_init() override;
+        void on_deinit() override;
 
     public:
         FAT(const VolumeInfo& info) : volumeInfo(info) {}

@@ -331,7 +331,7 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
             "SETVOL - Set current volume for the shell.\n"
             "DIR / LS - Print directory contents at path.\n"
             "CD - Change current working directory.\n"
-            "READFILE - Print contents of the file.\n"
+            "READF - Print contents of the file.\n"
             "PRINTARGS - Prints every argument specified to this command.\n";
         
         // kconsole::print("AHCIVER - Print AHCI specification version.\n");
@@ -562,7 +562,7 @@ void console_handle(string command, int argc, char** argv, bool* shouldContinue)
         return;
     }
 
-    if (command == "readfile")
+    if (command == "readf")
     {
         if (selectedVolume >= kstorage::volumeCount)
         {

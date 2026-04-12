@@ -146,27 +146,32 @@ namespace kfat
         {
             strcpy(volumeInfo.bpbVolumeLabel, volumeName);
         }
+    }
 
-        switch (volumeInfo.type)
-        {
-        case FatType::FAT12:
-            strlcpy("FAT12", fsTypeName, sizeof(fsTypeName));
-            break;
-        case FatType::FAT16:
-            strlcpy("FAT16", fsTypeName, sizeof(fsTypeName));
-            break;
-        case FatType::FAT32:
-            strlcpy("FAT32", fsTypeName, sizeof(fsTypeName));
-            break;
+    void FAT::on_deinit()
+    {
+        kmmanager::free_pages(loadedFAT, loadedFATPageCount);
 
-        default:
-            RAISE_ERROR("Unexpected FAT type");
-        }
+        if (buffer != nullptr)
+            kheap::free(buffer);
+        buffer = nullptr;
     }
 
     const char* FAT::get_name()
     {
-        return fsTypeName;
+        switch (volumeInfo.type)
+        {
+        case FatType::FAT12:
+            return "FAT12";
+        case FatType::FAT16:
+            return "FAT16";
+        case FatType::FAT32:
+            return "FAT32";
+
+        default:
+            RAISE_ERROR("Unexpected FAT type");
+            return nullptr;
+        }
     }
 
     const char* FAT::get_label()
