@@ -1,7 +1,5 @@
 #pragma once
-
 #include <stdint.h>
-#include "storage.h"
 
 namespace kide
 {
@@ -30,6 +28,8 @@ namespace kide
         char name[20];
         char model[41];
 
+        bool isDMASupported;
+        bool isLBASupported;
         uint32 totalAddressableSectors;
     };
 
@@ -40,6 +40,7 @@ namespace kide
 
     void init();
     bool ata_read_sector(AtaBusAddr bus, bool isSlave, uint32 startLba, uint8 sectorCount, uint16* buffer);
+    bool ata_write_sector(AtaBusAddr bus, bool isSlave, uint32 startLba, uint8 sectorCount, const uint16* buffer);
 
     const char* ata_devtype_as_string(AtaDevType devType);
 }

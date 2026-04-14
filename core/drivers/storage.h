@@ -9,6 +9,9 @@ namespace kstorage
         /// @brief Read the specified `count` of sectors, starting from `start` sector index.
         /// @param outBuffer Where to put, currently with no alignment requirements.
         virtual void read(uint32 start, uint32 count, uint16* outBuffer) = 0;
+        /// @brief Writes the specified `count` of sectors, starting from `start` sector index.
+        /// @param data Data buffer to write, currently with no alignment requirements.
+        virtual void write(uint32 start, uint32 count, const uint16* data) = 0;
 
         /// @brief Returns the amount of sectors (always 512-byte sized).
         virtual uint32 get_total_sectors() = 0;
@@ -27,6 +30,11 @@ namespace kstorage
         void read(uint32 start, uint32 count, uint16* outBuffer) override
         {
             dev->read(offset + start, count, outBuffer);
+        }
+
+        void write(uint32 start, uint32 count, const uint16* data) override
+        {
+            dev->write(start, count, data);
         }
 
         uint32 get_total_sectors() override { return size; }

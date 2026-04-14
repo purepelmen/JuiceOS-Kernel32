@@ -1,10 +1,21 @@
+#include "ide.h"
 #include "ports.h"
 #include "pci.h"
-#include "ide.h"
+#include "storage.h"
 
 #include <kernel.h>
 #include <console.h>
 #include <heap.h>
+#include <math.h>
+
+#define ATA_ERR  (1 << 0)
+#define ATA_IDX  (1 << 1)
+#define ATA_CORR (1 << 2)
+#define ATA_DRQ  (1 << 3)
+#define ATA_SRV  (1 << 4)
+#define ATA_DF   (1 << 5)
+#define ATA_RDY  (1 << 6)
+#define ATA_BSY  (1 << 7)
 
 #define ATA_LOGICAL_BLOCK_SIZE 512
 #define CONTROL_PORT_OFFSET 0x206
@@ -27,7 +38,7 @@
 
 namespace kide
 {
-    AtaDevice devices[4];
+    AtaDevice devices[MAX_DEVICES];
     int deviceCount = 0;
 
     static void ata_register_device(const char* name, AtaBusAddr busAddr, bool isSlave);
@@ -35,6 +46,7 @@ namespace kide
     static bool ata_identify(AtaDevice* outDevice);
     static void ata_analyze_identify(AtaDevice* device, uint16* identifyData);
     static bool ata_pio_read_poll(AtaBusAddr busAddr, uint16* buffer, uint8 sectorCount = 1);
+    static bool ata_pio_write_poll(AtaBusAddr busAddr, const uint16* buffer, uint8 sectorCount = 1);
 
     // Selects the specified drive on the specified bus and waits for it to switch. Optionally sets the head number or the highest last 4 bits of LBA.
     static void ata_select_drive(AtaBusAddr busAddr, bool isSlave, uint8 headOrLBA24_27_bits = 0);
@@ -53,15 +65,29 @@ namespace kide
 
         void read(uint32 start, uint32 count, uint16* outBuffer) override
         {
-            uint16 totalRead = 0;
+            uint32 totalRead = 0;
             while (totalRead < count)
             {
-                uint8 portion = count > 0xFF ? 0xFF : count;
+                uint8 portion = min<uint32>(count - totalRead, 0xFF);
                 uint32 offset = start + totalRead;
                 ata_read_sector(ataDev.addr, ataDev.isSlave, offset, portion, outBuffer);
 
-                outBuffer += portion * ATA_LOGICAL_BLOCK_SIZE;
+                outBuffer += portion * ATA_LOGICAL_BLOCK_SIZE / 2;
                 totalRead += portion;
+            }
+        }
+
+        void write(uint32 start, uint32 count, const uint16* data)
+        {
+            uint32 written = 0;
+            while (written < count)
+            {
+                uint8 portion = min<uint32>(count - written, 0xFF);
+                uint32 offset = start + written;
+                ata_write_sector(ataDev.addr, ataDev.isSlave, offset, portion, data);
+
+                data += portion * ATA_LOGICAL_BLOCK_SIZE / 2;
+                written += portion;
             }
         }
 
@@ -76,6 +102,10 @@ namespace kide
             kernel_log("[IDE] WARNING: Controller wasn't found in PCI device list.\n");
             return;
         }
+
+        uint8 progInterface = (ide->read(0x08) >> 8) & 0xFF;
+        kernel_log("[IDE] Native PCI mode support (primary/secondary) = %d/%d\n", (bool)(progInterface & (1 << 1)), (bool)(progInterface & (1 << 3)));
+        kernel_log("[IDE] Bus Mastering support = %d\n", (bool)(progInterface & (1 << 7)));
 
         // Check for floating buses. The status is 0xFF if no there are no drives (not definite though).
         if (port_read8(BUS_CMD_STATUS(PRIMARY_CMD_IDE)) == 0xFF)
@@ -151,7 +181,7 @@ namespace kide
         }
 
         // Wait until BSY is cleared.
-        while (port_read8(BUS_CMD_STATUS(bus.base)) & 1 << 7);
+        while (port_read8(BUS_CMD_STATUS(bus.base)) & ATA_BSY);
 
         device->type = ata_read_dev_type(bus);
         kernel_log("[IDE] ATA Device (BUS=%x SLAVE=%d) is detected as %s.\n", bus.base, isSlave, ata_devtype_as_string(device->type));
@@ -174,7 +204,13 @@ namespace kide
         
         ata_analyze_identify(device, identifyData);
         kernel_log("\tIDENTIFY Model: %s\n", device->model);
-        kernel_log("\tIDENTIFY: LBA48 supported=%d, Addressable space=%dKB\n", (identifyData[83] & 1 << 10) != 0, device->totalAddressableSectors / 2);
+        kernel_log("\tIDENTIFY: LBA48 supported=%d, DMA supported=%d, Addressable space=%dKB\n", (identifyData[83] & 1 << 10) != 0, device->isDMASupported, device->totalAddressableSectors / 2);
+
+        if (!device->isLBASupported)
+        {
+            kernel_log("[IDE] This device won't be registered: no LBA support. The driver requires it.\n");
+            return false;
+        }
 
         return true;
     }
@@ -182,24 +218,18 @@ namespace kide
     void ata_analyze_identify(AtaDevice* device, uint16* identifyData)
     {
         // Extract model string (word 27–46, 40 bytes).
-        char model[41];
         for (int i = 0; i < 40; i += 2)
         {
-            model[i] = (char)(identifyData[27 + i/2] >> 8);
-            model[i + 1] = (char)(identifyData[27 + i/2] & 0xFF);
+            device->model[i] = (char)(identifyData[27 + i/2] >> 8);
+            device->model[i + 1] = (char)(identifyData[27 + i/2] & 0xFF);
         }
-        model[40] = 0;
-
-        // Trim at the end to remove unnecessary spaces.
-        int i = 39;
-        while (model[i] == 0x20)
-        {
-            model[i] = 0x0;
-            i--;
-        }
-        mem_copy(model, device->model, 41);
+        spaced_string_to_cstr(device->model, 40);
 
         device->totalAddressableSectors = *((int*)&identifyData[60]);
+
+        uint16 capabilities = identifyData[49];
+        device->isDMASupported = capabilities & (1 << 8);
+        device->isLBASupported = capabilities & (1 << 9);
     }
 
     bool ata_read_sector(AtaBusAddr bus, bool isSlave, uint32 startLba, uint8 sectorCount, uint16* buffer) 
@@ -207,7 +237,7 @@ namespace kide
         ata_select_drive(bus, isSlave, startLba >> 24);
 
         // Wait until BSY is clear.
-        while (port_read8(BUS_CMD_STATUS(bus.base)) & (1 << 7));
+        while (port_read8(BUS_CMD_STATUS(bus.base)) & ATA_BSY);
 
         port_write8(BUS_CMD_SECTOR_COUNT(bus.base), sectorCount);
         port_write8(BUS_CMD_SECTOR_NUMBER(bus.base), startLba & 0xFF);
@@ -220,8 +250,37 @@ namespace kide
         return ata_pio_read_poll(bus, buffer, sectorCount);
     }
 
+    bool ata_write_sector(AtaBusAddr bus, bool isSlave, uint32 startLba, uint8 sectorCount, const uint16* buffer)
+    {
+        ata_select_drive(bus, isSlave, startLba >> 24);
+
+        // Wait until BSY is clear.
+        while (port_read8(BUS_CMD_STATUS(bus.base)) & ATA_BSY);
+
+        port_write8(BUS_CMD_SECTOR_COUNT(bus.base), sectorCount);
+        port_write8(BUS_CMD_SECTOR_NUMBER(bus.base), startLba & 0xFF);
+        port_write8(BUS_CMD_CYLINDER_LOW(bus.base), (startLba >> 8) & 0xFF);
+        port_write8(BUS_CMD_CYLINDER_HIGH(bus.base), (startLba >> 16) & 0xFF);
+        
+        // Issue WRITE SECTORS command.
+        port_write8(BUS_CMD_COMMAND(bus.base), 0x30);
+        bool isPioTransferSucceded = ata_pio_write_poll(bus, buffer, sectorCount);
+
+        // Issue Cache Flush command (required after writes).
+        port_write8(BUS_CMD_COMMAND(bus.base), 0xE7);
+
+        return isPioTransferSucceded;
+    }
+
     bool ata_pio_read_poll(AtaBusAddr busAddr, uint16* buffer, uint8 sectorCount)
     {
+        // After issuing a command, ERR/DF might still be set from the PREVIOUS failed command. 
+        // Let's make some small delay.
+        for (int i = 0; i < 4; i++)
+        {
+            port_read8(BUS_CMD_STATUS(busAddr.base));
+        }
+        
         for (int sectorIdx = 0; sectorIdx < sectorCount; sectorIdx++)
         {
             uint8 status;
@@ -230,18 +289,61 @@ namespace kide
             do 
             {
                 status = port_read8(BUS_CMD_STATUS(busAddr.base));
-                if (status & 1)
+                if (status & (ATA_ERR | ATA_DF))
                 {
+                    // TODO: Handle errors more correctly, read the Error register.
                     kernel_log("[IDE] ERR flag set during reading sector number %d.\n", sectorIdx);
                     return false;
                 }
             } 
-            while ((status & 1 << 3) == 0);
+            while ((status & ATA_DRQ) == 0);
 
             // Read next 256 words to the buffer.
             for (int j = 0; j < 256; j++)
             {
                 buffer[sectorIdx * 256 + j] = port_read16(BUS_CMD_DATA(busAddr.base));
+            }
+            
+            // 400ns delay to ensure DRQ is cleared, possibly BSY may be set.
+            for (int i = 0; i < 4; i++)
+            {
+                port_read8(BUS_CTL_DEVCONTROL(busAddr.ctl));
+            }
+        }
+
+        return true;
+    }
+
+    bool ata_pio_write_poll(AtaBusAddr busAddr, const uint16* buffer, uint8 sectorCount)
+    {
+        // After issuing a command, ERR/DF might still be set from the PREVIOUS failed command. 
+        // Let's make some small delay.
+        for (int i = 0; i < 4; i++)
+        {
+            port_read8(BUS_CMD_STATUS(busAddr.base));
+        }
+        
+        for (int sectorIdx = 0; sectorIdx < sectorCount; sectorIdx++)
+        {
+            uint8 status;
+
+            // Wait until DRQ is set meaning it's ready for PIO data transfer. Additionally checking if an error occured.
+            do 
+            {
+                status = port_read8(BUS_CMD_STATUS(busAddr.base));
+                if (status & (ATA_ERR | ATA_DF))
+                {
+                    // TODO: Handle errors more correctly, read the Error register.
+                    kernel_log("[IDE] ERR flag set during writing sector number %d.\n", sectorIdx);
+                    return false;
+                }
+            } 
+            while ((status & ATA_DRQ) == 0);
+
+            // Read next 256 words to the buffer.
+            for (int j = 0; j < 256; j++)
+            {
+                port_write16(BUS_CMD_DATA(busAddr.base), buffer[sectorIdx * 256 + j]);
             }
             
             // 400ns delay to ensure DRQ is cleared, possibly BSY may be set.

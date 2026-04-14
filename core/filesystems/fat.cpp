@@ -2,7 +2,7 @@
 #include "mbr.h"
 
 #include <drivers/screen.h>
-#include <drivers/ide.h>
+// #include <drivers/ide.h>
 // #include <drivers/ahci.h>
 #include <langutils.h>
 
